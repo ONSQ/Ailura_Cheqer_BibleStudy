@@ -1,5 +1,6 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,6 +9,8 @@ import {
   Text,
   View,
 } from 'react-native';
+
+import { createStudy, getUserId } from '@/lib/studies';
 
 import {
   displayGloss,
@@ -23,6 +26,8 @@ const PAGE = 50;
 
 export default function WordStudy() {
   const { strongs } = useLocalSearchParams<{ strongs: string }>();
+  const qc = useQueryClient();
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'signin'>('idle');
 
   const lexeme = useQuery({
     queryKey: ['lexeme', strongs],
@@ -56,6 +61,25 @@ export default function WordStudy() {
       params: { book: o.book, chapter: String(o.chapter), verse: String(o.verse) },
     });
 
+  const saveStudy = async () => {
+    if (!strongs || saveState === 'saving') return;
+    if (!(await getUserId())) {
+      setSaveState('signin');
+      return;
+    }
+    setSaveState('saving');
+    try {
+      await createStudy({
+        strongs,
+        title: `${lexeme.data?.lemma ?? strongs} (${strongs})`,
+      });
+      qc.invalidateQueries({ queryKey: ['studies'] });
+      setSaveState('saved');
+    } catch {
+      setSaveState('idle');
+    }
+  };
+
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ title: strongs ?? 'Word Study' }} />
@@ -79,6 +103,19 @@ export default function WordStudy() {
                   {displayGloss(lexeme.data.gloss) ? (
                     <Text style={styles.lexGloss}>{displayGloss(lexeme.data.gloss)}</Text>
                   ) : null}
+                  <Pressable
+                    style={[styles.saveBtn, saveState === 'saved' && styles.saveBtnDone]}
+                    onPress={saveState === 'signin' ? () => router.push('/studies' as never) : saveStudy}>
+                    <Text style={styles.saveBtnText}>
+                      {saveState === 'saved'
+                        ? 'Saved to studies ✓'
+                        : saveState === 'saving'
+                          ? 'Saving…'
+                          : saveState === 'signin'
+                            ? 'Sign in to save (tap)'
+                            : 'Save study'}
+                    </Text>
+                  </Pressable>
                 </>
               )}
             </View>
@@ -162,6 +199,16 @@ const styles = StyleSheet.create({
   lemmaHebrew: { textAlign: 'left', fontSize: 40 },
   lexMeta: { color: colors.faint, marginTop: 4, fontSize: 13 },
   lexGloss: { color: colors.ink, marginTop: 8, fontSize: 16 },
+  saveBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentSoft,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginTop: 12,
+  },
+  saveBtnDone: { backgroundColor: '#DCEEDB' },
+  saveBtnText: { color: colors.accent, fontWeight: '700', fontSize: 13 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 10 },
   glossRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 8 },
   glossLabel: { width: 110, fontSize: 13, color: colors.ink },

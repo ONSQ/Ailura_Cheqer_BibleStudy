@@ -5,6 +5,10 @@
 -- and "STEP Bible" (STEPBible.org)
 -- =============================================================
 
+-- pgvector for period_docs embeddings (Phase 3/4 RAG)
+create schema if not exists extensions;
+create extension if not exists vector with schema extensions;
+
 -- One row per original-language word token (Hebrew OT + Greek NT)
 create table if not exists ol_words (
     id            bigserial primary key,
@@ -76,18 +80,21 @@ create table if not exists word_studies (
     created_at  timestamptz default now()
 );
 
--- App API helpers (queried by the Expo app through PostgREST)
-create or replace view v_books as
+-- App API helpers (queried by the Expo app through PostgREST).
+-- security_invoker so the caller's RLS applies, not the view owner's.
+create or replace view v_books with (security_invoker = on) as
 select book, corpus, max(chapter) as chapters, min(id) as ord
 from ol_words
 group by book, corpus;
 
-create or replace view v_versions as
+create or replace view v_versions with (security_invoker = on) as
 select distinct version from translations;
 
 create or replace function gloss_distribution(p_strongs text)
 returns table (gloss text, count bigint)
-language sql stable as $$
+language sql stable
+set search_path = public
+as $$
     select gloss, count(*)
     from ol_words
     where strongs = p_strongs and gloss is not null and gloss <> ''
@@ -97,7 +104,7 @@ language sql stable as $$
 $$;
 
 -- Reassembled verse text for quick interlinear display
-create or replace view v_verse_interlinear as
+create or replace view v_verse_interlinear with (security_invoker = on) as
 select corpus, book, chapter, verse,
        string_agg(surface, ' ' order by word_num)                          as original_text,
        string_agg(coalesce(gloss,''), ' | ' order by word_num)             as gloss_line,
@@ -105,3 +112,46 @@ select corpus, book, chapter, verse,
 from ol_words
 where source_tag is null or source_tag in ('L','Q','R','X') or corpus = 'NT'
 group by corpus, book, chapter, verse;
+
+-- =============================================================
+-- Row Level Security
+-- Text data is world-readable; writes happen only through the
+-- service-role ingest scripts (which bypass RLS). word_studies:
+-- owner CRUDs own rows, signed-in group members read shared rows,
+-- no public access.
+-- =============================================================
+
+alter table ol_words      enable row level security;
+alter table lexemes       enable row level security;
+alter table translations  enable row level security;
+alter table period_docs   enable row level security;
+alter table word_studies  enable row level security;
+
+drop policy if exists ol_words_read      on ol_words;
+drop policy if exists lexemes_read       on lexemes;
+drop policy if exists translations_read  on translations;
+drop policy if exists period_docs_read   on period_docs;
+create policy ol_words_read     on ol_words     for select using (true);
+create policy lexemes_read      on lexemes      for select using (true);
+create policy translations_read on translations for select using (true);
+create policy period_docs_read  on period_docs  for select using (true);
+
+alter table word_studies alter column owner set default auth.uid();
+
+drop policy if exists word_studies_select on word_studies;
+drop policy if exists word_studies_insert on word_studies;
+drop policy if exists word_studies_update on word_studies;
+drop policy if exists word_studies_delete on word_studies;
+create policy word_studies_select on word_studies for select
+    to authenticated
+    using (owner = (select auth.uid()) or is_shared = true);
+create policy word_studies_insert on word_studies for insert
+    to authenticated
+    with check (owner = (select auth.uid()));
+create policy word_studies_update on word_studies for update
+    to authenticated
+    using (owner = (select auth.uid()))
+    with check (owner = (select auth.uid()));
+create policy word_studies_delete on word_studies for delete
+    to authenticated
+    using (owner = (select auth.uid()));

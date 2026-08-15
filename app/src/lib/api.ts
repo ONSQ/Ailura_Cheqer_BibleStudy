@@ -29,7 +29,12 @@ import type {
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-export const usingSupabase = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+export const hasSupabase = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+// Text data can stay on the local dev bridge while auth + shared studies
+// already run on Supabase (EXPO_PUBLIC_TEXT_SOURCE=dev). Once the bulk
+// load into Supabase is done, drop that env var.
+export const usingSupabase = hasSupabase && process.env.EXPO_PUBLIC_TEXT_SOURCE !== 'dev';
 
 // Android emulators reach the host machine at 10.0.2.2, not localhost.
 const DEV_API =
