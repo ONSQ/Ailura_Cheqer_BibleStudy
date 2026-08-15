@@ -10,6 +10,7 @@
 |---|---|
 | `schema.sql` | Supabase Postgres schema: word tokens, lexemes, translations, period documents (with pgvector for RAG), and shared word studies for group use |
 | `ingest/ingest_stepbible.py` | Parses STEPBible TAHOT (Hebrew OT) and TAGNT (Greek NT) into SQLite or Postgres |
+| `ingest/ingest_helloao.py` | Imports translation text (BSB by default) from the helloao Free Use Bible API into the translations table |
 | `app/` | Expo React Native app (TypeScript, expo-router, React Query): Reader with tappable words, Word Study with gloss distribution and occurrence list, Shared Studies stub |
 | `tools/dev_server.py` | Local API bridge serving `wordstudy.db` to the app during development, no Supabase needed |
 
@@ -81,7 +82,11 @@ export DATABASE_URL="postgresql://postgres:...@db.<project>.supabase.co:5432/pos
 pip install psycopg2-binary
 python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators Amalgamated OT+NT" --postgres
 
-# 4. Run the app against the local database
+# 4. Add the BSB English text (either target)
+python3 ingest/ingest_helloao.py --sqlite wordstudy.db
+# or: python3 ingest/ingest_helloao.py --postgres
+
+# 5. Run the app against the local database
 python3 tools/dev_server.py            # serves wordstudy.db on :8787
 cd app && npm install && npm run web   # or npm start for a device
 

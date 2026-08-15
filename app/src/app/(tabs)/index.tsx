@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { displaySurface, getBooks, getChapter } from '@/lib/api';
+import { displaySurface, getBooks, getChapter, getTranslation } from '@/lib/api';
 import { colors, fonts } from '@/lib/theme';
 import type { Verse } from '@/lib/types';
 
@@ -23,6 +23,7 @@ export default function Reader() {
   const [sel, setSel] = useState({ book: 'Gen', chapter: 1 });
   const [targetVerse, setTargetVerse] = useState<number | null>(null);
   const [picker, setPicker] = useState<'book' | 'chapter' | null>(null);
+  const [showEnglish, setShowEnglish] = useState(true);
   const listRef = useRef<FlatList<Verse>>(null);
 
   // Jump-to-verse links from the Word Study screen arrive as URL params.
@@ -38,6 +39,16 @@ export default function Reader() {
     queryKey: ['chapter', sel.book, sel.chapter],
     queryFn: () => getChapter(sel.book, sel.chapter),
   });
+  const translation = useQuery({
+    queryKey: ['translation', 'BSB', sel.book, sel.chapter],
+    queryFn: () => getTranslation(sel.book, sel.chapter),
+    enabled: showEnglish,
+  });
+  const englishByVerse = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const v of translation.data?.verses ?? []) map.set(v.verse, v.text);
+    return map;
+  }, [translation.data]);
 
   const isRTL = chapter.data?.corpus === 'OT';
   const chapterCount = useMemo(
@@ -74,6 +85,13 @@ export default function Reader() {
         <Pressable style={styles.pickerBtn} onPress={() => setPicker('chapter')}>
           <Text style={styles.pickerBtnText}>{sel.chapter}</Text>
         </Pressable>
+        <Pressable
+          style={[styles.pickerBtn, !showEnglish && styles.pickerBtnOff]}
+          onPress={() => setShowEnglish((v) => !v)}>
+          <Text style={[styles.pickerBtnText, !showEnglish && styles.pickerBtnTextOff]}>
+            BSB
+          </Text>
+        </Pressable>
         <View style={{ flex: 1 }} />
         <Pressable onPress={() => router.push('/about')} hitSlop={8}>
           <Text style={styles.aboutLink}>About</Text>
@@ -97,7 +115,12 @@ export default function Reader() {
           contentContainerStyle={styles.listContent}
           onScrollToIndexFailed={() => {}}
           renderItem={({ item }) => (
-            <VerseRow verse={item} isRTL={isRTL} highlighted={item.verse === targetVerse} />
+            <VerseRow
+              verse={item}
+              isRTL={isRTL}
+              highlighted={item.verse === targetVerse}
+              english={showEnglish ? englishByVerse.get(item.verse) : undefined}
+            />
           )}
         />
       )}
@@ -172,10 +195,12 @@ function VerseRow({
   verse,
   isRTL,
   highlighted,
+  english,
 }: {
   verse: Verse;
   isRTL: boolean;
   highlighted: boolean;
+  english?: string;
 }) {
   return (
     <View style={[styles.verseRow, highlighted && styles.verseHighlight]}>
@@ -199,6 +224,7 @@ function VerseRow({
           </Text>
         ))}
       </Text>
+      {english ? <Text style={styles.englishText}>{english}</Text> : null}
     </View>
   );
 }
@@ -221,9 +247,12 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   pickerBtnText: { color: colors.accent, fontWeight: '700', fontSize: 16 },
+  pickerBtnOff: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border },
+  pickerBtnTextOff: { color: colors.faint, fontWeight: '500' },
   aboutLink: { color: colors.faint, fontSize: 14 },
   listContent: { padding: 16, paddingBottom: 48 },
-  verseRow: { marginBottom: 6, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  verseRow: { marginBottom: 10, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  englishText: { color: colors.faint, fontSize: 14, lineHeight: 20, marginTop: 2 },
   verseHighlight: { backgroundColor: colors.highlight },
   verseText: { color: colors.ink },
   verseNum: { fontSize: 12, color: colors.accent, fontWeight: '700' },

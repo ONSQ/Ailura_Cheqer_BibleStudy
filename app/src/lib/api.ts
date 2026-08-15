@@ -21,6 +21,7 @@ import type {
   GlossCount,
   Lexeme,
   OccurrencePage,
+  TranslationChapter,
   Verse,
   Word,
 } from './types';
@@ -158,6 +159,28 @@ export async function getOccurrences(
     .range(offset, offset + limit - 1);
   if (error) throw error;
   return { total: count ?? 0, rows: data ?? [] };
+}
+
+export async function getTranslation(
+  book: string,
+  chapter: number,
+  version = 'BSB',
+): Promise<TranslationChapter> {
+  if (!usingSupabase) {
+    return devGet<TranslationChapter>(
+      `/translation?version=${version}&book=${encodeURIComponent(book)}&chapter=${chapter}`,
+    );
+  }
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('translations')
+    .select('verse, text')
+    .eq('version', version)
+    .eq('book', book)
+    .eq('chapter', chapter)
+    .order('verse');
+  if (error) throw error;
+  return { version, book, chapter, verses: data ?? [] };
 }
 
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */

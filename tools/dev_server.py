@@ -11,6 +11,7 @@ Endpoints (all JSON, CORS open, read-only):
     /books                                  -> [{book, corpus, chapters}]
     /chapter?book=Gen&chapter=1             -> {book, chapter, corpus, verses:[{verse, words:[...]}]}
     /lexeme?strongs=H0430                   -> {strongs, language, lemma, gloss, occurrences}
+    /translation?version=BSB&book=Gen&chapter=1 -> {version, book, chapter, verses:[{verse, text}]}
     /glosses?strongs=H0430                  -> [{gloss, count}]
     /occurrences?strongs=H0430&limit=50&offset=0 -> {total, rows:[...]}
 
@@ -129,6 +130,22 @@ def get_occurrences(strongs, limit, offset):
     return dict(total=total, rows=[dict(r) for r in rows])
 
 
+def get_translation(version, book, chapter):
+    try:
+        rows = db().execute(
+            """select verse, text from translations
+               where version = ? and book = ? and chapter = ?
+               order by verse""",
+            (version, book, chapter),
+        ).fetchall()
+    except sqlite3.OperationalError:  # translations table not imported yet
+        rows = []
+    return dict(
+        version=version, book=book, chapter=chapter,
+        verses=[dict(r) for r in rows],
+    )
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlparse(self.path)
@@ -142,6 +159,10 @@ class Handler(BaseHTTPRequestHandler):
                 body = get_lexeme(q["strongs"])
             elif url.path == "/glosses":
                 body = get_glosses(q["strongs"])
+            elif url.path == "/translation":
+                body = get_translation(
+                    q.get("version", "BSB"), q["book"], int(q["chapter"])
+                )
             elif url.path == "/occurrences":
                 body = get_occurrences(
                     q["strongs"], int(q.get("limit", 50)), int(q.get("offset", 0))

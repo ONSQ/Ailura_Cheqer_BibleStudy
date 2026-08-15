@@ -28,6 +28,18 @@ export interface Chapter {
   verses: Verse[];
 }
 
+export interface TranslationVerse {
+  verse: number;
+  text: string;
+}
+
+export interface TranslationChapter {
+  version: string;
+  book: string;
+  chapter: number;
+  verses: TranslationVerse[];
+}
+
 export interface Lexeme {
   strongs: string;
   language: 'heb' | 'grk' | 'arc';
