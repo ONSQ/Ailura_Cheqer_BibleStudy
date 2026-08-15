@@ -76,6 +76,23 @@ create table if not exists word_studies (
     created_at  timestamptz default now()
 );
 
+-- App API helpers (queried by the Expo app through PostgREST)
+create or replace view v_books as
+select book, corpus, max(chapter) as chapters, min(id) as ord
+from ol_words
+group by book, corpus;
+
+create or replace function gloss_distribution(p_strongs text)
+returns table (gloss text, count bigint)
+language sql stable as $$
+    select gloss, count(*)
+    from ol_words
+    where strongs = p_strongs and gloss is not null and gloss <> ''
+    group by gloss
+    order by count(*) desc
+    limit 15
+$$;
+
 -- Reassembled verse text for quick interlinear display
 create or replace view v_verse_interlinear as
 select corpus, book, chapter, verse,

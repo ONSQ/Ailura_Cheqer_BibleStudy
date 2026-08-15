@@ -33,6 +33,38 @@ Supabase: Postgres + pgvector + Auth + Row Level Security
   word_studies         <- shared group notes, RLS: each user sees shared + own (phase 2)
 ```
 
+## AI architecture
+
+The AI layers in Cheqer, in build order:
+
+1. Semantic retrieval over untagged corpora (Phase 3). The OT/NT are
+   exhaustively tagged, so lemma lookup there is deterministic SQL. The period
+   witnesses (Josephus, Philo, Pseudepigrapha, some DSS material) have no
+   Strong's tags and no join key. Solution: embed every passage in period_docs
+   (the vector(1536) pgvector column), embed the semantic field of the lemma
+   under study, and retrieve conceptually related passages across languages.
+   Hybrid retrieval rule: exact lemma match wherever tagging exists, semantic
+   search where it does not, merged and deduplicated.
+
+2. Grounded synthesis (Phase 4). An LLM writes the word-study brief (usage
+   development from Torah to prophets to Qumran to NT) strictly from retrieved
+   passages, with a citation for every claim linking back to the source row in
+   period_docs or ol_words. No claim without a retrievable citation. This is
+   theological content: the model summarizes witnesses, it never generates
+   doctrine from its own weights.
+
+3. Natural-language front door (Phase 4). Users ask questions ("where does
+   Scripture talk about the sons of God?"); an LLM maps the question to lemma
+   sets + retrieval queries. Users never need to know Strong's numbers.
+
+4. Evaluation harness (UTSA independent study). Gold standard: scholarly
+   cross-reference sets (e.g., NA28 loci citati, lexicon article citations)
+   define which period passages relate to a given lemma. Measure precision and
+   recall of embedding retrieval vs. lemma-match baseline vs. hybrid, across
+   20-30 test lemmas. Compare at least two embedding models for Koine Greek
+   and Biblical Hebrew coverage. Keep eval code in docs/eval/ so results are
+   reproducible.
+
 ## Roadmap
 
 - Phase 1 (done): data spine, ingestion, schema.

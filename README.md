@@ -10,6 +10,8 @@
 |---|---|
 | `schema.sql` | Supabase Postgres schema: word tokens, lexemes, translations, period documents (with pgvector for RAG), and shared word studies for group use |
 | `ingest/ingest_stepbible.py` | Parses STEPBible TAHOT (Hebrew OT) and TAGNT (Greek NT) into SQLite or Postgres |
+| `app/` | Expo React Native app (TypeScript, expo-router, React Query): Reader with tappable words, Word Study with gloss distribution and occurrence list, Shared Studies stub |
+| `tools/dev_server.py` | Local API bridge serving `wordstudy.db` to the app during development, no Supabase needed |
 
 The build produces `wordstudy.db`, a local SQLite database with 425,454 word tokens and 13,616 lexemes covering the full OT and NT. It is not committed to this repo; build it with the quick start below.
 
@@ -78,4 +80,12 @@ python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators A
 export DATABASE_URL="postgresql://postgres:...@db.<project>.supabase.co:5432/postgres"
 pip install psycopg2-binary
 python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators Amalgamated OT+NT" --postgres
+
+# 4. Run the app against the local database
+python3 tools/dev_server.py            # serves wordstudy.db on :8787
+cd app && npm install && npm run web   # or npm start for a device
+
+# To run against Supabase instead, set in app/.env:
+#   EXPO_PUBLIC_SUPABASE_URL=...
+#   EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 ```
