@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { WordSheet, type WordSelection } from '@/components/word-sheet';
 import { displaySurface, getBooks, getChapter, getTranslation, getVersions } from '@/lib/api';
 import { colors, fonts } from '@/lib/theme';
 import type { Verse } from '@/lib/types';
@@ -24,6 +25,8 @@ export default function Reader() {
   const [targetVerse, setTargetVerse] = useState<number | null>(null);
   const [picker, setPicker] = useState<'book' | 'chapter' | null>(null);
   const [version, setVersion] = useState<string | null>('BSB');
+  const [showOriginal, setShowOriginal] = useState(true);
+  const [wordSel, setWordSel] = useState<WordSelection | null>(null);
   const listRef = useRef<FlatList<Verse>>(null);
 
   // Jump-to-verse links from the Word Study screen arrive as URL params.
@@ -102,6 +105,15 @@ export default function Reader() {
             {version ?? 'EN off'}
           </Text>
         </Pressable>
+        {version != null && (
+          <Pressable
+            style={[styles.pickerBtn, !showOriginal && styles.pickerBtnOff]}
+            onPress={() => setShowOriginal((v) => !v)}>
+            <Text style={[styles.pickerBtnText, !showOriginal && styles.pickerBtnTextOff]}>
+              {isRTL ? 'Heb' : 'Grk'}
+            </Text>
+          </Pressable>
+        )}
         <View style={{ flex: 1 }} />
         <Pressable onPress={() => router.push('/about')} hitSlop={8}>
           <Text style={styles.aboutLink}>About</Text>
@@ -117,6 +129,8 @@ export default function Reader() {
         </View>
       )}
 
+      <WordSheet selection={wordSel} onClose={() => setWordSel(null)} />
+
       {chapter.data && (
         <FlatList
           ref={listRef}
@@ -130,6 +144,10 @@ export default function Reader() {
               isRTL={isRTL}
               highlighted={item.verse === targetVerse}
               english={version != null ? englishByVerse.get(item.verse) : undefined}
+              showOriginal={showOriginal}
+              onEnglishWord={(query) =>
+                setWordSel({ query, verse: item, book: sel.book, chapter: sel.chapter, isRTL })
+              }
             />
           )}
         />
@@ -201,40 +219,82 @@ export default function Reader() {
   );
 }
 
+function OriginalLine({
+  verse,
+  isRTL,
+  primary,
+}: {
+  verse: Verse;
+  isRTL: boolean;
+  primary: boolean;
+}) {
+  const size = primary
+    ? isRTL
+      ? fonts.hebrewSize
+      : fonts.greekSize
+    : isRTL
+      ? 20
+      : 16;
+  return (
+    <Text
+      style={[
+        primary ? styles.verseText : styles.originalSecondary,
+        isRTL && { writingDirection: 'rtl', textAlign: 'right' },
+        { fontSize: size, lineHeight: size * 1.6 },
+      ]}>
+      {primary && <Text style={styles.verseNum}>{verse.verse} </Text>}
+      {verse.words.map((w) => (
+        <Text
+          key={w.id}
+          suppressHighlighting
+          style={w.strongs ? undefined : styles.wordUntagged}
+          onPress={w.strongs ? () => router.push(`/study/${w.strongs}` as never) : undefined}>
+          {displaySurface(w.surface)}{' '}
+        </Text>
+      ))}
+    </Text>
+  );
+}
+
 function VerseRow({
   verse,
   isRTL,
   highlighted,
   english,
+  showOriginal,
+  onEnglishWord,
 }: {
   verse: Verse;
   isRTL: boolean;
   highlighted: boolean;
   english?: string;
+  showOriginal: boolean;
+  onEnglishWord: (word: string) => void;
 }) {
+  // English primary: tappable English words, original beneath (optional).
+  if (english != null) {
+    return (
+      <View style={[styles.verseRow, highlighted && styles.verseHighlight]}>
+        <Text style={styles.englishPrimary}>
+          <Text style={styles.verseNum}>{verse.verse} </Text>
+          {english.split(/(\s+)/).map((token, i) =>
+            /\S/.test(token) ? (
+              <Text key={i} suppressHighlighting onPress={() => onEnglishWord(token)}>
+                {token}
+              </Text>
+            ) : (
+              token
+            ),
+          )}
+        </Text>
+        {showOriginal && <OriginalLine verse={verse} isRTL={isRTL} primary={false} />}
+      </View>
+    );
+  }
+  // No translation active: original text is primary, words tap to Word Study.
   return (
     <View style={[styles.verseRow, highlighted && styles.verseHighlight]}>
-      <Text
-        style={[
-          styles.verseText,
-          isRTL
-            ? { writingDirection: 'rtl', textAlign: 'right', fontSize: fonts.hebrewSize, lineHeight: fonts.hebrewSize * 1.7 }
-            : { fontSize: fonts.greekSize, lineHeight: fonts.greekSize * 1.7 },
-        ]}>
-        <Text style={styles.verseNum}>{verse.verse} </Text>
-        {verse.words.map((w) => (
-          <Text
-            key={w.id}
-            suppressHighlighting
-            style={w.strongs ? styles.word : styles.wordUntagged}
-            onPress={
-              w.strongs ? () => router.push(`/study/${w.strongs}` as never) : undefined
-            }>
-            {displaySurface(w.surface)}{' '}
-          </Text>
-        ))}
-      </Text>
-      {english ? <Text style={styles.englishText}>{english}</Text> : null}
+      <OriginalLine verse={verse} isRTL={isRTL} primary />
     </View>
   );
 }
@@ -261,8 +321,9 @@ const styles = StyleSheet.create({
   pickerBtnTextOff: { color: colors.faint, fontWeight: '500' },
   aboutLink: { color: colors.faint, fontSize: 14 },
   listContent: { padding: 16, paddingBottom: 48 },
-  verseRow: { marginBottom: 10, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
-  englishText: { color: colors.faint, fontSize: 14, lineHeight: 20, marginTop: 2 },
+  verseRow: { marginBottom: 12, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  englishPrimary: { color: colors.ink, fontSize: 17, lineHeight: 26 },
+  originalSecondary: { color: colors.faint, marginTop: 3 },
   verseHighlight: { backgroundColor: colors.highlight },
   verseText: { color: colors.ink },
   verseNum: { fontSize: 12, color: colors.accent, fontWeight: '700' },
