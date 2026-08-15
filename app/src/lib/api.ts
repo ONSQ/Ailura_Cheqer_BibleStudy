@@ -161,6 +161,20 @@ export async function getOccurrences(
   return { total: count ?? 0, rows: data ?? [] };
 }
 
+/** Version codes present in the translations table, BSB first. */
+export async function getVersions(): Promise<string[]> {
+  let versions: string[];
+  if (!usingSupabase) {
+    versions = await devGet<string[]>('/versions');
+  } else {
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.from('v_versions').select('version');
+    if (error) throw error;
+    versions = (data ?? []).map((r) => r.version);
+  }
+  return versions.sort((a, b) => (a === 'BSB' ? -1 : b === 'BSB' ? 1 : a.localeCompare(b)));
+}
+
 export async function getTranslation(
   book: string,
   chapter: number,

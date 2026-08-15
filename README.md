@@ -82,9 +82,11 @@ export DATABASE_URL="postgresql://postgres:...@db.<project>.supabase.co:5432/pos
 pip install psycopg2-binary
 python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators Amalgamated OT+NT" --postgres
 
-# 4. Add the BSB English text (either target)
+# 4. Add English text (either target). BSB is the default; add more the same way.
 python3 ingest/ingest_helloao.py --sqlite wordstudy.db
-# or: python3 ingest/ingest_helloao.py --postgres
+python3 ingest/ingest_helloao.py --sqlite wordstudy.db --version eng_kjv --as KJV
+python3 ingest/ingest_helloao.py --sqlite wordstudy.db --version ENGWEBP --as WEB
+# or: python3 ingest/ingest_helloao.py --postgres [...]
 
 # 5. Run the app against the local database
 python3 tools/dev_server.py            # serves wordstudy.db on :8787

@@ -18,6 +18,10 @@ Usage:
     # Subset for testing:
     python ingest/ingest_helloao.py --sqlite wordstudy.db --books Gen,Jhn
 
+    # Other versions, stored under a clean code:
+    python ingest/ingest_helloao.py --sqlite wordstudy.db --version eng_kjv --as KJV
+    python ingest/ingest_helloao.py --sqlite wordstudy.db --version ENGWEBP --as WEB
+
 Idempotent: rows upsert on (version, book, chapter, verse).
 """
 
@@ -78,7 +82,8 @@ def chapter_rows(version, book, chapter_json):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--version", default="BSB")
+    ap.add_argument("--version", default="BSB", help="helloao translation id")
+    ap.add_argument("--as", dest="store_as", help="version code to store (default: same as --version)")
     ap.add_argument("--sqlite", help="path to SQLite db (local testing)")
     ap.add_argument("--postgres", action="store_true", help="use DATABASE_URL")
     ap.add_argument("--books", help="comma-separated STEPBible codes (default: all 66)")
@@ -105,6 +110,7 @@ def main():
             "values (?,?,?,?,?)"
         )
 
+    store_as = args.store_as or args.version
     cur = conn.cursor()
     books_meta = {
         b["id"]: b for b in fetch_json(f"{API}/{args.version}/books.json")["books"]
@@ -120,12 +126,12 @@ def main():
         urls = [f"{API}/{args.version}/{usfm}/{n}.json" for n in range(1, chapters + 1)]
         with ThreadPoolExecutor(max_workers=8) as pool:
             results = list(pool.map(fetch_json, urls))
-        rows = [r for ch in results for r in chapter_rows(args.version, code, ch)]
+        rows = [r for ch in results for r in chapter_rows(store_as, code, ch)]
         cur.executemany(upsert, rows)
         conn.commit()
         total += len(rows)
         print(f"  {code:4s} {chapters:>3} chapters {len(rows):>6,} verses")
-    print(f"\nImported {total:,} verses of {args.version}.")
+    print(f"\nImported {total:,} verses of {args.version} as {store_as}.")
     conn.close()
 
 

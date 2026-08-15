@@ -12,6 +12,7 @@ Endpoints (all JSON, CORS open, read-only):
     /chapter?book=Gen&chapter=1             -> {book, chapter, corpus, verses:[{verse, words:[...]}]}
     /lexeme?strongs=H0430                   -> {strongs, language, lemma, gloss, occurrences}
     /translation?version=BSB&book=Gen&chapter=1 -> {version, book, chapter, verses:[{verse, text}]}
+    /versions                               -> ["BSB", "KJV", ...]
     /glosses?strongs=H0430                  -> [{gloss, count}]
     /occurrences?strongs=H0430&limit=50&offset=0 -> {total, rows:[...]}
 
@@ -146,6 +147,14 @@ def get_translation(version, book, chapter):
     )
 
 
+def get_versions():
+    try:
+        rows = db().execute("select distinct version from translations order by version").fetchall()
+    except sqlite3.OperationalError:
+        rows = []
+    return [r["version"] for r in rows]
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlparse(self.path)
@@ -159,6 +168,8 @@ class Handler(BaseHTTPRequestHandler):
                 body = get_lexeme(q["strongs"])
             elif url.path == "/glosses":
                 body = get_glosses(q["strongs"])
+            elif url.path == "/versions":
+                body = get_versions()
             elif url.path == "/translation":
                 body = get_translation(
                     q.get("version", "BSB"), q["book"], int(q["chapter"])

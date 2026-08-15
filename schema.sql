@@ -82,6 +82,9 @@ select book, corpus, max(chapter) as chapters, min(id) as ord
 from ol_words
 group by book, corpus;
 
+create or replace view v_versions as
+select distinct version from translations;
+
 create or replace function gloss_distribution(p_strongs text)
 returns table (gloss text, count bigint)
 language sql stable as $$

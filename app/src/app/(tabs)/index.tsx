@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { displaySurface, getBooks, getChapter, getTranslation } from '@/lib/api';
+import { displaySurface, getBooks, getChapter, getTranslation, getVersions } from '@/lib/api';
 import { colors, fonts } from '@/lib/theme';
 import type { Verse } from '@/lib/types';
 
@@ -23,7 +23,7 @@ export default function Reader() {
   const [sel, setSel] = useState({ book: 'Gen', chapter: 1 });
   const [targetVerse, setTargetVerse] = useState<number | null>(null);
   const [picker, setPicker] = useState<'book' | 'chapter' | null>(null);
-  const [showEnglish, setShowEnglish] = useState(true);
+  const [version, setVersion] = useState<string | null>('BSB');
   const listRef = useRef<FlatList<Verse>>(null);
 
   // Jump-to-verse links from the Word Study screen arrive as URL params.
@@ -39,11 +39,21 @@ export default function Reader() {
     queryKey: ['chapter', sel.book, sel.chapter],
     queryFn: () => getChapter(sel.book, sel.chapter),
   });
+  const versions = useQuery({ queryKey: ['versions'], queryFn: getVersions });
   const translation = useQuery({
-    queryKey: ['translation', 'BSB', sel.book, sel.chapter],
-    queryFn: () => getTranslation(sel.book, sel.chapter),
-    enabled: showEnglish,
+    queryKey: ['translation', version, sel.book, sel.chapter],
+    queryFn: () => getTranslation(sel.book, sel.chapter, version!),
+    enabled: version != null,
   });
+  // Cycle BSB -> KJV -> WEB -> off -> BSB...
+  const cycleVersion = () => {
+    const list = versions.data?.length ? versions.data : ['BSB'];
+    setVersion((v) => {
+      if (v == null) return list[0];
+      const i = list.indexOf(v);
+      return i < 0 || i === list.length - 1 ? null : list[i + 1];
+    });
+  };
   const englishByVerse = useMemo(() => {
     const map = new Map<number, string>();
     for (const v of translation.data?.verses ?? []) map.set(v.verse, v.text);
@@ -86,10 +96,10 @@ export default function Reader() {
           <Text style={styles.pickerBtnText}>{sel.chapter}</Text>
         </Pressable>
         <Pressable
-          style={[styles.pickerBtn, !showEnglish && styles.pickerBtnOff]}
-          onPress={() => setShowEnglish((v) => !v)}>
-          <Text style={[styles.pickerBtnText, !showEnglish && styles.pickerBtnTextOff]}>
-            BSB
+          style={[styles.pickerBtn, version == null && styles.pickerBtnOff]}
+          onPress={cycleVersion}>
+          <Text style={[styles.pickerBtnText, version == null && styles.pickerBtnTextOff]}>
+            {version ?? 'EN off'}
           </Text>
         </Pressable>
         <View style={{ flex: 1 }} />
@@ -119,7 +129,7 @@ export default function Reader() {
               verse={item}
               isRTL={isRTL}
               highlighted={item.verse === targetVerse}
-              english={showEnglish ? englishByVerse.get(item.verse) : undefined}
+              english={version != null ? englishByVerse.get(item.verse) : undefined}
             />
           )}
         />
