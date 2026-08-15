@@ -1,0 +1,25 @@
+# Built database and source data: never commit (licensing + size)
+wordstudy.db
+*.db
+data/
+
+# Secrets
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node / Expo (phase 2 app)
+node_modules/
+.expo/
+dist/
+*.apk
+*.aab
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
