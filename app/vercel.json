@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npx expo export --platform web",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/study/:strongs", "destination": "/study/[strongs].html" }
+  ]
+}

@@ -29,8 +29,14 @@ import type {
   Word,
 } from './types';
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+import Constants from 'expo-constants';
+
+// Publishable client config: env vars first (local dev), app.json extra as
+// the committed fallback (CI builds). The anon key is public by design;
+// RLS is the security boundary.
+const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? extra.supabaseUrl;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra.supabaseAnonKey;
 
 export const hasSupabase = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
