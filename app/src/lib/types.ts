@@ -92,6 +92,12 @@ export interface VerseWitness {
   content_en: string | null;
 }
 
+export interface AskResult {
+  answer: string;
+  lemmas: { strongs: string; lemma: string; note: string }[];
+  verses: { ref: string; note: string }[];
+}
+
 export interface SodBriefSection {
   title: string;
   body: string;

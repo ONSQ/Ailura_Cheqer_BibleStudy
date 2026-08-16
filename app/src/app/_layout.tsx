@@ -52,6 +52,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="study/[strongs]" options={{ title: 'Word Study' }} />
         <Stack.Screen name="about" options={{ title: 'About Cheqer', presentation: 'modal' }} />
+        <Stack.Screen name="ask" options={{ title: 'Ask' }} />
       </Stack>
       {!splashDone && <BrandSplash onDone={() => setSplashDone(true)} />}
     </QueryClientProvider>

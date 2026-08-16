@@ -15,6 +15,7 @@
 import { Platform } from 'react-native';
 
 import type {
+  AskResult,
   Book,
   Chapter,
   Corpus,
@@ -285,6 +286,21 @@ export async function generateSodBrief(strongs: string): Promise<SodBrief> {
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
   return data.brief as SodBrief;
+}
+
+/**
+ * Natural-language front door (Phase 4, layer 3): plain question in,
+ * verified verses and lemmas out. The ask edge function searches the text
+ * and lexicon with Claude; nothing is cited that wasn't retrieved.
+ */
+export async function askQuestion(question: string): Promise<AskResult> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.functions.invoke('ask', {
+    body: { question },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data.result as AskResult;
 }
 
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */

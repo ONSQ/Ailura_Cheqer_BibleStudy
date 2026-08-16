@@ -123,6 +123,9 @@ export default function Reader() {
           </Pressable>
         )}
         <View style={{ flex: 1 }} />
+        <Pressable onPress={() => router.push('/ask' as never)} hitSlop={8}>
+          <Text style={styles.askLink}>Ask ✨</Text>
+        </Pressable>
         <Pressable onPress={() => router.push('/about')} hitSlop={8}>
           <Text style={styles.aboutLink}>About</Text>
         </Pressable>
@@ -406,6 +409,7 @@ const styles = StyleSheet.create({
   pickerBtnOff: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border },
   pickerBtnTextOff: { color: colors.faint, fontWeight: '500' },
   aboutLink: { color: colors.faint, fontSize: 14 },
+  askLink: { color: colors.accent, fontSize: 14, fontWeight: '600', marginRight: 12 },
   listContent: { padding: 16, paddingBottom: 48 },
   verseRow: { marginBottom: 12, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
   englishPrimary: { color: colors.ink, fontSize: 17, lineHeight: 26 },
