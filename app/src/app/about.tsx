@@ -102,9 +102,25 @@ export default function About() {
       </Text>
       <Link label="github.com/CenterBLC/LXX" url="https://github.com/CenterBLC/LXX" />
       <Text style={[styles.body, { marginTop: 12 }]}>
-        Targum Onkelos: Public Domain text via Sefaria.
+        Targum Onkelos and Second Temple apocrypha: public domain texts via Sefaria.
       </Text>
       <Link label="www.sefaria.org" url="https://www.sefaria.org" />
+      <Text style={[styles.body, { marginTop: 12 }]}>
+        Josephus: Greek text and Whiston translation via the Perseus Digital Library, CC BY-SA
+        4.0.
+      </Text>
+      <Link label="www.perseus.tufts.edu" url="https://www.perseus.tufts.edu" />
+      <Text style={[styles.body, { marginTop: 12 }]}>
+        Philo: Greek text via OpenGreekAndLatin First1KGreek, CC BY-SA 4.0; Yonge translation
+        public domain.
+      </Text>
+      <Link
+        label="opengreekandlatin.org"
+        url="https://opengreekandlatin.github.io/First1KGreek/"
+      />
+      <Text style={[styles.body, { marginTop: 12 }]}>
+        1 Enoch: R. H. Charles translation (1917), public domain, via Wikisource.
+      </Text>
     </ScrollView>
   );
 }
