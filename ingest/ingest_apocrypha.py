@@ -126,8 +126,12 @@ def ingest_simple(title, work, keep_hebrew=False):
     if isinstance(chapters[0], dict):  # complex text: one node per sub-book
         for sub in chapters:
             sub_title = sub["title"]
-            # "The Testaments of the Twelve Patriarchs, Reuben" -> "T. Reuben"
-            short = f"T. {sub_title.split(',')[-1].strip()}" if work == "T12P" else sub_title
+            # "The Testament of Gad the Ninth Son of Jacob and Zilpah" -> "T. Gad"
+            if work == "T12P":
+                m = re.search(r"Testament of (\w+)", sub_title)
+                short = f"T. {m.group(1)}" if m else sub_title
+            else:
+                short = sub_title
             for ch in range(1, len(sub["chapters"]) + 1):
                 d = get(f"texts/{urllib.parse.quote(sub_title)}.{ch}?context=0&pad=0")
                 rows.extend(

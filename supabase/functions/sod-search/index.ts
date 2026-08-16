@@ -38,16 +38,34 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  // Semantic field of the lemma: lemma, transliteration, glosses.
+  // Semantic field of the lemma: the lemma plus its distinct gloss senses
+  // across all occurrences, so the embedding covers the word's whole range
+  // (λόγος: word, account, saying...) rather than a single head gloss.
   const { data: lex } = await supa
     .from('lexemes')
-    .select('lemma, translit, gloss, language')
+    .select('lemma, gloss, language')
     .eq('strongs', strongs)
     .maybeSingle();
   if (!lex) return json({ error: 'unknown lexeme' }, 404);
 
-  const gloss = (lex.gloss ?? '').split('@')[0].split('»')[0];
-  const field = `${lex.lemma ?? ''} (${lex.translit ?? ''}): ${gloss}`;
+  const STOP = new Set(['and', 'the', 'a', 'of', 'my', 'his', 'your', 'their', 'i', 'he', 'you', 'they', 'who', 'm', 're', 'y', 'have', 'been', 'were', 'was', 'are', 'is', 'to', 'about']);
+  const clean = (g: string) =>
+    g
+      .split('@')[0]
+      .split('»')[0]
+      .replace(/[\[\]\/,]+/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w && !STOP.has(w.toLowerCase()))
+      .join(' ');
+
+  const { data: glosses } = await supa.rpc('gloss_distribution', { p_strongs: strongs });
+  const senses = [
+    ...new Set(
+      [...((glosses as { gloss: string }[]) ?? []).map((g) => clean(g.gloss)), clean(lex.gloss ?? '')]
+        .filter(Boolean),
+    ),
+  ].slice(0, 8);
+  const field = `${lex.lemma ?? ''}: ${senses.join(', ')}`;
 
   const embRes = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',

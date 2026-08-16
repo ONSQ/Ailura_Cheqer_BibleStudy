@@ -315,31 +315,59 @@ create policy word_studies_delete on word_studies for delete
 
 -- Semantic arm of hybrid retrieval: nearest period passages by embedding.
 -- Exact-lemma matches stay with period_usage(); this covers untagged corpora
--- (Josephus, Philo, Second Temple apocrypha).
+-- (Josephus, Philo, Second Temple apocrypha). plpgsql so ivfflat.probes can
+-- be raised per call (the function SET clause is not permitted on Supabase).
+create index if not exists idx_period_docs_embedding
+  on period_docs using ivfflat (embedding extensions.vector_cosine_ops) with (lists = 200);
+
 create or replace function semantic_period_search(
   p_embedding extensions.vector(1536),
   p_corpora text[] default null,
   p_k int default 8
 ) returns jsonb
-language sql stable
+language plpgsql stable
 as $$
-  select coalesce(jsonb_agg(row_json), '[]'::jsonb)
-  from (
-    select jsonb_build_object(
-      'corpus', corpus,
-      'work', work,
-      'ref', ref,
-      'language', language,
-      'content', left(content, 1200),
-      'content_en', left(content_en, 1200),
-      'similarity', round((1 - (embedding <=> p_embedding))::numeric, 4)
-    ) as row_json
-    from period_docs
-    where embedding is not null
-      and (p_corpora is null or corpus = any(p_corpora))
-    order by embedding <=> p_embedding
-    limit least(p_k, 25)
-  ) t;
+begin
+  perform set_config('ivfflat.probes', '12', true);
+  return (
+    select coalesce(jsonb_agg(row_json), '[]'::jsonb)
+    from (
+      select jsonb_build_object(
+        'corpus', corpus,
+        'work', work,
+        'ref', ref,
+        'language', language,
+        'content', left(content, 1200),
+        'content_en', left(content_en, 1200),
+        'similarity', round((1 - (embedding <=> p_embedding))::numeric, 4)
+      ) as row_json
+      from period_docs
+      where embedding is not null
+        and (p_corpora is null or corpus = any(p_corpora))
+      order by embedding <=> p_embedding
+      limit least(p_k, 25)
+    ) t
+  );
+end;
 $$;
 
 grant execute on function semantic_period_search(extensions.vector, text[], int) to anon, authenticated;
+
+-- Bulk-write embeddings from the embed batch loader (service role only).
+create or replace function set_embeddings(p jsonb)
+returns int
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  with updated as (
+    update period_docs d
+    set embedding = (e->>'embedding')::extensions.vector(1536)
+    from jsonb_array_elements(p) e
+    where d.id = (e->>'id')::bigint
+    returning 1
+  )
+  select count(*)::int from updated;
+$$;
+
+revoke execute on function set_embeddings(jsonb) from public, anon, authenticated;
