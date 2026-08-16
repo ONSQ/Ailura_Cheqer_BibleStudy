@@ -25,6 +25,7 @@ import type {
   PeriodUsagePage,
   TranslationChapter,
   Verse,
+  VerseWitness,
   Word,
 } from './types';
 
@@ -233,6 +234,23 @@ export async function getLxxRenderings(strongs: string): Promise<LxxRendering[]>
   const { data, error } = await supabase.rpc('lxx_renderings', { p_strongs: strongs });
   if (error) throw error;
   return (data ?? []) as LxxRendering[];
+}
+
+/** Period witnesses (LXX, Targum) for one MT verse, ref-aligned server-side. */
+export async function getVerseWitnesses(
+  book: string,
+  chapter: number,
+  verse: number,
+): Promise<VerseWitness[]> {
+  if (!hasSupabase) return [];
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('verse_witnesses', {
+    p_book: book,
+    p_chapter: chapter,
+    p_verse: verse,
+  });
+  if (error) throw error;
+  return (data ?? []) as VerseWitness[];
 }
 
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */

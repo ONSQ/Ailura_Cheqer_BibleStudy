@@ -14,7 +14,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WordSheet, type WordSelection } from '@/components/word-sheet';
-import { displaySurface, getBooks, getChapter, getTranslation, getVersions } from '@/lib/api';
+import {
+  displaySurface,
+  getBooks,
+  getChapter,
+  getTranslation,
+  getVersions,
+  getVerseWitnesses,
+} from '@/lib/api';
 import { colors, fonts } from '@/lib/theme';
 import type { Verse } from '@/lib/types';
 
@@ -27,6 +34,7 @@ export default function Reader() {
   const [version, setVersion] = useState<string | null>('BSB');
   const [showOriginal, setShowOriginal] = useState(true);
   const [wordSel, setWordSel] = useState<WordSelection | null>(null);
+  const [witnessVerse, setWitnessVerse] = useState<number | null>(null);
   const listRef = useRef<FlatList<Verse>>(null);
 
   // Jump-to-verse links from the Word Study screen arrive as URL params.
@@ -130,6 +138,12 @@ export default function Reader() {
       )}
 
       <WordSheet selection={wordSel} onClose={() => setWordSel(null)} />
+      <WitnessSheet
+        book={sel.book}
+        chapter={sel.chapter}
+        verse={witnessVerse}
+        onClose={() => setWitnessVerse(null)}
+      />
 
       {chapter.data && (
         <FlatList
@@ -148,6 +162,7 @@ export default function Reader() {
               onEnglishWord={(query) =>
                 setWordSel({ query, verse: item, book: sel.book, chapter: sel.chapter, isRTL })
               }
+              onVersePress={isRTL ? () => setWitnessVerse(item.verse) : undefined}
             />
           )}
         />
@@ -263,6 +278,7 @@ function VerseRow({
   english,
   showOriginal,
   onEnglishWord,
+  onVersePress,
 }: {
   verse: Verse;
   isRTL: boolean;
@@ -270,13 +286,19 @@ function VerseRow({
   english?: string;
   showOriginal: boolean;
   onEnglishWord: (word: string) => void;
+  onVersePress?: () => void;
 }) {
   // English primary: tappable English words, original beneath (optional).
   if (english != null) {
     return (
       <View style={[styles.verseRow, highlighted && styles.verseHighlight]}>
         <Text style={styles.englishPrimary}>
-          <Text style={styles.verseNum}>{verse.verse} </Text>
+          <Text
+            suppressHighlighting
+            style={[styles.verseNum, onVersePress && styles.verseNumTappable]}
+            onPress={onVersePress}>
+            {verse.verse}{' '}
+          </Text>
           {english.split(/(\s+)/).map((token, i) =>
             /\S/.test(token) ? (
               <Text key={i} suppressHighlighting onPress={() => onEnglishWord(token)}>
@@ -296,6 +318,69 @@ function VerseRow({
     <View style={[styles.verseRow, highlighted && styles.verseHighlight]}>
       <OriginalLine verse={verse} isRTL={isRTL} primary />
     </View>
+  );
+}
+
+function WitnessSheet({
+  book,
+  chapter,
+  verse,
+  onClose,
+}: {
+  book: string;
+  chapter: number;
+  verse: number | null;
+  onClose: () => void;
+}) {
+  const witnesses = useQuery({
+    queryKey: ['witnesses', book, chapter, verse],
+    queryFn: () => getVerseWitnesses(book, chapter, verse!),
+    enabled: verse != null,
+  });
+  if (verse == null) return null;
+  const labels: Record<string, string> = {
+    LXX: 'Septuagint (Greek, ~3rd–2nd c. BC)',
+    Targum: 'Targum Onkelos (Aramaic, ~1st–2nd c. AD)',
+  };
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.modalScrim} onPress={onClose}>
+        <Pressable style={styles.modalSheet} onPress={() => {}}>
+          <Text style={styles.modalTitle}>
+            Witnesses · {book} {chapter}:{verse}
+          </Text>
+          <ScrollView>
+            {witnesses.isLoading && (
+              <ActivityIndicator style={{ marginVertical: 16 }} color={colors.accent} />
+            )}
+            {witnesses.data?.length === 0 && (
+              <Text style={styles.witnessEmpty}>
+                No period witnesses for this verse yet.
+              </Text>
+            )}
+            {witnesses.data?.map((w) => (
+              <View key={`${w.corpus}-${w.ref}`} style={styles.witnessCard}>
+                <Text style={styles.witnessLabel}>
+                  {labels[w.corpus] ?? w.corpus} · {w.work} {w.ref}
+                </Text>
+                <Text
+                  style={[
+                    styles.witnessText,
+                    w.language === 'arc' && {
+                      writingDirection: 'rtl',
+                      textAlign: 'right',
+                      fontSize: 20,
+                      lineHeight: 32,
+                    },
+                  ]}>
+                  {w.content}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -327,6 +412,18 @@ const styles = StyleSheet.create({
   verseHighlight: { backgroundColor: colors.highlight },
   verseText: { color: colors.ink },
   verseNum: { fontSize: 12, color: colors.accent, fontWeight: '700' },
+  verseNumTappable: { textDecorationLine: 'underline' },
+  witnessCard: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+  },
+  witnessLabel: { fontSize: 12, fontWeight: '700', color: colors.accent, marginBottom: 6 },
+  witnessText: { fontSize: 16, color: colors.ink, lineHeight: 24 },
+  witnessEmpty: { color: colors.faint, textAlign: 'center', marginVertical: 20 },
   word: { color: colors.ink },
   wordUntagged: { color: colors.faint },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },

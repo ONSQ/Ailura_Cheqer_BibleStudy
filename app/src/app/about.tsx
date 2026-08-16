@@ -33,6 +33,10 @@ export default function About() {
         Septuagint text and tagging: CenterBLC LXX (Rahlfs 1935), MIT license.
       </Text>
       <Link label="github.com/CenterBLC/LXX" url="https://github.com/CenterBLC/LXX" />
+      <Text style={[styles.body, { marginTop: 12 }]}>
+        Targum Onkelos: Public Domain text via Sefaria.
+      </Text>
+      <Link label="www.sefaria.org" url="https://www.sefaria.org" />
     </ScrollView>
   );
 }

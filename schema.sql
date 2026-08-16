@@ -210,6 +210,30 @@ as $$
     left join lexemes l on l.strongs = e.grk_strongs
 $$;
 
+-- Period witnesses for one MT verse: Targum Onkelos shares refs directly,
+-- the LXX joins through the book map (with the psalm-chapter remap).
+create or replace function verse_witnesses(p_book text, p_chapter int, p_verse int)
+returns jsonb
+language sql stable
+set search_path = public
+as $$
+    with refs as (
+        select 'Targum'::text as corpus, 'Onkelos ' || p_book as work,
+               p_chapter || ':' || p_verse as ref
+        union all
+        select 'LXX', m.lxx_work,
+               (case when p_book = 'Psa' then lxx_ps_chapter(p_chapter) else p_chapter end)
+                 || ':' || p_verse
+        from lxx_book_map m where m.ot_book = p_book
+    )
+    select coalesce(jsonb_agg(jsonb_build_object(
+        'corpus', p.corpus, 'work', p.work, 'ref', p.ref,
+        'language', p.language, 'content', p.content
+    ) order by p.corpus), '[]'::jsonb)
+    from period_docs p
+    join refs r on p.corpus = r.corpus and p.work = r.work and p.ref = r.ref
+$$;
+
 -- Reassembled verse text for quick interlinear display
 create or replace view v_verse_interlinear with (security_invoker = on) as
 select corpus, book, chapter, verse,

@@ -82,6 +82,14 @@ export interface PeriodUsagePage {
   rows: PeriodHit[];
 }
 
+export interface VerseWitness {
+  corpus: string;
+  work: string;
+  ref: string;
+  language: string | null;
+  content: string;
+}
+
 export interface LxxRendering {
   grk_strongs: string;
   lemma: string | null;
