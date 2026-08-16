@@ -103,6 +103,47 @@ as $$
     limit 15
 $$;
 
+-- Whole chapter as one JSON value: PostgREST row caps do not apply,
+-- and word order is preserved server-side.
+create or replace function chapter_words(p_book text, p_chapter int)
+returns jsonb
+language sql stable
+set search_path = public
+as $$
+    select coalesce(jsonb_agg(jsonb_build_object(
+        'id', id, 'verse', verse, 'word_num', word_num,
+        'source_tag', source_tag, 'surface', surface, 'translit', translit,
+        'gloss', gloss, 'strongs', strongs, 'morph', morph, 'corpus', corpus
+    ) order by verse, word_num, id), '[]'::jsonb)
+    from ol_words
+    where book = p_book and chapter = p_chapter
+$$;
+
+-- Occurrence page in canonical book order with total count, as one JSON value.
+create or replace function occurrences_page(p_strongs text, p_limit int, p_offset int)
+returns jsonb
+language sql stable
+set search_path = public
+as $$
+    with ordered as (
+        select book, chapter, verse, word_num, surface, translit, gloss
+        from ol_words
+        where strongs = p_strongs
+        order by array_position(array[
+            'Gen','Exo','Lev','Num','Deu','Jos','Jdg','Rut','1Sa','2Sa','1Ki','2Ki',
+            '1Ch','2Ch','Ezr','Neh','Est','Job','Psa','Pro','Ecc','Sng','Isa','Jer',
+            'Lam','Ezk','Dan','Hos','Jol','Amo','Oba','Jon','Mic','Nam','Hab','Zep',
+            'Hag','Zec','Mal','Mat','Mrk','Luk','Jhn','Act','Rom','1Co','2Co','Gal',
+            'Eph','Php','Col','1Th','2Th','1Ti','2Ti','Tit','Phm','Heb','Jas','1Pe',
+            '2Pe','1Jn','2Jn','3Jn','Jud','Rev'], book), chapter, verse, word_num
+        limit p_limit offset p_offset
+    )
+    select jsonb_build_object(
+        'total', (select count(*) from ol_words where strongs = p_strongs),
+        'rows', coalesce((select jsonb_agg(to_jsonb(o)) from ordered o), '[]'::jsonb)
+    )
+$$;
+
 -- Reassembled verse text for quick interlinear display
 create or replace view v_verse_interlinear with (security_invoker = on) as
 select corpus, book, chapter, verse,

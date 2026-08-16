@@ -115,14 +115,12 @@ export async function getChapter(book: string, chapter: number): Promise<Chapter
     return devGet<Chapter>(`/chapter?book=${encodeURIComponent(book)}&chapter=${chapter}`);
   }
   const supabase = await getSupabase();
-  const { data, error } = await supabase
-    .from('ol_words')
-    .select('id, verse, word_num, source_tag, surface, translit, gloss, strongs, morph')
-    .eq('book', book)
-    .eq('chapter', chapter)
-    .order('verse')
-    .order('word_num')
-    .limit(3000);
+  // RPC returns the whole chapter as one JSON value (PostgREST caps row
+  // responses at 1,000; long chapters exceed that).
+  const { data, error } = await supabase.rpc('chapter_words', {
+    p_book: book,
+    p_chapter: chapter,
+  });
   if (error) throw error;
   return shapeChapter(book, chapter, (data ?? []) as RawWordRow[]);
 }
@@ -156,14 +154,13 @@ export async function getOccurrences(
     return devGet<OccurrencePage>(`/occurrences?strongs=${strongs}&limit=${limit}&offset=${offset}`);
   }
   const supabase = await getSupabase();
-  const { data, error, count } = await supabase
-    .from('ol_words')
-    .select('book, chapter, verse, word_num, surface, translit, gloss', { count: 'exact' })
-    .eq('strongs', strongs)
-    .order('id')
-    .range(offset, offset + limit - 1);
+  const { data, error } = await supabase.rpc('occurrences_page', {
+    p_strongs: strongs,
+    p_limit: limit,
+    p_offset: offset,
+  });
   if (error) throw error;
-  return { total: count ?? 0, rows: data ?? [] };
+  return (data ?? { total: 0, rows: [] }) as OccurrencePage;
 }
 
 /** Version codes present in the translations table, BSB first. */
