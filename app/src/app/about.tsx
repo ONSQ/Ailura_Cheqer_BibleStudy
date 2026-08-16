@@ -67,6 +67,26 @@ export default function About() {
         private or shared with your study group.
       </Text>
 
+      <Text style={styles.sectionTitle}>Hearing the words</Text>
+      <Text style={styles.body}>
+        Every pronunciation guide has a speaker button that reads the Hebrew or Greek aloud. The
+        app speaks with the voices your device provides, so quality varies: phones usually sound
+        natural, while some desktop browsers fall back to older voices. On a computer, Microsoft
+        Edge and Chrome come with the best voices built in, and the app automatically picks the
+        most natural one it finds.
+      </Text>
+      <Text style={[styles.body, { marginTop: 12 }]}>
+        For the clearest Hebrew and Greek on a computer, add those speech voices to your system:
+      </Text>
+      <Link
+        label="Add voices on Windows"
+        url="https://support.microsoft.com/en-us/topic/download-languages-and-voices-for-immersive-reader-read-mode-and-read-aloud-4c83a8d8-7486-42f7-8e46-2b0fdf753130"
+      />
+      <Link
+        label="Add voices on macOS"
+        url="https://support.apple.com/guide/mac-help/change-the-voice-your-mac-uses-to-speak-text-mchlp2290/mac"
+      />
+
       <Text style={styles.sectionTitle}>Appearance</Text>
       <ThemePicker />
 
