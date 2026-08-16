@@ -92,6 +92,17 @@ export interface VerseWitness {
   content_en: string | null;
 }
 
+export interface SodBriefSection {
+  title: string;
+  body: string;
+  citations: string[];
+}
+
+export interface SodBrief {
+  summary: string;
+  sections: SodBriefSection[];
+}
+
 export interface LxxRendering {
   grk_strongs: string;
   lemma: string | null;

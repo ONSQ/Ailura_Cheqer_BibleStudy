@@ -23,6 +23,7 @@ import type {
   LxxRendering,
   OccurrencePage,
   PeriodUsagePage,
+  SodBrief,
   TranslationChapter,
   Verse,
   VerseWitness,
@@ -257,6 +258,33 @@ export async function getVerseWitnesses(
   });
   if (error) throw error;
   return (data ?? []) as VerseWitness[];
+}
+
+/**
+ * Sod brief (Phase 4, layer 2): AI-written word-study synthesis, grounded in
+ * retrieved passages with a citation per claim. Generated once per lexeme by
+ * the sod-brief edge function, then cached in sod_briefs.
+ */
+export async function getCachedSodBrief(strongs: string): Promise<SodBrief | null> {
+  if (!hasSupabase) return null;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('sod_briefs')
+    .select('brief')
+    .eq('strongs', strongs)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.brief as SodBrief) ?? null;
+}
+
+export async function generateSodBrief(strongs: string): Promise<SodBrief> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.functions.invoke('sod-brief', {
+    body: { strongs },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data.brief as SodBrief;
 }
 
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */

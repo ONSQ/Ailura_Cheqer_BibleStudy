@@ -234,6 +234,31 @@ as $$
     join refs r on p.corpus = r.corpus and p.work = r.work and p.ref = r.ref
 $$;
 
+-- =============================================================
+-- Sod brief (Phase 4, layer 2): AI word-study synthesis, grounded
+-- in retrieved passages with a citation per claim. Written only by
+-- the sod-brief edge function (service role) using claude-opus-5;
+-- one cached brief per lexeme, world-readable.
+-- =============================================================
+
+create table if not exists sod_briefs (
+    strongs     text primary key references lexemes (strongs),
+    brief       jsonb not null,
+    model       text,
+    created_at  timestamptz default now()
+);
+alter table sod_briefs enable row level security;
+drop policy if exists sod_briefs_read on sod_briefs;
+create policy sod_briefs_read on sod_briefs for select using (true);
+
+-- Everything the brief writer needs, in one round trip. All content here is
+-- retrievable-by-citation: MT refs, LXX refs, BSB text. (Full definition in
+-- migration sod_brief_infrastructure; summarized here.)
+-- study_bundle(p_strongs) returns jsonb with: lexeme, glosses, book_counts,
+-- representative_verses (first occurrence per book + BSB text), and for
+-- Hebrew lemmas lxx_renderings + sample LXX verses of the top equivalent,
+-- for Greek lemmas the LXX verses of the lemma itself.
+
 -- Reassembled verse text for quick interlinear display
 create or replace view v_verse_interlinear with (security_invoker = on) as
 select corpus, book, chapter, verse,

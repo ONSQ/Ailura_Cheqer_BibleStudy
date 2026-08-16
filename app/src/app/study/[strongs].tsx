@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -16,6 +16,8 @@ import { createStudy, getUserId } from '@/lib/studies';
 import {
   displayGloss,
   displaySurface,
+  generateSodBrief,
+  getCachedSodBrief,
   getGlossDistribution,
   getLexeme,
   getLxxRenderings,
@@ -51,6 +53,15 @@ export default function WordStudy() {
     queryKey: ['lxx-renderings', strongs],
     queryFn: () => getLxxRenderings(strongs!),
     enabled: !!strongs?.startsWith('H'),
+  });
+  const brief = useQuery({
+    queryKey: ['sod-brief', strongs],
+    queryFn: () => getCachedSodBrief(strongs!),
+    enabled: !!strongs,
+  });
+  const makeBrief = useMutation({
+    mutationFn: () => generateSodBrief(strongs!),
+    onSuccess: (data) => qc.setQueryData(['sod-brief', strongs], data),
   });
   const occurrences = useInfiniteQuery({
     queryKey: ['occurrences', strongs],
@@ -173,6 +184,55 @@ export default function WordStudy() {
               </View>
             )}
 
+            <View style={[styles.card, styles.sodCard]}>
+              <Text style={styles.sodTitle}>Sod · Word-study brief</Text>
+              {brief.data ? (
+                <>
+                  <Text style={styles.briefSummary}>{brief.data.summary}</Text>
+                  {brief.data.sections.map((s, i) => (
+                    <View key={i} style={styles.briefSection}>
+                      <Text style={styles.briefTitle}>{s.title}</Text>
+                      <Text style={styles.briefBody}>{s.body}</Text>
+                      {s.citations.length > 0 && (
+                        <View style={styles.citationRow}>
+                          {s.citations.map((c) => (
+                            <CitationChip key={c} citation={c} />
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                  <Text style={styles.briefNote}>
+                    AI summary of the witnesses above, with a citation for every claim. Always
+                    weigh it against the texts themselves.
+                  </Text>
+                </>
+              ) : makeBrief.isPending ? (
+                <View style={styles.briefPending}>
+                  <ActivityIndicator color="#C9A96A" />
+                  <Text style={styles.sodSub}>
+                    Studying the witnesses… this takes up to a minute the first time. The brief
+                    is kept for everyone afterward.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.sodSub}>
+                    A short brief tracing this word from Torah to prophets to the Septuagint,
+                    written from the evidence on this page with a citation for every claim.
+                  </Text>
+                  {makeBrief.isError && (
+                    <Text style={styles.briefError}>
+                      Could not write the brief. Try again in a moment.
+                    </Text>
+                  )}
+                  <Pressable style={styles.briefBtn} onPress={() => makeBrief.mutate()}>
+                    <Text style={styles.briefBtnText}>Write the brief</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+
             {!!renderings.data?.length && (
               <View style={[styles.card, styles.sodCard]}>
                 <Text style={styles.sodTitle}>Sod · How the Septuagint renders it</Text>
@@ -268,6 +328,35 @@ function languageName(code: string) {
   return code === 'heb' ? 'Hebrew' : code === 'grk' ? 'Greek' : 'Aramaic';
 }
 
+const BOOK_CODES = new Set(
+  ('Gen Exo Lev Num Deu Jos Jdg Rut 1Sa 2Sa 1Ki 2Ki 1Ch 2Ch Ezr Neh Est Job Psa Pro ' +
+    'Ecc Sng Isa Jer Lam Ezk Dan Hos Jol Amo Oba Jon Mic Nam Hab Zep Hag Zec Mal ' +
+    'Mat Mrk Luk Jhn Act Rom 1Co 2Co Gal Eph Php Col 1Th 2Th 1Ti 2Ti Tit Phm Heb Jas ' +
+    '1Pe 2Pe 1Jn 2Jn 3Jn Jud Rev').split(' '),
+);
+
+/** Citation chips: MT refs jump to the Reader; other witnesses render plain. */
+function CitationChip({ citation }: { citation: string }) {
+  const m = citation.match(/^([1-3]?[A-Z][a-z]{1,2})\s+(\d+):(\d+)$/);
+  const tappable = !!m && BOOK_CODES.has(m[1]);
+  const chip = (
+    <Text style={[styles.citation, tappable && styles.citationLink]}>{citation}</Text>
+  );
+  if (!tappable) return chip;
+  return (
+    <Pressable
+      onPress={() =>
+        router.push({
+          pathname: '/',
+          params: { book: m![1], chapter: m![2], verse: m![3] },
+        })
+      }
+      hitSlop={4}>
+      {chip}
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   listContent: { padding: 16, paddingBottom: 48 },
@@ -312,6 +401,33 @@ const styles = StyleSheet.create({
   renderingLemma: { fontSize: 19, color: '#F0EBDD' },
   renderingMeta: { flex: 1, fontSize: 12, color: '#9FA9BE' },
   renderingCount: { fontSize: 12, color: '#C9A96A', fontWeight: '600' },
+  briefSummary: { fontSize: 15, color: '#F0EBDD', lineHeight: 23, marginBottom: 12 },
+  briefSection: { marginBottom: 12 },
+  briefTitle: { fontSize: 14, fontWeight: '700', color: '#C9A96A', marginBottom: 3 },
+  briefBody: { fontSize: 14, color: '#DDD6C6', lineHeight: 21 },
+  citationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  citation: {
+    fontSize: 11,
+    color: '#9FA9BE',
+    backgroundColor: '#31405E',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    overflow: 'hidden',
+  },
+  citationLink: { color: '#E8DEC8', textDecorationLine: 'underline' },
+  briefNote: { fontSize: 11, color: '#8A94AB', marginTop: 6, lineHeight: 16 },
+  briefError: { fontSize: 13, color: '#E8A0A0', marginBottom: 8 },
+  briefPending: { alignItems: 'center', gap: 10, paddingVertical: 8 },
+  briefBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#C9A96A',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    marginTop: 4,
+  },
+  briefBtnText: { color: '#22304A', fontWeight: '700', fontSize: 14 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 10 },
   glossRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 8 },
   glossLabel: { width: 110, fontSize: 13, color: colors.ink },
