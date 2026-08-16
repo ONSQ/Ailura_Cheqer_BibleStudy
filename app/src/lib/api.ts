@@ -233,6 +233,32 @@ export async function getPeriodUsage(
   return (data ?? { total: 0, rows: [] }) as PeriodUsagePage;
 }
 
+export interface SemanticWitness {
+  corpus: string;
+  work: string;
+  ref: string;
+  language: string;
+  content: string | null;
+  content_en: string | null;
+  similarity: number;
+}
+
+/**
+ * Semantic arm of hybrid retrieval (Phase 4): conceptually related passages
+ * in the untagged period witnesses (Josephus, Philo, Second Temple
+ * apocrypha), found by embedding the lexeme's semantic field server-side.
+ */
+export async function getSemanticWitnesses(strongs: string): Promise<SemanticWitness[]> {
+  if (!hasSupabase) return [];
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.functions.invoke('sod-search', {
+    body: { strongs },
+  });
+  if (error) throw error;
+  if (data?.error) return []; // not configured: show nothing rather than fail
+  return (data?.results ?? []) as SemanticWitness[];
+}
+
 /**
  * How the Septuagint renders a Hebrew lemma: statistical translation
  * equivalents from verse-level co-occurrence (see schema.sql).

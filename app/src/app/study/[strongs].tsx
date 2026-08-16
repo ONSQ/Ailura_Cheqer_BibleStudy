@@ -23,6 +23,7 @@ import {
   getLxxRenderings,
   getOccurrences,
   getPeriodUsage,
+  getSemanticWitnesses,
 } from '@/lib/api';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Occurrence } from '@/lib/types';
@@ -60,6 +61,12 @@ export default function WordStudy() {
     queryKey: ['sod-brief', strongs],
     queryFn: () => getCachedSodBrief(strongs!),
     enabled: !!strongs,
+  });
+  const semantic = useQuery({
+    queryKey: ['semantic', strongs],
+    queryFn: () => getSemanticWitnesses(strongs!),
+    enabled: !!strongs,
+    staleTime: Infinity,
   });
   const makeBrief = useMutation({
     mutationFn: () => generateSodBrief(strongs!),
@@ -282,6 +289,25 @@ export default function WordStudy() {
                     + {(sod.data.total - sod.data.rows.length).toLocaleString()} more in the LXX
                   </Text>
                 )}
+              </View>
+            )}
+
+            {!!semantic.data?.length && (
+              <View style={[styles.card, styles.sodCard]}>
+                <Text style={styles.sodTitle}>Sod · Second Temple usage</Text>
+                <Text style={styles.sodSub}>
+                  Passages in Josephus, Philo, 1 Enoch, Jubilees, and other Second Temple
+                  writings whose subject matter is closest to this word&apos;s field of meaning.
+                  Found by meaning, not exact wording; weigh each one.
+                </Text>
+                {semantic.data.map((w) => (
+                  <View key={`${w.work}-${w.ref}`} style={styles.sodRow}>
+                    <Text style={styles.sodRef}>{w.ref}</Text>
+                    <Text style={styles.sodEn} numberOfLines={6}>
+                      {w.content_en ?? w.content}
+                    </Text>
+                  </View>
+                ))}
               </View>
             )}
 

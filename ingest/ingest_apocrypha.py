@@ -154,7 +154,10 @@ def main():
         all_rows.extend(rows)
 
     conn = sqlite3.connect(args.sqlite)
-    conn.execute("delete from period_docs where corpus = 'Second Temple'")
+    # scoped to this script's works: 1 Enoch loads separately (ingest_enoch.py)
+    conn.execute(
+        "delete from period_docs where corpus = 'Second Temple' and work != '1 Enoch'"
+    )
     conn.executemany(
         "insert into period_docs (corpus, work, ref, language, content, content_en, license) "
         "values (:corpus, :work, :ref, :language, :content, :content_en, :license)",
