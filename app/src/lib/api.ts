@@ -27,6 +27,7 @@ import type {
   SodBrief,
   TranslationChapter,
   Verse,
+  VerseAnswer,
   VerseWitness,
   Word,
 } from './types';
@@ -301,6 +302,21 @@ export async function askQuestion(question: string): Promise<AskResult> {
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
   return data.result as AskResult;
+}
+
+/** Direct questions on one verse, grounded in its words, context, and witnesses. */
+export async function askVerse(input: {
+  book: string;
+  chapter: number;
+  verse: number;
+  question: string;
+  history?: { question: string; answer: string }[];
+}): Promise<VerseAnswer> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.functions.invoke('ask-verse', { body: input });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data.result as VerseAnswer;
 }
 
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */

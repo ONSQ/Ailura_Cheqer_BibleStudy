@@ -92,6 +92,11 @@ export interface VerseWitness {
   content_en: string | null;
 }
 
+export interface VerseAnswer {
+  answer: string;
+  refs: { ref: string; note: string }[];
+}
+
 export interface AskResult {
   answer: string;
   lemmas: { strongs: string; lemma: string; note: string }[];

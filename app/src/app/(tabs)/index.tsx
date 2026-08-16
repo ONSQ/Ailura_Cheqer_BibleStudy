@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -9,12 +9,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WordSheet, type WordSelection } from '@/components/word-sheet';
 import {
+  askVerse,
   displaySurface,
   getBooks,
   getChapter,
@@ -141,7 +143,7 @@ export default function Reader() {
       )}
 
       <WordSheet selection={wordSel} onClose={() => setWordSel(null)} />
-      <WitnessSheet
+      <VerseSheet
         book={sel.book}
         chapter={sel.chapter}
         verse={witnessVerse}
@@ -165,7 +167,7 @@ export default function Reader() {
               onEnglishWord={(query) =>
                 setWordSel({ query, verse: item, book: sel.book, chapter: sel.chapter, isRTL })
               }
-              onVersePress={isRTL ? () => setWitnessVerse(item.verse) : undefined}
+              onVersePress={() => setWitnessVerse(item.verse)}
             />
           )}
         />
@@ -295,7 +297,7 @@ function VerseRow({
   if (english != null) {
     return (
       <View style={[styles.verseRow, highlighted && styles.verseHighlight]}>
-        <Text style={styles.englishPrimary}>
+        <Text style={styles.englishPrimary} onLongPress={onVersePress} suppressHighlighting>
           <Text
             suppressHighlighting
             style={[styles.verseNum, onVersePress && styles.verseNumTappable]}
@@ -324,7 +326,89 @@ function VerseRow({
   );
 }
 
-function WitnessSheet({
+const PRESET_QUESTIONS = [
+  'What is it really saying here?',
+  'Are there other ways to read this?',
+  'How might this apply to me?',
+];
+
+function AskVerseSection({
+  book,
+  chapter,
+  verse,
+}: {
+  book: string;
+  chapter: number;
+  verse: number;
+}) {
+  const [thread, setThread] = useState<
+    { question: string; answer: string; refs: { ref: string; note: string }[] }[]
+  >([]);
+  const [custom, setCustom] = useState('');
+  const ask = useMutation({
+    mutationFn: (question: string) =>
+      askVerse({
+        book,
+        chapter,
+        verse,
+        question,
+        history: thread.map(({ question: q, answer }) => ({ question: q, answer })),
+      }),
+    onSuccess: (res, question) => {
+      setThread((t) => [...t, { question, ...res }]);
+      setCustom('');
+    },
+  });
+  const submit = (q: string) => {
+    const question = q.trim();
+    if (question.length >= 3 && !ask.isPending) ask.mutate(question);
+  };
+
+  return (
+    <View style={styles.askSection}>
+      {thread.map((t, i) => (
+        <View key={i} style={styles.askTurn}>
+          <Text style={styles.askQuestion}>{t.question}</Text>
+          <Text style={styles.askAnswer}>{t.answer}</Text>
+        </View>
+      ))}
+      {ask.isPending ? (
+        <View style={styles.askPending}>
+          <ActivityIndicator color={colors.accent} />
+          <Text style={styles.askPendingText}>Reading the verse and its witnesses…</Text>
+        </View>
+      ) : (
+        <>
+          {ask.isError && (
+            <Text style={styles.askError}>Could not answer that — try again.</Text>
+          )}
+          <View style={styles.presetRow}>
+            {PRESET_QUESTIONS.map((q) => (
+              <Pressable key={q} style={styles.presetChip} onPress={() => submit(q)}>
+                <Text style={styles.presetChipText}>{q}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.askInputRow}>
+            <TextInput
+              style={styles.askInput}
+              placeholder="Or ask your own question about this verse…"
+              placeholderTextColor={colors.faint}
+              value={custom}
+              onChangeText={setCustom}
+              onSubmitEditing={() => submit(custom)}
+            />
+            <Pressable style={styles.askSend} onPress={() => submit(custom)} hitSlop={6}>
+              <Text style={styles.askSendText}>Ask</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+function VerseSheet({
   book,
   chapter,
   verse,
@@ -350,16 +434,17 @@ function WitnessSheet({
       <Pressable style={styles.modalScrim} onPress={onClose}>
         <Pressable style={styles.modalSheet} onPress={() => {}}>
           <Text style={styles.modalTitle}>
-            Witnesses · {book} {chapter}:{verse}
+            {book} {chapter}:{verse}
           </Text>
-          <ScrollView>
-            {witnesses.isLoading && (
-              <ActivityIndicator style={{ marginVertical: 16 }} color={colors.accent} />
-            )}
-            {witnesses.data?.length === 0 && (
-              <Text style={styles.witnessEmpty}>
-                No period witnesses for this verse yet.
-              </Text>
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <AskVerseSection
+              key={`${book}-${chapter}-${verse}`}
+              book={book}
+              chapter={chapter}
+              verse={verse}
+            />
+            {!!witnesses.data?.length && (
+              <Text style={styles.witnessHeading}>Ancient witnesses</Text>
             )}
             {witnesses.data?.map((w) => (
               <View key={`${w.corpus}-${w.ref}`} style={styles.witnessCard}>
@@ -430,6 +515,47 @@ const styles = StyleSheet.create({
   witnessText: { fontSize: 16, color: colors.ink, lineHeight: 24 },
   witnessEmpty: { color: colors.faint, textAlign: 'center', marginVertical: 20 },
   witnessEn: { fontSize: 14, color: colors.faint, lineHeight: 20, marginTop: 6 },
+  witnessHeading: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.accent,
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  askSection: { marginBottom: 4 },
+  askTurn: { marginBottom: 12 },
+  askQuestion: { fontSize: 14, fontWeight: '700', color: colors.ink, marginBottom: 4 },
+  askAnswer: { fontSize: 14, color: colors.ink, lineHeight: 21 },
+  askPending: { alignItems: 'center', gap: 8, paddingVertical: 14 },
+  askPendingText: { color: colors.faint, fontSize: 13 },
+  askError: { color: '#A33', fontSize: 13, marginBottom: 6 },
+  presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
+  presetChip: {
+    backgroundColor: colors.accentSoft,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  presetChipText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
+  askInputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 6 },
+  askInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    backgroundColor: colors.bg,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: colors.ink,
+  },
+  askSend: {
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  askSendText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   word: { color: colors.ink },
   wordUntagged: { color: colors.faint },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
