@@ -312,3 +312,34 @@ create policy word_studies_update on word_studies for update
 create policy word_studies_delete on word_studies for delete
     to authenticated
     using (owner = (select auth.uid()));
+
+-- Semantic arm of hybrid retrieval: nearest period passages by embedding.
+-- Exact-lemma matches stay with period_usage(); this covers untagged corpora
+-- (Josephus, Philo, Second Temple apocrypha).
+create or replace function semantic_period_search(
+  p_embedding extensions.vector(1536),
+  p_corpora text[] default null,
+  p_k int default 8
+) returns jsonb
+language sql stable
+as $$
+  select coalesce(jsonb_agg(row_json), '[]'::jsonb)
+  from (
+    select jsonb_build_object(
+      'corpus', corpus,
+      'work', work,
+      'ref', ref,
+      'language', language,
+      'content', left(content, 1200),
+      'content_en', left(content_en, 1200),
+      'similarity', round((1 - (embedding <=> p_embedding))::numeric, 4)
+    ) as row_json
+    from period_docs
+    where embedding is not null
+      and (p_corpora is null or corpus = any(p_corpora))
+    order by embedding <=> p_embedding
+    limit least(p_k, 25)
+  ) t;
+$$;
+
+grant execute on function semantic_period_search(extensions.vector, text[], int) to anon, authenticated;
