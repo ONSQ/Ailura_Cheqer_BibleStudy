@@ -80,6 +80,34 @@ export default function Reader() {
     [books.data, sel.book],
   );
 
+  // Prev/next chapter, crossing book boundaries (Gen 50 -> Exo 1).
+  const nav = useMemo(() => {
+    const list = books.data;
+    if (!list) return { prev: null, next: null };
+    const idx = list.findIndex((b) => b.book === sel.book);
+    if (idx < 0) return { prev: null, next: null };
+    const prev =
+      sel.chapter > 1
+        ? { book: sel.book, chapter: sel.chapter - 1 }
+        : idx > 0
+          ? { book: list[idx - 1].book, chapter: list[idx - 1].chapters }
+          : null;
+    const next =
+      sel.chapter < list[idx].chapters
+        ? { book: sel.book, chapter: sel.chapter + 1 }
+        : idx < list.length - 1
+          ? { book: list[idx + 1].book, chapter: 1 }
+          : null;
+    return { prev, next };
+  }, [books.data, sel]);
+
+  const goTo = (target: { book: string; chapter: number }) => {
+    setSel(target);
+    setTargetVerse(null);
+    setSelection(null);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  };
+
   // Scroll to the jumped-to verse once the chapter is in.
   useEffect(() => {
     if (targetVerse == null || !chapter.data) return;
@@ -120,11 +148,25 @@ export default function Reader() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
+        <Pressable
+          style={[styles.navArrow, !nav.prev && styles.navArrowOff]}
+          disabled={!nav.prev}
+          onPress={() => goTo(nav.prev!)}
+          hitSlop={6}>
+          <Text style={styles.navArrowText}>‹</Text>
+        </Pressable>
         <Pressable style={styles.pickerBtn} onPress={() => setPicker('book')}>
           <Text style={styles.pickerBtnText}>{sel.book}</Text>
         </Pressable>
         <Pressable style={styles.pickerBtn} onPress={() => setPicker('chapter')}>
           <Text style={styles.pickerBtnText}>{sel.chapter}</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.navArrow, !nav.next && styles.navArrowOff]}
+          disabled={!nav.next}
+          onPress={() => goTo(nav.next!)}
+          hitSlop={6}>
+          <Text style={styles.navArrowText}>›</Text>
         </Pressable>
         <Pressable
           style={[styles.pickerBtn, version == null && styles.pickerBtnOff]}
@@ -198,6 +240,30 @@ export default function Reader() {
           keyExtractor={(v) => String(v.verse)}
           contentContainerStyle={styles.listContent}
           onScrollToIndexFailed={() => {}}
+          ListFooterComponent={
+            <View style={styles.chapterNavRow}>
+              {nav.prev ? (
+                <Pressable style={styles.chapterNavBtn} onPress={() => goTo(nav.prev!)}>
+                  <Text style={styles.chapterNavText}>
+                    ‹ {nav.prev.book} {nav.prev.chapter}
+                  </Text>
+                </Pressable>
+              ) : (
+                <View style={{ flex: 1 }} />
+              )}
+              {nav.next ? (
+                <Pressable
+                  style={[styles.chapterNavBtn, styles.chapterNavNext]}
+                  onPress={() => goTo(nav.next!)}>
+                  <Text style={[styles.chapterNavText, styles.chapterNavNextText]}>
+                    {nav.next.book} {nav.next.chapter} ›
+                  </Text>
+                </Pressable>
+              ) : (
+                <View style={{ flex: 1 }} />
+              )}
+            </View>
+          }
           renderItem={({ item }) => (
             <VerseRow
               verse={item}
@@ -602,6 +668,26 @@ const styles = StyleSheet.create({
   },
   pickerBtnText: { color: colors.accent, fontWeight: '700', fontSize: 16 },
   pickerBtnOff: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border },
+  navArrow: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  navArrowOff: { opacity: 0.25 },
+  navArrowText: { color: colors.accent, fontSize: 22, fontWeight: '700', lineHeight: 24 },
+  chapterNavRow: { flexDirection: 'row', gap: 10, marginTop: 18, marginBottom: 8 },
+  chapterNavBtn: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  chapterNavNext: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chapterNavText: { color: colors.accent, fontWeight: '700', fontSize: 15 },
+  chapterNavNextText: { color: '#fff' },
   pickerBtnTextOff: { color: colors.faint, fontWeight: '500' },
   aboutLink: { color: colors.faint, fontSize: 14 },
   askLink: { color: colors.accent, fontSize: 14, fontWeight: '600', marginRight: 12 },
