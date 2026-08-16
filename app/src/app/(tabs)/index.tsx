@@ -36,7 +36,8 @@ export default function Reader() {
   const [version, setVersion] = useState<string | null>('BSB');
   const [showOriginal, setShowOriginal] = useState(true);
   const [wordSel, setWordSel] = useState<WordSelection | null>(null);
-  const [witnessVerse, setWitnessVerse] = useState<number | null>(null);
+  const [sheetRange, setSheetRange] = useState<{ start: number; end: number } | null>(null);
+  const [selection, setSelection] = useState<{ start: number; end: number } | null>(null);
   const listRef = useRef<FlatList<Verse>>(null);
 
   // Jump-to-verse links from the Word Study screen arrive as URL params.
@@ -91,12 +92,29 @@ export default function Reader() {
   const setBook = (book: string) => {
     setSel({ book, chapter: 1 });
     setTargetVerse(null);
+    setSelection(null);
     setPicker(null);
   };
   const setChapterNum = (n: number) => {
     setSel((s) => ({ ...s, chapter: n }));
     setTargetVerse(null);
+    setSelection(null);
     setPicker(null);
+  };
+
+  // Tap: open the verse sheet (or extend an active selection).
+  const onVersePress = (v: number) => {
+    if (selection) {
+      setSelection({ start: Math.min(selection.start, v), end: Math.max(selection.end, v) });
+    } else {
+      setSheetRange({ start: v, end: v });
+    }
+  };
+  // Long-press: start (or extend) a multi-verse selection.
+  const onVerseLongPress = (v: number) => {
+    setSelection((s) =>
+      s ? { start: Math.min(s.start, v), end: Math.max(s.end, v) } : { start: v, end: v },
+    );
   };
 
   return (
@@ -146,9 +164,32 @@ export default function Reader() {
       <VerseSheet
         book={sel.book}
         chapter={sel.chapter}
-        verse={witnessVerse}
-        onClose={() => setWitnessVerse(null)}
+        range={sheetRange}
+        onClose={() => setSheetRange(null)}
+        onStartSelection={() => {
+          if (sheetRange) setSelection(sheetRange);
+          setSheetRange(null);
+        }}
       />
+
+      {selection && (
+        <View style={styles.selectionBar}>
+          <Pressable
+            style={styles.selectionAsk}
+            onPress={() => {
+              setSheetRange(selection);
+              setSelection(null);
+            }}>
+            <Text style={styles.selectionAskText}>
+              Ask about {sel.book} {sel.chapter}:{selection.start}
+              {selection.end > selection.start ? `–${selection.end}` : ''}
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => setSelection(null)} hitSlop={10}>
+            <Text style={styles.selectionCancel}>✕</Text>
+          </Pressable>
+        </View>
+      )}
 
       {chapter.data && (
         <FlatList
@@ -162,12 +203,16 @@ export default function Reader() {
               verse={item}
               isRTL={isRTL}
               highlighted={item.verse === targetVerse}
+              selected={
+                !!selection && item.verse >= selection.start && item.verse <= selection.end
+              }
               english={version != null ? englishByVerse.get(item.verse) : undefined}
               showOriginal={showOriginal}
               onEnglishWord={(query) =>
                 setWordSel({ query, verse: item, book: sel.book, chapter: sel.chapter, isRTL })
               }
-              onVersePress={() => setWitnessVerse(item.verse)}
+              onVersePress={() => onVersePress(item.verse)}
+              onVerseLongPress={() => onVerseLongPress(item.verse)}
             />
           )}
         />
@@ -280,24 +325,33 @@ function VerseRow({
   verse,
   isRTL,
   highlighted,
+  selected,
   english,
   showOriginal,
   onEnglishWord,
   onVersePress,
+  onVerseLongPress,
 }: {
   verse: Verse;
   isRTL: boolean;
   highlighted: boolean;
+  selected?: boolean;
   english?: string;
   showOriginal: boolean;
   onEnglishWord: (word: string) => void;
   onVersePress?: () => void;
+  onVerseLongPress?: () => void;
 }) {
   // English primary: tappable English words, original beneath (optional).
   if (english != null) {
     return (
-      <View style={[styles.verseRow, highlighted && styles.verseHighlight]}>
-        <Text style={styles.englishPrimary} onLongPress={onVersePress} suppressHighlighting>
+      <View
+        style={[
+          styles.verseRow,
+          highlighted && styles.verseHighlight,
+          selected && styles.verseSelected,
+        ]}>
+        <Text style={styles.englishPrimary} onLongPress={onVerseLongPress} suppressHighlighting>
           <Text
             suppressHighlighting
             style={[styles.verseNum, onVersePress && styles.verseNumTappable]}
@@ -320,7 +374,12 @@ function VerseRow({
   }
   // No translation active: original text is primary, words tap to Word Study.
   return (
-    <View style={[styles.verseRow, highlighted && styles.verseHighlight]}>
+    <View
+      style={[
+        styles.verseRow,
+        highlighted && styles.verseHighlight,
+        selected && styles.verseSelected,
+      ]}>
       <OriginalLine verse={verse} isRTL={isRTL} primary />
     </View>
   );
@@ -328,18 +387,50 @@ function VerseRow({
 
 const PRESET_QUESTIONS = [
   'What is it really saying here?',
+  'What are the themes and big idea here?',
+  'How does this connect with the rest of Scripture?',
   'Are there other ways to read this?',
   'How might this apply to me?',
 ];
 
+const BOOK_CODES = new Set(
+  ('Gen Exo Lev Num Deu Jos Jdg Rut 1Sa 2Sa 1Ki 2Ki 1Ch 2Ch Ezr Neh Est Job Psa Pro ' +
+    'Ecc Sng Isa Jer Lam Ezk Dan Hos Jol Amo Oba Jon Mic Nam Hab Zep Hag Zec Mal ' +
+    'Mat Mrk Luk Jhn Act Rom 1Co 2Co Gal Eph Php Col 1Th 2Th 1Ti 2Ti Tit Phm Heb Jas ' +
+    '1Pe 2Pe 1Jn 2Jn 3Jn Jud Rev').split(' '),
+);
+
+function AnswerRefChip({ refStr, onJump }: { refStr: string; onJump: () => void }) {
+  const m = refStr.match(/^([1-3]?[A-Z][a-z]{1,2})\s+(\d+):(\d+)/);
+  const tappable = !!m && BOOK_CODES.has(m[1]);
+  if (!tappable) return <Text style={styles.answerRef}>{refStr}</Text>;
+  return (
+    <Pressable
+      onPress={() => {
+        onJump();
+        router.push({
+          pathname: '/',
+          params: { book: m![1], chapter: m![2], verse: m![3] },
+        });
+      }}
+      hitSlop={4}>
+      <Text style={[styles.answerRef, styles.answerRefLink]}>{refStr}</Text>
+    </Pressable>
+  );
+}
+
 function AskVerseSection({
   book,
   chapter,
-  verse,
+  verseStart,
+  verseEnd,
+  onClose,
 }: {
   book: string;
   chapter: number;
-  verse: number;
+  verseStart: number;
+  verseEnd: number;
+  onClose: () => void;
 }) {
   const [thread, setThread] = useState<
     { question: string; answer: string; refs: { ref: string; note: string }[] }[]
@@ -350,7 +441,8 @@ function AskVerseSection({
       askVerse({
         book,
         chapter,
-        verse,
+        verse: verseStart,
+        verseEnd: verseEnd > verseStart ? verseEnd : undefined,
         question,
         history: thread.map(({ question: q, answer }) => ({ question: q, answer })),
       }),
@@ -370,6 +462,13 @@ function AskVerseSection({
         <View key={i} style={styles.askTurn}>
           <Text style={styles.askQuestion}>{t.question}</Text>
           <Text style={styles.askAnswer}>{t.answer}</Text>
+          {t.refs.length > 0 && (
+            <View style={styles.answerRefRow}>
+              {t.refs.map((r) => (
+                <AnswerRefChip key={r.ref} refStr={r.ref} onJump={onClose} />
+              ))}
+            </View>
+          )}
         </View>
       ))}
       {ask.isPending ? (
@@ -411,20 +510,23 @@ function AskVerseSection({
 function VerseSheet({
   book,
   chapter,
-  verse,
+  range,
   onClose,
+  onStartSelection,
 }: {
   book: string;
   chapter: number;
-  verse: number | null;
+  range: { start: number; end: number } | null;
   onClose: () => void;
+  onStartSelection: () => void;
 }) {
+  const single = range != null && range.start === range.end;
   const witnesses = useQuery({
-    queryKey: ['witnesses', book, chapter, verse],
-    queryFn: () => getVerseWitnesses(book, chapter, verse!),
-    enabled: verse != null,
+    queryKey: ['witnesses', book, chapter, range?.start],
+    queryFn: () => getVerseWitnesses(book, chapter, range!.start),
+    enabled: single,
   });
-  if (verse == null) return null;
+  if (range == null) return null;
   const labels: Record<string, string> = {
     LXX: 'Septuagint (Greek, ~3rd–2nd c. BC)',
     Targum: 'Targum Onkelos (Aramaic, ~1st–2nd c. AD)',
@@ -433,20 +535,28 @@ function VerseSheet({
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.modalScrim} onPress={onClose}>
         <Pressable style={styles.modalSheet} onPress={() => {}}>
-          <Text style={styles.modalTitle}>
-            {book} {chapter}:{verse}
-          </Text>
+          <View style={styles.sheetHeader}>
+            <Text style={styles.modalTitle}>
+              {book} {chapter}:{range.start}
+              {range.end > range.start ? `–${range.end}` : ''}
+            </Text>
+            <Pressable onPress={onStartSelection} hitSlop={8}>
+              <Text style={styles.selectMoreLink}>+ more verses</Text>
+            </Pressable>
+          </View>
           <ScrollView keyboardShouldPersistTaps="handled">
             <AskVerseSection
-              key={`${book}-${chapter}-${verse}`}
+              key={`${book}-${chapter}-${range.start}-${range.end}`}
               book={book}
               chapter={chapter}
-              verse={verse}
+              verseStart={range.start}
+              verseEnd={range.end}
+              onClose={onClose}
             />
-            {!!witnesses.data?.length && (
+            {single && !!witnesses.data?.length && (
               <Text style={styles.witnessHeading}>Ancient witnesses</Text>
             )}
-            {witnesses.data?.map((w) => (
+            {single && witnesses.data?.map((w) => (
               <View key={`${w.corpus}-${w.ref}`} style={styles.witnessCard}>
                 <Text style={styles.witnessLabel}>
                   {labels[w.corpus] ?? w.corpus} · {w.work} {w.ref}
@@ -556,6 +666,52 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   askSendText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  answerRefRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  answerRef: {
+    fontSize: 11,
+    color: colors.faint,
+    backgroundColor: colors.accentSoft,
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    overflow: 'hidden',
+  },
+  answerRefLink: { color: colors.accent, fontWeight: '600' },
+  verseSelected: { backgroundColor: colors.accentSoft },
+  selectionBar: {
+    position: 'absolute',
+    bottom: 16,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  selectionAsk: {
+    backgroundColor: colors.accent,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  selectionAskText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  selectionCancel: { color: colors.faint, fontSize: 16, fontWeight: '700' },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 10,
+  },
+  selectMoreLink: { color: colors.accent, fontSize: 13, fontWeight: '600' },
   word: { color: colors.ink },
   wordUntagged: { color: colors.faint },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },

@@ -309,6 +309,7 @@ export async function askVerse(input: {
   book: string;
   chapter: number;
   verse: number;
+  verseEnd?: number;
   question: string;
   history?: { question: string; answer: string }[];
 }): Promise<VerseAnswer> {
