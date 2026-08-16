@@ -26,6 +26,7 @@ import {
   getVersions,
   getVerseWitnesses,
 } from '@/lib/api';
+import { parseRef } from '@/lib/refs';
 import { fonts, themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Verse } from '@/lib/types';
 
@@ -120,6 +121,14 @@ export default function Reader() {
       setTimeout(() => listRef.current?.scrollToIndex({ index, viewPosition: 0.2 }), 250);
     }
   }, [targetVerse, chapter.data]);
+
+  // Direct navigation from a typed reference like "John 3:16".
+  const goToRef = (t: { book: string; chapter: number; verse?: number }) => {
+    setPicker(null);
+    setSelection(null);
+    setSel({ book: t.book, chapter: t.chapter });
+    setTargetVerse(t.verse ?? null);
+  };
 
   const setBook = (book: string) => {
     setSel({ book, chapter: 1 });
@@ -290,8 +299,9 @@ export default function Reader() {
 
       <Modal visible={picker === 'book'} animationType="slide" transparent>
         <Pressable style={styles.modalScrim} onPress={() => setPicker(null)}>
-          <View style={styles.modalSheet}>
+          <Pressable style={styles.modalSheet} onPress={() => {}}>
             <Text style={styles.modalTitle}>Book</Text>
+            <GoToRef onGo={goToRef} />
             <ScrollView>
               {(['OT', 'NT'] as const).map((corpus) => (
                 <View key={corpus}>
@@ -319,16 +329,17 @@ export default function Reader() {
                 </View>
               ))}
             </ScrollView>
-          </View>
+          </Pressable>
         </Pressable>
       </Modal>
 
       <Modal visible={picker === 'chapter'} animationType="slide" transparent>
         <Pressable style={styles.modalScrim} onPress={() => setPicker(null)}>
-          <View style={styles.modalSheet}>
+          <Pressable style={styles.modalSheet} onPress={() => {}}>
             <Text style={styles.modalTitle}>
               {sel.book}: chapter
             </Text>
+            <GoToRef onGo={goToRef} />
             <ScrollView>
               <View style={styles.grid}>
                 {Array.from({ length: chapterCount }, (_, i) => i + 1).map((n) => (
@@ -347,9 +358,55 @@ export default function Reader() {
                 ))}
               </View>
             </ScrollView>
-          </View>
+          </Pressable>
         </Pressable>
       </Modal>
+    </View>
+  );
+}
+
+/** Type-in reference box shown at the top of the book/chapter pickers. */
+function GoToRef({
+  onGo,
+}: {
+  onGo: (t: { book: string; chapter: number; verse?: number }) => void;
+}) {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
+  const [text, setText] = useState('');
+  const [bad, setBad] = useState(false);
+  const submit = () => {
+    const target = parseRef(text);
+    if (target) {
+      setText('');
+      setBad(false);
+      onGo(target);
+    } else {
+      setBad(true);
+    }
+  };
+  return (
+    <View style={styles.goRow}>
+      <TextInput
+        style={[styles.goInput, bad && styles.goInputBad]}
+        placeholder="Go to reference, e.g. John 3:16"
+        placeholderTextColor={colors.faint}
+        value={text}
+        onChangeText={(t) => {
+          setText(t);
+          setBad(false);
+        }}
+        onSubmitEditing={submit}
+        onKeyPress={(e) => {
+          if (e.nativeEvent.key === 'Enter') submit();
+        }}
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="go"
+      />
+      <Pressable style={styles.goBtn} onPress={submit} hitSlop={4}>
+        <Text style={styles.goBtnText}>Go</Text>
+      </Pressable>
     </View>
   );
 }
@@ -870,6 +927,26 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     padding: 16,
   },
   modalTitle: { fontSize: 16, fontWeight: '700', color: colors.ink, marginBottom: 10 },
+  goRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  goInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    backgroundColor: colors.bg,
+    color: colors.ink,
+    fontSize: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  goInputBad: { borderColor: colors.danger },
+  goBtn: {
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    paddingHorizontal: 18,
+    justifyContent: 'center',
+  },
+  goBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   corpusLabel: { fontSize: 12, color: colors.faint, marginTop: 10, marginBottom: 6 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   gridCell: {

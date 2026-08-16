@@ -42,12 +42,30 @@ export default function About() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.hebrew}>חֵקֶר</Text>
       <Text style={styles.name}>Cheqer Bible Study</Text>
+      <Text style={styles.definition}>
+        Cheqer (חֵקֶר, pronounced KHAY-ker) is Hebrew for a searching out, a deep inquiry into a
+        matter.
+      </Text>
       <Text style={styles.verse}>
         “It is the glory of God to conceal a matter, but the glory of kings is to search out a
         matter.” (Proverbs 25:2)
       </Text>
       <Text style={styles.byline}>powered by Ailura</Text>
-      <Link label="getailura.com" url="https://getailura.com" />
+      <Link label="ailura.net" url="https://ailura.net" />
+
+      <Text style={styles.sectionTitle}>What this app does</Text>
+      <Text style={styles.body}>
+        Cheqer is a word-study Bible. Read in English with the Hebrew or Greek underneath, then
+        tap any word to see the original word behind it: its root, meaning, pronunciation, and
+        every place it appears in Scripture. Each word study shows how translators render the
+        word, how the Septuagint carries it into Greek, and a written brief tracing its use from
+        the Torah through the prophets, with a citation for every claim.
+      </Text>
+      <Text style={[styles.body, { marginTop: 12 }]}>
+        You can also select a verse or passage and ask questions about it in plain English,
+        explore themes and connections across chapters, and save what you find as notes, kept
+        private or shared with your study group.
+      </Text>
 
       <Text style={styles.sectionTitle}>Appearance</Text>
       <ThemePicker />
@@ -76,6 +94,13 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   content: { padding: 24, alignItems: 'center' },
   hebrew: { fontSize: 44, color: colors.ink, marginTop: 12 },
   name: { fontSize: 24, fontWeight: '700', color: colors.ink, marginTop: 4 },
+  definition: {
+    fontSize: 14,
+    color: colors.ink,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginTop: 10,
+  },
   verse: {
     fontSize: 14,
     fontStyle: 'italic',
