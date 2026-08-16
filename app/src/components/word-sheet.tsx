@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Pronunciation } from '@/components/pronunciation';
 import { displaySurface } from '@/lib/api';
 import { matchEnglishToOriginal } from '@/lib/match';
 import { colors } from '@/lib/theme';
@@ -96,10 +97,12 @@ function WordRow({
         <Text style={[styles.surface, isRTL && styles.surfaceHebrew]}>
           {displaySurface(word.surface)}
         </Text>
-        <Text style={styles.meta}>
-          {word.translit ? `${word.translit} · ` : ''}
-          {word.gloss ?? ''}
-        </Text>
+        <Pronunciation
+          translit={word.translit}
+          speak={displaySurface(word.surface)}
+          strongs={word.strongs}
+        />
+        <Text style={styles.meta}>{word.gloss ?? ''}</Text>
         <Text style={styles.morph}>
           {word.strongs}
           {word.morph ? ` · ${word.morph}` : ''}

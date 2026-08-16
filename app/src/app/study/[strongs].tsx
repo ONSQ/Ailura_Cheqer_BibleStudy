@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { Pronunciation } from '@/components/pronunciation';
 import { createStudy, getUserId } from '@/lib/studies';
 
 import {
@@ -64,6 +65,19 @@ export default function WordStudy() {
 
   const rows = occurrences.data?.pages.flatMap((p) => p.rows) ?? [];
   const total = occurrences.data?.pages[0]?.total ?? 0;
+
+  // Pronunciation guide: the most common attested form of this lexeme.
+  const commonForm = useMemo(() => {
+    const counts = new Map<string, { n: number; surface: string }>();
+    for (const r of rows) {
+      if (!r.translit) continue;
+      const e = counts.get(r.translit) ?? { n: 0, surface: r.surface };
+      e.n += 1;
+      counts.set(r.translit, e);
+    }
+    const top = [...counts.entries()].sort((a, b) => b[1].n - a[1].n)[0];
+    return top ? { translit: top[0], surface: top[1].surface } : null;
+  }, [rows]);
   const isHebrew = strongs?.startsWith('H');
   const maxGloss = glosses.data?.[0]?.count ?? 1;
 
@@ -108,6 +122,14 @@ export default function WordStudy() {
                   <Text style={[styles.lemma, isHebrew && styles.lemmaHebrew]}>
                     {lexeme.data.lemma ?? '—'}
                   </Text>
+                  {commonForm && (
+                    <Pronunciation
+                      translit={commonForm.translit}
+                      speak={lexeme.data.lemma ?? displaySurface(commonForm.surface)}
+                      strongs={strongs}
+                      size={16}
+                    />
+                  )}
                   <Text style={styles.lexMeta}>
                     {lexeme.data.strongs} · {languageName(lexeme.data.language)} ·{' '}
                     {lexeme.data.occurrences.toLocaleString()} occurrences
