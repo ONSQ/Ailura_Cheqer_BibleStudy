@@ -1,5 +1,39 @@
-/** Cheqer palette: parchment ground, ink text, gold accent. */
-export const colors = {
+/**
+ * Cheqer theming. Light: parchment ground, ink text, gold accent.
+ * Dark: deep navy ground (harmonizing with the Sod cards), warm gold.
+ * Components build a sheet per palette with themedSheets() and pick the
+ * active one with useSheet(); inline colors come from useTheme().palette.
+ */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import { Appearance } from 'react-native';
+
+export interface Palette {
+  bg: string;
+  card: string;
+  ink: string;
+  faint: string;
+  accent: string;
+  accentSoft: string;
+  border: string;
+  bar: string;
+  highlight: string;
+  danger: string;
+  link: string;
+  successSoft: string;
+  splashBg: string;
+  splashInk: string;
+}
+
+export const light: Palette = {
   bg: '#FBF8F1',
   card: '#FFFFFF',
   ink: '#26211A',
@@ -9,11 +43,88 @@ export const colors = {
   border: '#E7DFCF',
   bar: '#C9A96A',
   highlight: '#FFF3C9',
+  danger: '#A33333',
+  link: '#2A5D8F',
+  successSoft: '#DCEEDB',
   splashBg: '#1E2A3A',
   splashInk: '#F3EDDF',
 };
+
+export const dark: Palette = {
+  bg: '#151A26',
+  card: '#1E2534',
+  ink: '#E9E3D4',
+  faint: '#8D95A8',
+  accent: '#D4B476',
+  accentSoft: '#2B3348',
+  border: '#2C3447',
+  bar: '#C9A96A',
+  highlight: '#413A1F',
+  danger: '#E08A8A',
+  link: '#8FB4DC',
+  successSoft: '#24402A',
+  splashBg: '#1E2A3A',
+  splashInk: '#F3EDDF',
+};
+
+/** Kept for splash and any theme-independent use. */
+export const colors = light;
 
 export const fonts = {
   hebrewSize: 26,
   greekSize: 21,
 };
+
+export type ThemeMode = 'auto' | 'light' | 'dark';
+type Scheme = 'light' | 'dark';
+
+const STORAGE_KEY = 'cheqer-theme-mode';
+
+const ThemeContext = createContext<{
+  scheme: Scheme;
+  mode: ThemeMode;
+  palette: Palette;
+  setMode: (m: ThemeMode) => void;
+}>({ scheme: 'light', mode: 'auto', palette: light, setMode: () => {} });
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [mode, setModeState] = useState<ThemeMode>('auto');
+  const [system, setSystem] = useState<Scheme>(
+    Appearance.getColorScheme() === 'dark' ? 'dark' : 'light',
+  );
+
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((v) => {
+      if (v === 'light' || v === 'dark' || v === 'auto') setModeState(v);
+    });
+    const sub = Appearance.addChangeListener(({ colorScheme }) => {
+      setSystem(colorScheme === 'dark' ? 'dark' : 'light');
+    });
+    return () => sub.remove();
+  }, []);
+
+  const setMode = (m: ThemeMode) => {
+    setModeState(m);
+    AsyncStorage.setItem(STORAGE_KEY, m).catch(() => {});
+  };
+
+  const scheme: Scheme = mode === 'auto' ? system : mode;
+  const value = useMemo(
+    () => ({ scheme, mode, palette: scheme === 'dark' ? dark : light, setMode }),
+    [scheme, mode],
+  );
+  return createElement(ThemeContext.Provider, { value }, children);
+}
+
+export function useTheme() {
+  return useContext(ThemeContext);
+}
+
+/** Build one sheet per palette at module load; pick with useSheet(). */
+export function themedSheets<T>(factory: (c: Palette) => T): { light: T; dark: T } {
+  return { light: factory(light), dark: factory(dark) };
+}
+
+export function useSheet<T>(sheets: { light: T; dark: T }): T {
+  return sheets[useTheme().scheme];
+}

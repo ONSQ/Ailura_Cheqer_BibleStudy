@@ -26,10 +26,12 @@ import {
   getVersions,
   getVerseWitnesses,
 } from '@/lib/api';
-import { colors, fonts } from '@/lib/theme';
+import { fonts, themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Verse } from '@/lib/types';
 
 export default function Reader() {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const params = useLocalSearchParams<{ book?: string; chapter?: string; verse?: string }>();
   const insets = useSafeAreaInsets();
   const [sel, setSel] = useState({ book: 'Gen', chapter: 1 });
@@ -361,6 +363,7 @@ function OriginalLine({
   isRTL: boolean;
   primary: boolean;
 }) {
+  const styles = useSheet(sheets);
   const size = primary
     ? isRTL
       ? fonts.hebrewSize
@@ -410,6 +413,7 @@ function VerseRow({
   onVersePress?: () => void;
   onVerseLongPress?: () => void;
 }) {
+  const styles = useSheet(sheets);
   // English primary: tappable English words, original beneath (optional).
   if (english != null) {
     return (
@@ -469,6 +473,7 @@ const BOOK_CODES = new Set(
 );
 
 function AnswerRefChip({ refStr, onJump }: { refStr: string; onJump: () => void }) {
+  const styles = useSheet(sheets);
   const m = refStr.match(/^([1-3]?[A-Z][a-z]{1,2})\s+(\d+):(\d+)/);
   const tappable = !!m && BOOK_CODES.has(m[1]);
   if (!tappable) return <Text style={styles.answerRef}>{refStr}</Text>;
@@ -500,6 +505,8 @@ function AskVerseSection({
   verseEnd: number;
   onClose: () => void;
 }) {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const [thread, setThread] = useState<
     { question: string; answer: string; refs: { ref: string; note: string }[] }[]
   >([]);
@@ -633,6 +640,8 @@ function VerseSheet({
   onClose: () => void;
   onStartSelection: () => void;
 }) {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const single = range != null && range.start === range.end;
   const witnesses = useQuery({
     queryKey: ['witnesses', book, chapter, range?.start],
@@ -696,7 +705,7 @@ function VerseSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const sheets = themedSheets((colors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',
@@ -771,7 +780,7 @@ const styles = StyleSheet.create({
   askAnswer: { fontSize: 14, color: colors.ink, lineHeight: 21 },
   askPending: { alignItems: 'center', gap: 8, paddingVertical: 14 },
   askPendingText: { color: colors.faint, fontSize: 13 },
-  askError: { color: '#A33', fontSize: 13, marginBottom: 6 },
+  askError: { color: colors.danger, fontSize: 13, marginBottom: 6 },
   presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
   presetChip: {
     backgroundColor: colors.accentSoft,
@@ -876,4 +885,4 @@ const styles = StyleSheet.create({
   gridCellActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   gridCellText: { color: colors.ink, fontSize: 14 },
   gridCellTextActive: { color: '#fff', fontWeight: '700' },
-});
+}));

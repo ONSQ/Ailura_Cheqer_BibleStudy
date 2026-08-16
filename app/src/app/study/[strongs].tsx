@@ -24,12 +24,14 @@ import {
   getOccurrences,
   getPeriodUsage,
 } from '@/lib/api';
-import { colors } from '@/lib/theme';
+import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Occurrence } from '@/lib/types';
 
 const PAGE = 50;
 
 export default function WordStudy() {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const { strongs } = useLocalSearchParams<{ strongs: string }>();
   const qc = useQueryClient();
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'signin'>('idle');
@@ -337,6 +339,7 @@ const BOOK_CODES = new Set(
 
 /** Citation chips: MT refs jump to the Reader; other witnesses render plain. */
 function CitationChip({ citation }: { citation: string }) {
+  const styles = useSheet(sheets);
   const m = citation.match(/^([1-3]?[A-Z][a-z]{1,2})\s+(\d+):(\d+)$/);
   const tappable = !!m && BOOK_CODES.has(m[1]);
   const chip = (
@@ -357,7 +360,7 @@ function CitationChip({ citation }: { citation: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const sheets = themedSheets((colors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   listContent: { padding: 16, paddingBottom: 48 },
   card: {
@@ -451,4 +454,4 @@ const styles = StyleSheet.create({
   occSurfaceHebrew: { fontSize: 20 },
   occGloss: { flex: 1, textAlign: 'right', color: colors.faint, fontSize: 13 },
   empty: { textAlign: 'center', color: colors.faint, marginTop: 24 },
-});
+}));

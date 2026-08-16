@@ -4,7 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Pronunciation } from '@/components/pronunciation';
 import { displaySurface } from '@/lib/api';
 import { matchEnglishToOriginal } from '@/lib/match';
-import { colors } from '@/lib/theme';
+import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Verse, Word } from '@/lib/types';
 
 export interface WordSelection {
@@ -27,6 +27,7 @@ export function WordSheet({
   selection: WordSelection | null;
   onClose: () => void;
 }) {
+  const styles = useSheet(sheets);
   if (!selection) return null;
   const { query, verse, book, chapter, isRTL } = selection;
   // One row per lexeme: the same word repeated in a verse collapses.
@@ -91,6 +92,7 @@ function WordRow({
   muted?: boolean;
   onPress: () => void;
 }) {
+  const styles = useSheet(sheets);
   return (
     <Pressable style={[styles.row, muted && styles.rowMuted]} onPress={onPress}>
       <View style={{ flex: 1 }}>
@@ -113,7 +115,7 @@ function WordRow({
   );
 }
 
-const styles = StyleSheet.create({
+const sheets = themedSheets((colors) => StyleSheet.create({
   scrim: { flex: 1, backgroundColor: 'rgba(20,16,10,0.45)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.card,
@@ -142,4 +144,4 @@ const styles = StyleSheet.create({
   morph: { fontSize: 11, color: colors.faint, marginTop: 2 },
   chevron: { fontSize: 24, color: colors.faint, marginLeft: 8 },
   restLabel: { fontSize: 12, color: colors.faint, marginTop: 6, marginBottom: 8 },
-});
+}));

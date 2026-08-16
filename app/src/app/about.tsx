@@ -1,8 +1,34 @@
-import { Linking, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/lib/theme';
+import { themedSheets, useSheet, useTheme, type ThemeMode } from '@/lib/theme';
+
+const MODES: { value: ThemeMode; label: string }[] = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
+function ThemePicker() {
+  const styles = useSheet(sheets);
+  const { mode, setMode } = useTheme();
+  return (
+    <View style={styles.modeRow}>
+      {MODES.map((m) => (
+        <Pressable
+          key={m.value}
+          style={[styles.modeBtn, mode === m.value && styles.modeBtnOn]}
+          onPress={() => setMode(m.value)}>
+          <Text style={[styles.modeBtnText, mode === m.value && styles.modeBtnTextOn]}>
+            {m.label}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
 
 function Link({ label, url }: { label: string; url: string }) {
+  const styles = useSheet(sheets);
   return (
     <Pressable onPress={() => Linking.openURL(url)}>
       <Text style={styles.link}>{label}</Text>
@@ -11,6 +37,7 @@ function Link({ label, url }: { label: string; url: string }) {
 }
 
 export default function About() {
+  const styles = useSheet(sheets);
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.hebrew}>חֵקֶר</Text>
@@ -21,6 +48,9 @@ export default function About() {
       </Text>
       <Text style={styles.byline}>powered by Ailura</Text>
       <Link label="getailura.com" url="https://getailura.com" />
+
+      <Text style={styles.sectionTitle}>Appearance</Text>
+      <ThemePicker />
 
       <Text style={styles.sectionTitle}>Data credits</Text>
       <Text style={styles.body}>
@@ -41,7 +71,7 @@ export default function About() {
   );
 }
 
-const styles = StyleSheet.create({
+const sheets = themedSheets((colors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 24, alignItems: 'center' },
   hebrew: { fontSize: 44, color: colors.ink, marginTop: 12 },
@@ -64,5 +94,17 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   body: { fontSize: 14, color: colors.ink, lineHeight: 21, alignSelf: 'flex-start' },
-  link: { fontSize: 14, color: '#2A5D8F', marginTop: 6, textDecorationLine: 'underline' },
-});
+  link: { fontSize: 14, color: colors.link, marginTop: 6, textDecorationLine: 'underline' },
+  modeRow: { flexDirection: 'row', gap: 8, alignSelf: 'flex-start' },
+  modeBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    backgroundColor: colors.card,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  modeBtnOn: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+  modeBtnText: { fontSize: 14, color: colors.faint, fontWeight: '600' },
+  modeBtnTextOn: { color: colors.accent },
+}));

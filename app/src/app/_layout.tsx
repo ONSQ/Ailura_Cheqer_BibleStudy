@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/lib/theme';
+import { ThemeProvider, colors, useTheme } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,17 +37,18 @@ function BrandSplash({ onDone }: { onDone: () => void }) {
   );
 }
 
-export default function RootLayout() {
+function ThemedApp() {
   const [splashDone, setSplashDone] = useState(false);
+  const { palette, scheme } = useTheme();
   return (
-    <QueryClientProvider client={queryClient}>
-      <StatusBar style="dark" />
+    <>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.bg },
-          headerTintColor: colors.ink,
+          headerStyle: { backgroundColor: palette.bg },
+          headerTintColor: palette.ink,
           headerTitleStyle: { fontWeight: '600' },
-          contentStyle: { backgroundColor: colors.bg },
+          contentStyle: { backgroundColor: palette.bg },
         }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="study/[strongs]" options={{ title: 'Word Study' }} />
@@ -55,6 +56,16 @@ export default function RootLayout() {
         <Stack.Screen name="ask" options={{ title: 'Ask' }} />
       </Stack>
       {!splashDone && <BrandSplash onDone={() => setSplashDone(true)} />}
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <ThemedApp />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

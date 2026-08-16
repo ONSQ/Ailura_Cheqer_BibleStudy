@@ -14,7 +14,7 @@ import {
 import { askQuestion } from '@/lib/api';
 import { formatQaShare, shareText } from '@/lib/share';
 import { createStudy, getUserId } from '@/lib/studies';
-import { colors } from '@/lib/theme';
+import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 const BOOK_CODES = new Set(
   ('Gen Exo Lev Num Deu Jos Jdg Rut 1Sa 2Sa 1Ki 2Ki 1Ch 2Ch Ezr Neh Est Job Psa Pro ' +
@@ -31,6 +31,8 @@ function jumpToRef(ref: string) {
 }
 
 export default function Ask() {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const [question, setQuestion] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const ask = useMutation({ mutationFn: askQuestion, onMutate: () => setStatus(null) });
@@ -154,7 +156,7 @@ export default function Ask() {
   );
 }
 
-const styles = StyleSheet.create({
+const sheets = themedSheets((colors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 16, paddingBottom: 48 },
   lead: { fontSize: 14, color: colors.faint, lineHeight: 20, marginBottom: 12 },
@@ -181,7 +183,7 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   pending: { alignItems: 'center', gap: 10, marginTop: 28 },
   pendingText: { color: colors.faint, fontSize: 13 },
-  error: { color: '#A33', marginTop: 16 },
+  error: { color: colors.danger, marginTop: 16 },
   result: { marginTop: 20 },
   answer: { fontSize: 15, color: colors.ink, lineHeight: 23 },
   resultActions: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 8 },
@@ -219,4 +221,4 @@ const styles = StyleSheet.create({
   },
   lemmaText: { fontSize: 18, color: colors.ink },
   lemmaNote: { fontSize: 13, color: colors.faint, marginTop: 2, lineHeight: 18 },
-});
+}));

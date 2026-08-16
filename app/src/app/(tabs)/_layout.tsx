@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Text, type ColorValue } from 'react-native';
 
-import { colors } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
 function tabIcon(glyph: string) {
   return ({ color }: { color: ColorValue }) => (
@@ -10,6 +10,7 @@ function tabIcon(glyph: string) {
 }
 
 export default function TabsLayout() {
+  const { palette: colors } = useTheme();
   return (
     <Tabs
       screenOptions={{

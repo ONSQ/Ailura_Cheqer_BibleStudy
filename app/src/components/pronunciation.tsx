@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { speakWord, translitSyllables } from '@/lib/speech';
-import { colors } from '@/lib/theme';
+import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 /**
  * Syllable-by-syllable pronunciation line with a speak-aloud button.
@@ -20,6 +20,8 @@ export function Pronunciation({
   size?: number;
   onDark?: boolean;
 }) {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   if (!translit) return null;
   const sylls = translitSyllables(translit);
   return (
@@ -53,6 +55,6 @@ export function Pronunciation({
   );
 }
 
-const styles = StyleSheet.create({
+const sheets = themedSheets((colors) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-});
+}));

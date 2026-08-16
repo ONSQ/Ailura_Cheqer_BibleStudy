@@ -23,9 +23,11 @@ import {
   updateStudy,
   type WordStudy,
 } from '@/lib/studies';
-import { colors } from '@/lib/theme';
+import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 export default function SharedStudies() {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const [userId, setUserId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
@@ -51,6 +53,8 @@ export default function SharedStudies() {
 }
 
 function SignIn() {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -135,6 +139,8 @@ function EditStudyModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const [title, setTitle] = useState(study.title ?? '');
   const [notes, setNotes] = useState(study.notes ?? '');
   const save = useMutation({
@@ -184,6 +190,8 @@ function EditStudyModal({
 }
 
 function StudyList({ userId }: { userId: string }) {
+  const styles = useSheet(sheets);
+  const { palette: colors } = useTheme();
   const qc = useQueryClient();
   const studies = useQuery({ queryKey: ['studies'], queryFn: listStudies });
   const invalidate = () => qc.invalidateQueries({ queryKey: ['studies'] });
@@ -275,7 +283,7 @@ function StudyList({ userId }: { userId: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const sheets = themedSheets((colors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, padding: 16 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   card: {
@@ -325,7 +333,7 @@ const styles = StyleSheet.create({
   badge: { fontSize: 12, color: colors.faint },
   cardMeta: { fontSize: 12, color: colors.faint, marginTop: 6 },
   link: { color: colors.accent, fontSize: 13, fontWeight: '600' },
-  danger: { color: '#A33' },
+  danger: { color: colors.danger },
   byline: { textAlign: 'center', color: colors.faint, fontSize: 12, marginTop: 'auto', marginBottom: 12 },
   modalScrim: { flex: 1, backgroundColor: 'rgba(20,16,10,0.45)', justifyContent: 'flex-end' },
   modalSheet: {
@@ -337,4 +345,4 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
   },
   notesInput: { minHeight: 180, textAlignVertical: 'top' },
-});
+}));

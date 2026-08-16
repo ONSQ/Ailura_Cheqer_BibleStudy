@@ -3,8 +3,9 @@
   "configurations": [
     {
       "name": "cheqer-web",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "app", "run", "web"],
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
+      "cwd": "app",
       "port": 8081
     }
   ]
