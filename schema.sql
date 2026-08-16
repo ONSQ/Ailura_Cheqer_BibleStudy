@@ -97,6 +97,7 @@ create table if not exists word_studies (
     id          bigserial primary key,
     owner       uuid,                     -- auth.users reference when auth is enabled
     strongs     text references lexemes (strongs),
+    ref         text,                     -- passage anchor, e.g. 'Gen 1:2' or 'Gen 1:1-5'
     title       text,
     notes       text,
     is_shared   boolean default false,

@@ -8,6 +8,7 @@ export interface WordStudy {
   id: number;
   owner: string;
   strongs: string | null;
+  ref: string | null;
   title: string | null;
   notes: string | null;
   is_shared: boolean;
@@ -46,6 +47,7 @@ export async function listStudies(): Promise<WordStudy[]> {
 
 export async function createStudy(input: {
   strongs?: string;
+  ref?: string;
   title: string;
   notes?: string;
   is_shared?: boolean;
@@ -54,6 +56,7 @@ export async function createStudy(input: {
     .from('word_studies')
     .insert({
       strongs: input.strongs ?? null,
+      ref: input.ref ?? null,
       title: input.title,
       notes: input.notes ?? '',
       is_shared: input.is_shared ?? false,

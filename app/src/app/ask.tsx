@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 
 import { askQuestion } from '@/lib/api';
+import { formatQaShare, shareText } from '@/lib/share';
+import { createStudy, getUserId } from '@/lib/studies';
 import { colors } from '@/lib/theme';
 
 const BOOK_CODES = new Set(
@@ -30,11 +32,47 @@ function jumpToRef(ref: string) {
 
 export default function Ask() {
   const [question, setQuestion] = useState('');
-  const ask = useMutation({ mutationFn: askQuestion });
+  const [status, setStatus] = useState<string | null>(null);
+  const ask = useMutation({ mutationFn: askQuestion, onMutate: () => setStatus(null) });
 
   const submit = () => {
     const q = question.trim();
     if (q.length >= 3 && !ask.isPending) ask.mutate(q);
+  };
+
+  const saveResult = async () => {
+    if (!ask.data) return;
+    if (!(await getUserId())) {
+      setStatus('Sign in on the Studies tab to save notes');
+      return;
+    }
+    try {
+      await createStudy({
+        title: question.trim(),
+        notes: `${ask.data.answer}${
+          ask.data.verses.length
+            ? `\n\nPassages: ${ask.data.verses.map((v) => v.ref).join(', ')}`
+            : ''
+        }`,
+      });
+      setStatus('Saved to Studies ✓');
+    } catch {
+      setStatus('Could not save');
+    }
+  };
+
+  const shareResult = async () => {
+    if (!ask.data) return;
+    const outcome = await shareText(
+      formatQaShare({
+        heading: 'Asked in Cheqer',
+        question: question.trim(),
+        answer: ask.data.answer,
+        refs: ask.data.verses.map((v) => v.ref),
+      }),
+    );
+    if (outcome === 'copied') setStatus('Copied to clipboard ✓');
+    else if (outcome === 'failed') setStatus('Could not share');
   };
 
   return (
@@ -74,6 +112,15 @@ export default function Ask() {
       {ask.data && (
         <View style={styles.result}>
           <Text style={styles.answer}>{ask.data.answer}</Text>
+          <View style={styles.resultActions}>
+            <Pressable onPress={saveResult} hitSlop={6}>
+              <Text style={styles.resultActionText}>Save note</Text>
+            </Pressable>
+            <Pressable onPress={shareResult} hitSlop={6}>
+              <Text style={styles.resultActionText}>Share</Text>
+            </Pressable>
+            {status ? <Text style={styles.resultStatus}>{status}</Text> : null}
+          </View>
 
           {ask.data.verses.length > 0 && (
             <>
@@ -137,6 +184,9 @@ const styles = StyleSheet.create({
   error: { color: '#A33', marginTop: 16 },
   result: { marginTop: 20 },
   answer: { fontSize: 15, color: colors.ink, lineHeight: 23 },
+  resultActions: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 8 },
+  resultActionText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
+  resultStatus: { color: colors.faint, fontSize: 12 },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '700',

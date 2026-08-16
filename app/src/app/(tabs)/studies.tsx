@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -117,6 +119,70 @@ function SignIn() {
   );
 }
 
+function jumpToStudyRef(ref: string) {
+  const m = ref.match(/^([1-3]?[A-Za-z]{2,3})\s+(\d+):(\d+)/);
+  if (m) {
+    router.push({ pathname: '/', params: { book: m[1], chapter: m[2], verse: m[3] } });
+  }
+}
+
+function EditStudyModal({
+  study,
+  onClose,
+  onSaved,
+}: {
+  study: WordStudy;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [title, setTitle] = useState(study.title ?? '');
+  const [notes, setNotes] = useState(study.notes ?? '');
+  const save = useMutation({
+    mutationFn: () => updateStudy(study.id, { title, notes }),
+    onSuccess: () => {
+      onSaved();
+      onClose();
+    },
+  });
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.modalScrim} onPress={onClose}>
+        <Pressable style={styles.modalSheet} onPress={() => {}}>
+          <Text style={styles.title}>Edit note</Text>
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Title"
+              placeholderTextColor={colors.faint}
+            />
+            <TextInput
+              style={[styles.input, styles.notesInput]}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Notes — build your study here"
+              placeholderTextColor={colors.faint}
+              multiline
+            />
+            <View style={styles.buttonRow}>
+              <Pressable
+                style={[styles.button, save.isPending && styles.buttonDisabled]}
+                disabled={save.isPending}
+                onPress={() => save.mutate()}>
+                <Text style={styles.buttonText}>{save.isPending ? 'Saving…' : 'Save'}</Text>
+              </Pressable>
+              <Pressable style={[styles.button, styles.buttonGhost]} onPress={onClose}>
+                <Text style={[styles.buttonText, styles.buttonGhostText]}>Cancel</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 function StudyList({ userId }: { userId: string }) {
   const qc = useQueryClient();
   const studies = useQuery({ queryKey: ['studies'], queryFn: listStudies });
@@ -126,6 +192,7 @@ function StudyList({ userId }: { userId: string }) {
     onSuccess: invalidate,
   });
   const remove = useMutation({ mutationFn: deleteStudy, onSuccess: invalidate });
+  const [editing, setEditing] = useState<WordStudy | null>(null);
 
   return (
     <View style={styles.screen}>
@@ -161,7 +228,11 @@ function StudyList({ userId }: { userId: string }) {
             <Pressable
               style={styles.card}
               onPress={() =>
-                item.strongs ? router.push(`/study/${item.strongs}` as never) : undefined
+                item.strongs
+                  ? router.push(`/study/${item.strongs}` as never)
+                  : item.ref
+                    ? jumpToStudyRef(item.ref)
+                    : undefined
               }>
               <View style={styles.cardTop}>
                 <Text style={styles.cardTitle}>{item.title ?? item.strongs ?? 'Study'}</Text>
@@ -170,10 +241,19 @@ function StudyList({ userId }: { userId: string }) {
                   {mine ? '' : ' · group'}
                 </Text>
               </View>
-              {item.notes ? <Text style={styles.body}>{item.notes}</Text> : null}
-              {item.strongs ? <Text style={styles.cardMeta}>{item.strongs}</Text> : null}
+              {item.notes ? (
+                <Text style={styles.body} numberOfLines={6}>
+                  {item.notes}
+                </Text>
+              ) : null}
+              {item.strongs || item.ref ? (
+                <Text style={styles.cardMeta}>{item.ref ?? item.strongs}</Text>
+              ) : null}
               {mine && (
                 <View style={styles.buttonRow}>
+                  <Pressable onPress={() => setEditing(item)} hitSlop={6}>
+                    <Text style={styles.link}>Edit</Text>
+                  </Pressable>
                   <Pressable onPress={() => toggleShare.mutate(item)} hitSlop={6}>
                     <Text style={styles.link}>
                       {item.is_shared ? 'Make private' : 'Share with group'}
@@ -188,6 +268,9 @@ function StudyList({ userId }: { userId: string }) {
           );
         }}
       />
+      {editing && (
+        <EditStudyModal study={editing} onClose={() => setEditing(null)} onSaved={invalidate} />
+      )}
     </View>
   );
 }
@@ -244,4 +327,14 @@ const styles = StyleSheet.create({
   link: { color: colors.accent, fontSize: 13, fontWeight: '600' },
   danger: { color: '#A33' },
   byline: { textAlign: 'center', color: colors.faint, fontSize: 12, marginTop: 'auto', marginBottom: 12 },
+  modalScrim: { flex: 1, backgroundColor: 'rgba(20,16,10,0.45)', justifyContent: 'flex-end' },
+  modalSheet: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '85%',
+    padding: 16,
+    paddingBottom: 28,
+  },
+  notesInput: { minHeight: 180, textAlignVertical: 'top' },
 });

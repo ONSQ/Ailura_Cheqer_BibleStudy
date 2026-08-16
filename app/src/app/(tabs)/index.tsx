@@ -15,6 +15,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WordSheet, type WordSelection } from '@/components/word-sheet';
+import { formatQaShare, shareText } from '@/lib/share';
+import { createStudy, getUserId } from '@/lib/studies';
 import {
   askVerse,
   displaySurface,
@@ -502,6 +504,42 @@ function AskVerseSection({
     { question: string; answer: string; refs: { ref: string; note: string }[] }[]
   >([]);
   const [custom, setCustom] = useState('');
+  const [turnStatus, setTurnStatus] = useState<Record<number, string>>({});
+  const passageRef = `${book} ${chapter}:${verseStart}${verseEnd > verseStart ? `-${verseEnd}` : ''}`;
+
+  const saveTurn = async (i: number) => {
+    const t = thread[i];
+    if (!t) return;
+    if (!(await getUserId())) {
+      setTurnStatus((s) => ({ ...s, [i]: 'Sign in on the Studies tab to save notes' }));
+      return;
+    }
+    try {
+      await createStudy({
+        ref: passageRef,
+        title: `${passageRef} — ${t.question}`,
+        notes: `${t.answer}${t.refs.length ? `\n\nReferences: ${t.refs.map((r) => r.ref).join(', ')}` : ''}`,
+      });
+      setTurnStatus((s) => ({ ...s, [i]: 'Saved to Studies ✓' }));
+    } catch {
+      setTurnStatus((s) => ({ ...s, [i]: 'Could not save' }));
+    }
+  };
+
+  const shareTurn = async (i: number) => {
+    const t = thread[i];
+    if (!t) return;
+    const outcome = await shareText(
+      formatQaShare({
+        heading: passageRef,
+        question: t.question,
+        answer: t.answer,
+        refs: t.refs.map((r) => r.ref),
+      }),
+    );
+    if (outcome === 'copied') setTurnStatus((s) => ({ ...s, [i]: 'Copied to clipboard ✓' }));
+    else if (outcome === 'failed') setTurnStatus((s) => ({ ...s, [i]: 'Could not share' }));
+  };
   const ask = useMutation({
     mutationFn: (question: string) =>
       askVerse({
@@ -535,6 +573,15 @@ function AskVerseSection({
               ))}
             </View>
           )}
+          <View style={styles.turnActions}>
+            <Pressable onPress={() => saveTurn(i)} hitSlop={6}>
+              <Text style={styles.turnActionText}>Save note</Text>
+            </Pressable>
+            <Pressable onPress={() => shareTurn(i)} hitSlop={6}>
+              <Text style={styles.turnActionText}>Share</Text>
+            </Pressable>
+            {turnStatus[i] ? <Text style={styles.turnStatus}>{turnStatus[i]}</Text> : null}
+          </View>
         </View>
       ))}
       {ask.isPending ? (
@@ -763,6 +810,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   answerRefLink: { color: colors.accent, fontWeight: '600' },
+  turnActions: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 6 },
+  turnActionText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
+  turnStatus: { color: colors.faint, fontSize: 12 },
   verseSelected: { backgroundColor: colors.accentSoft },
   selectionBar: {
     position: 'absolute',
