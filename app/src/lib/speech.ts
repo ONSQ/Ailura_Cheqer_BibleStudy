@@ -32,9 +32,17 @@ function speechLang(strongs: string | null | undefined): string {
   return strongs?.startsWith('G') ? 'el-GR' : 'he-IL';
 }
 
-/** Turn "ba.Ra'" into something a default English voice says acceptably. */
+/**
+ * Turn "ba.Ra'" into something a default English voice says acceptably.
+ * Translits of prefixed words carry morpheme dividers ("be./re.Shit");
+ * anything that is not a letter makes the voice spell the word out, so
+ * keep letters only.
+ */
 function romanized(translit: string): string {
-  return translit.replace(/[.'’]/g, ' ').trim();
+  return translit
+    .replace(/[^\p{L}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function hasVoiceFor(lang: string): boolean {
