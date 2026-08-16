@@ -20,6 +20,7 @@ import type {
   Corpus,
   GlossCount,
   Lexeme,
+  LxxRendering,
   OccurrencePage,
   PeriodUsagePage,
   TranslationChapter,
@@ -220,6 +221,18 @@ export async function getPeriodUsage(
   });
   if (error) throw error;
   return (data ?? { total: 0, rows: [] }) as PeriodUsagePage;
+}
+
+/**
+ * How the Septuagint renders a Hebrew lemma: statistical translation
+ * equivalents from verse-level co-occurrence (see schema.sql).
+ */
+export async function getLxxRenderings(strongs: string): Promise<LxxRendering[]> {
+  if (!hasSupabase) return [];
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('lxx_renderings', { p_strongs: strongs });
+  if (error) throw error;
+  return (data ?? []) as LxxRendering[];
 }
 
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */

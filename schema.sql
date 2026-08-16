@@ -167,6 +167,49 @@ as $$
     )
 $$;
 
+-- =============================================================
+-- Hebrew -> LXX bridge (Phase 3). No external alignment data:
+-- OT verses carry Hebrew Strong's, LXX verses carry Greek Strong's,
+-- and they share versification. Verse-level co-occurrence recovers
+-- translation equivalents; a lift filter (>= 2 vs corpus baseline)
+-- keeps Greek function words from dominating. Rebuild lxx_equivalents
+-- after reloading either corpus (see migration hebrew_lxx_bridge).
+-- =============================================================
+
+create table if not exists lxx_book_map (
+    ot_book  text primary key,
+    lxx_work text not null
+);
+-- Values: 38 OT books mapped (Neh omitted; LXX 2Esdras shifts chapters).
+-- Psalms chapters remapped through lxx_ps_chapter() during the build.
+
+-- lxx_equivalents (heb_strongs, grk_strongs, pair_count, share, lift):
+-- materialized by the hebrew_lxx_bridge migration from ol_words x
+-- period_docs. RLS: world-readable like the other text tables.
+
+-- Top LXX renderings of a Hebrew lemma, with the Greek lexeme joined in.
+create or replace function lxx_renderings(p_strongs text)
+returns jsonb
+language sql stable
+set search_path = public
+as $$
+    select coalesce(jsonb_agg(jsonb_build_object(
+        'grk_strongs', e.grk_strongs,
+        'lemma', l.lemma,
+        'gloss', l.gloss,
+        'pair_count', e.pair_count,
+        'share', e.share,
+        'lift', e.lift
+    ) order by e.pair_count desc), '[]'::jsonb)
+    from (
+        select * from lxx_equivalents
+        where heb_strongs = p_strongs
+        order by pair_count desc
+        limit 8
+    ) e
+    left join lexemes l on l.strongs = e.grk_strongs
+$$;
+
 -- Reassembled verse text for quick interlinear display
 create or replace view v_verse_interlinear with (security_invoker = on) as
 select corpus, book, chapter, verse,

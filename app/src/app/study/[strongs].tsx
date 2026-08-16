@@ -17,6 +17,7 @@ import {
   displaySurface,
   getGlossDistribution,
   getLexeme,
+  getLxxRenderings,
   getOccurrences,
   getPeriodUsage,
 } from '@/lib/api';
@@ -44,6 +45,11 @@ export default function WordStudy() {
     queryKey: ['period', strongs],
     queryFn: () => getPeriodUsage(strongs!, 10),
     enabled: !!strongs?.startsWith('G'),
+  });
+  const renderings = useQuery({
+    queryKey: ['lxx-renderings', strongs],
+    queryFn: () => getLxxRenderings(strongs!),
+    enabled: !!strongs?.startsWith('H'),
   });
   const occurrences = useInfiniteQuery({
     queryKey: ['occurrences', strongs],
@@ -141,6 +147,30 @@ export default function WordStudy() {
                     </View>
                     <Text style={styles.glossCount}>{g.count.toLocaleString()}</Text>
                   </View>
+                ))}
+              </View>
+            )}
+
+            {!!renderings.data?.length && (
+              <View style={[styles.card, styles.sodCard]}>
+                <Text style={styles.sodTitle}>Sod · How the Septuagint renders it</Text>
+                <Text style={styles.sodSub}>
+                  Greek words the LXX translators chose for this Hebrew word. Tap one to follow
+                  it into the Greek scriptures. “The deeper counsel” (Jer 23:18).
+                </Text>
+                {renderings.data.map((r) => (
+                  <Pressable
+                    key={r.grk_strongs}
+                    style={styles.renderingRow}
+                    onPress={() => router.push(`/study/${r.grk_strongs}` as never)}>
+                    <Text style={styles.renderingLemma}>{r.lemma ?? r.grk_strongs}</Text>
+                    <Text style={styles.renderingMeta}>
+                      {displayGloss(r.gloss) ?? ''} · {r.grk_strongs}
+                    </Text>
+                    <Text style={styles.renderingCount}>
+                      {r.pair_count.toLocaleString()} shared verses ›
+                    </Text>
+                  </Pressable>
                 ))}
               </View>
             )}
@@ -247,6 +277,17 @@ const styles = StyleSheet.create({
   sodRef: { fontSize: 12, fontWeight: '700', color: '#C9A96A' },
   sodText: { fontSize: 15, color: '#F0EBDD', lineHeight: 22, marginTop: 1 },
   sodMore: { fontSize: 12, color: '#9FA9BE', marginTop: 4 },
+  renderingRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: '#31405E',
+  },
+  renderingLemma: { fontSize: 19, color: '#F0EBDD' },
+  renderingMeta: { flex: 1, fontSize: 12, color: '#9FA9BE' },
+  renderingCount: { fontSize: 12, color: '#C9A96A', fontWeight: '600' },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 10 },
   glossRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 8 },
   glossLabel: { width: 110, fontSize: 13, color: colors.ink },

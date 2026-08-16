@@ -81,3 +81,12 @@ export interface PeriodUsagePage {
   total: number;
   rows: PeriodHit[];
 }
+
+export interface LxxRendering {
+  grk_strongs: string;
+  lemma: string | null;
+  gloss: string | null;
+  pair_count: number;
+  share: number;
+  lift: number;
+}
