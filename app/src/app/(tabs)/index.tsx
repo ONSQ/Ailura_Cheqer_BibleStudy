@@ -375,6 +375,7 @@ function WitnessSheet({
                   ]}>
                   {w.content}
                 </Text>
+                {w.content_en ? <Text style={styles.witnessEn}>{w.content_en}</Text> : null}
               </View>
             ))}
           </ScrollView>
@@ -424,6 +425,7 @@ const styles = StyleSheet.create({
   witnessLabel: { fontSize: 12, fontWeight: '700', color: colors.accent, marginBottom: 6 },
   witnessText: { fontSize: 16, color: colors.ink, lineHeight: 24 },
   witnessEmpty: { color: colors.faint, textAlign: 'center', marginVertical: 20 },
+  witnessEn: { fontSize: 14, color: colors.faint, lineHeight: 20, marginTop: 6 },
   word: { color: colors.ink },
   wordUntagged: { color: colors.faint },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },

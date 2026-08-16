@@ -75,6 +75,7 @@ export interface PeriodHit {
   ref: string;
   language: string | null;
   content: string;
+  content_en: string | null;
 }
 
 export interface PeriodUsagePage {
@@ -88,6 +89,7 @@ export interface VerseWitness {
   ref: string;
   language: string | null;
   content: string;
+  content_en: string | null;
 }
 
 export interface LxxRendering {

@@ -212,6 +212,7 @@ export default function WordStudy() {
                       {h.work} {h.ref}
                     </Text>
                     <Text style={styles.sodText}>{h.content}</Text>
+                    {h.content_en ? <Text style={styles.sodEn}>{h.content_en}</Text> : null}
                   </View>
                 ))}
                 {sod.data.total > sod.data.rows.length && (
@@ -299,6 +300,7 @@ const styles = StyleSheet.create({
   sodRef: { fontSize: 12, fontWeight: '700', color: '#C9A96A' },
   sodText: { fontSize: 15, color: '#F0EBDD', lineHeight: 22, marginTop: 1 },
   sodMore: { fontSize: 12, color: '#9FA9BE', marginTop: 4 },
+  sodEn: { fontSize: 13, color: '#AEB7CA', lineHeight: 19, marginTop: 2 },
   renderingRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
