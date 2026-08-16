@@ -29,7 +29,7 @@ Verified queries against the built database:
 | STEPBible TAHOT/TAGNT | Tagged Hebrew OT + Greek NT, all major editions | CC BY 4.0 | Done |
 | helloao Free Use Bible API | 1,250+ translations incl. public-domain BSB | Free use | 2 |
 | OSHB lexicon / Abbott-Smith | BDB and Greek lexicon entries | Public domain | 2 |
-| CenterBLC LXX (Rahlfs) | Tagged Septuagint | Check repo | 3 |
+| CenterBLC LXX (Rahlfs 1935) | Tagged Septuagint (Strong's + lemmas) | MIT | 3 (loaded) |
 | Sefaria exports | Targumim, Mishnah, rabbinic texts | Mixed free licenses | 3 |
 | Perseus | Josephus, Philo (Greek + English) | CC BY-SA | 3 |
 | Online Critical Pseudepigrapha / Charles | 1 Enoch, Jubilees | Check per text | 3 |

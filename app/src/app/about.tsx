@@ -29,6 +29,10 @@ export default function About() {
       </Text>
       <Link label="www.TyndaleHouse.com" url="https://www.TyndaleHouse.com" />
       <Link label="www.STEPBible.org" url="https://www.STEPBible.org" />
+      <Text style={[styles.body, { marginTop: 12 }]}>
+        Septuagint text and tagging: CenterBLC LXX (Rahlfs 1935), MIT license.
+      </Text>
+      <Link label="github.com/CenterBLC/LXX" url="https://github.com/CenterBLC/LXX" />
     </ScrollView>
   );
 }

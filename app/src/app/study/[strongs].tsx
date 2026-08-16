@@ -18,6 +18,7 @@ import {
   getGlossDistribution,
   getLexeme,
   getOccurrences,
+  getPeriodUsage,
 } from '@/lib/api';
 import { colors } from '@/lib/theme';
 import type { Occurrence } from '@/lib/types';
@@ -38,6 +39,11 @@ export default function WordStudy() {
     queryKey: ['glosses', strongs],
     queryFn: () => getGlossDistribution(strongs!),
     enabled: !!strongs,
+  });
+  const sod = useQuery({
+    queryKey: ['period', strongs],
+    queryFn: () => getPeriodUsage(strongs!, 10),
+    enabled: !!strongs?.startsWith('G'),
   });
   const occurrences = useInfiniteQuery({
     queryKey: ['occurrences', strongs],
@@ -139,6 +145,31 @@ export default function WordStudy() {
               </View>
             )}
 
+            {!!sod.data?.total && (
+              <View style={[styles.card, styles.sodCard]}>
+                <Text style={styles.sodTitle}>
+                  Sod · Septuagint usage ({sod.data.total.toLocaleString()} verses)
+                </Text>
+                <Text style={styles.sodSub}>
+                  The same Greek word in the LXX, centuries before the NT. “The deeper counsel”
+                  (Jer 23:18).
+                </Text>
+                {sod.data.rows.map((h) => (
+                  <View key={h.id} style={styles.sodRow}>
+                    <Text style={styles.sodRef}>
+                      {h.work} {h.ref}
+                    </Text>
+                    <Text style={styles.sodText}>{h.content}</Text>
+                  </View>
+                ))}
+                {sod.data.total > sod.data.rows.length && (
+                  <Text style={styles.sodMore}>
+                    + {(sod.data.total - sod.data.rows.length).toLocaleString()} more in the LXX
+                  </Text>
+                )}
+              </View>
+            )}
+
             <Text style={styles.sectionTitle}>
               Occurrences{total ? ` (${total.toLocaleString()})` : ''}
             </Text>
@@ -209,6 +240,13 @@ const styles = StyleSheet.create({
   },
   saveBtnDone: { backgroundColor: '#DCEEDB' },
   saveBtnText: { color: colors.accent, fontWeight: '700', fontSize: 13 },
+  sodCard: { backgroundColor: '#22304A', borderColor: '#22304A' },
+  sodTitle: { fontSize: 14, fontWeight: '700', color: '#E8DEC8', marginBottom: 4 },
+  sodSub: { fontSize: 12, color: '#9FA9BE', marginBottom: 12, lineHeight: 17 },
+  sodRow: { marginBottom: 10 },
+  sodRef: { fontSize: 12, fontWeight: '700', color: '#C9A96A' },
+  sodText: { fontSize: 15, color: '#F0EBDD', lineHeight: 22, marginTop: 1 },
+  sodMore: { fontSize: 12, color: '#9FA9BE', marginTop: 4 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 10 },
   glossRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 8 },
   glossLabel: { width: 110, fontSize: 13, color: colors.ink },

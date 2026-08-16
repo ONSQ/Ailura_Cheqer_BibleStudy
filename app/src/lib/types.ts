@@ -67,3 +67,17 @@ export interface OccurrencePage {
   total: number;
   rows: Occurrence[];
 }
+
+export interface PeriodHit {
+  id: number;
+  corpus: string;
+  work: string;
+  ref: string;
+  language: string | null;
+  content: string;
+}
+
+export interface PeriodUsagePage {
+  total: number;
+  rows: PeriodHit[];
+}

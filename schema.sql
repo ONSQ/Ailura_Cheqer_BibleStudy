@@ -65,9 +65,32 @@ create table if not exists period_docs (
     language  text,
     content   text not null,
     license   text,                       -- track per-source licensing (e.g. CC BY-NC for ETCBC DSS)
+    strongs   text[],                     -- exact-match arm of hybrid retrieval (tagged corpora)
+    lemmas    text[],
     embedding vector(1536)                -- pgvector, for RAG over period witnesses
 );
 create index if not exists idx_period_docs_work on period_docs (corpus, work);
+create index if not exists idx_period_docs_strongs on period_docs using gin (strongs);
+create unique index if not exists idx_period_docs_key on period_docs (corpus, work, ref);
+
+-- Period-witness hits for a Strong's number (Sod panel), as one JSON value.
+create or replace function period_usage(p_strongs text, p_limit int, p_offset int)
+returns jsonb
+language sql stable
+set search_path = public
+as $$
+    with hits as (
+        select id, corpus, work, ref, language, content
+        from period_docs
+        where strongs @> array[p_strongs]
+        order by id
+        limit p_limit offset p_offset
+    )
+    select jsonb_build_object(
+        'total', (select count(*) from period_docs where strongs @> array[p_strongs]),
+        'rows', coalesce((select jsonb_agg(to_jsonb(h)) from hits h), '[]'::jsonb)
+    )
+$$;
 
 -- Group features (men's group layer, wired to Supabase auth later)
 create table if not exists word_studies (

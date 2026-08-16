@@ -21,6 +21,7 @@ import type {
   GlossCount,
   Lexeme,
   OccurrencePage,
+  PeriodUsagePage,
   TranslationChapter,
   Verse,
   Word,
@@ -197,6 +198,28 @@ export async function getTranslation(
     .order('verse');
   if (error) throw error;
   return { version, book, chapter, verses: data ?? [] };
+}
+
+/**
+ * Period-witness usage (Sod panel): exact Strong's match against tagged
+ * corpora in period_docs (LXX for now). Semantic search over untagged
+ * corpora joins this in Phase 4 (hybrid retrieval).
+ * Requires Supabase; the dev bridge has no period data.
+ */
+export async function getPeriodUsage(
+  strongs: string,
+  limit = 10,
+  offset = 0,
+): Promise<PeriodUsagePage> {
+  if (!hasSupabase) return { total: 0, rows: [] };
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('period_usage', {
+    p_strongs: strongs,
+    p_limit: limit,
+    p_offset: offset,
+  });
+  if (error) throw error;
+  return (data ?? { total: 0, rows: [] }) as PeriodUsagePage;
 }
 
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */
