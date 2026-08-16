@@ -3,6 +3,6 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/study/:strongs", "destination": "/study/[strongs].html" }
+    { "source": "/study/:strongs", "destination": "/study/%5Bstrongs%5D" }
   ]
 }
