@@ -2,6 +2,7 @@
  * Auth + shared word studies. Always Supabase (never the dev bridge):
  * RLS gives each signed-in member his own rows plus anything shared.
  */
+import { APP_URL } from './share';
 import { supabase } from './supabase';
 
 export interface WordStudy {
@@ -26,7 +27,17 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signUp(email: string, password: string) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  // Confirmation links should land on the deployed app, or wherever the
+  // user is signing up from during development, never a hardcoded host.
+  const redirectTo =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : APP_URL;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: redirectTo },
+  });
   if (error) throw error;
   return { needsConfirmation: !data.session };
 }
