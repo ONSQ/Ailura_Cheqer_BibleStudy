@@ -45,6 +45,16 @@ const TOOLS = [
       required: ['book', 'chapter', 'verse'],
     },
   },
+  {
+    name: 'search_witnesses',
+    description:
+      'Search Jewish writings from the centuries around the New Testament (Josephus, Philo, 1 Enoch, Jubilees, Testaments of the Twelve Patriarchs, Maccabees, and more) for passages related to an idea, by meaning. These are historical witnesses, NOT Scripture. Use when the question touches what Jews of the period believed or how an idea was understood in that world. Returns refs with English excerpts.',
+    input_schema: {
+      type: 'object',
+      properties: { query: { type: 'string', description: 'the idea to search for, a short phrase' } },
+      required: ['query'],
+    },
+  },
 ];
 
 const ANSWER_SCHEMA = {
@@ -94,7 +104,8 @@ Hard rules:
 2. You describe where and how Scripture speaks; you do not adjudicate doctrine or interpretation disputes. Where witnesses differ or a phrase is debated, note it neutrally.
 3. Write for thoughtful laymen: plain, warm English. Introduce Hebrew/Greek words with transliteration. Never show Strong's numbers in the answer text (they ride along in the lemmas list for the app to link).
 4. Be efficient: two to four tool calls usually suffice. Search the English text for distinctive phrases first, then use verse_words on a key verse to identify the original words.
-5. In the verses list, use the exact 3-letter book codes from the search results (Gen, Exo, Psa, Mat, Jhn...). List 3-8 of the most relevant verses, not every hit.`;
+5. In the verses list, use the exact 3-letter book codes from the search results (Gen, Exo, Psa, Mat, Jhn...). List 3-8 of the most relevant verses, not every hit.
+6. search_witnesses returns Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others). These illuminate the world of Scripture but are not Scripture: always attribute them by name in the answer ("Josephus writes...", "1 Enoch describes...") and never present them with scriptural authority. Keep the verses list for Bible verses only.`;
 
 async function callClaude(messages: unknown[]) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -154,6 +165,27 @@ Deno.serve(async (req: Request) => {
           p_book: input.book, p_chapter: input.chapter, p_verse: input.verse,
         });
         return data ?? [];
+      }
+      if (name === 'search_witnesses') {
+        const key = Deno.env.get('OPENAI_API_KEY');
+        if (!key) return { error: 'witness search unavailable' };
+        const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({ model: 'text-embedding-3-small', input: String(input.query).slice(0, 300) }),
+        });
+        if (!embRes.ok) return { error: 'witness search failed' };
+        const embedding = (await embRes.json()).data[0].embedding as number[];
+        const { data } = await supabase.rpc('semantic_period_search', {
+          p_embedding: JSON.stringify(embedding),
+          p_corpora: ['Josephus', 'Philo', 'Second Temple'],
+          p_k: 6,
+        });
+        return ((data as Array<Record<string, unknown>>) ?? []).map((r) => ({
+          work: r.work,
+          ref: r.ref,
+          excerpt: String(r.content_en ?? r.content ?? '').slice(0, 700),
+        }));
       }
       return { error: 'unknown tool' };
     };

@@ -259,6 +259,48 @@ export async function getSemanticWitnesses(strongs: string): Promise<SemanticWit
   return (data?.results ?? []) as SemanticWitness[];
 }
 
+export interface LibraryWork {
+  corpus: string;
+  work: string;
+  passages: number;
+  language: string;
+}
+
+export interface LibraryPassage {
+  id: number;
+  ref: string;
+  language: string;
+  content: string;
+  content_en: string | null;
+}
+
+/** The period library: Josephus, Philo, and Second Temple works. */
+export async function getLibraryWorks(): Promise<LibraryWork[]> {
+  if (!hasSupabase) return [];
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('library_works');
+  if (error) throw error;
+  return (data ?? []) as LibraryWork[];
+}
+
+export async function getLibraryPassages(
+  corpus: string,
+  work: string,
+  limit = 40,
+  offset = 0,
+): Promise<{ total: number; rows: LibraryPassage[] }> {
+  if (!hasSupabase) return { total: 0, rows: [] };
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('library_passages', {
+    p_corpus: corpus,
+    p_work: work,
+    p_limit: limit,
+    p_offset: offset,
+  });
+  if (error) throw error;
+  return (data ?? { total: 0, rows: [] }) as { total: number; rows: LibraryPassage[] };
+}
+
 /**
  * How the Septuagint renders a Hebrew lemma: statistical translation
  * equivalents from verse-level co-occurrence (see schema.sql).

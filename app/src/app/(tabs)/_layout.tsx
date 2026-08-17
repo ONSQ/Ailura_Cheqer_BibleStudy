@@ -26,6 +26,10 @@ export default function TabsLayout() {
         options={{ title: 'Reader', headerShown: false, tabBarIcon: tabIcon('📖') }}
       />
       <Tabs.Screen
+        name="library"
+        options={{ title: 'Library', tabBarIcon: tabIcon('🏛️') }}
+      />
+      <Tabs.Screen
         name="studies"
         options={{ title: 'Shared Studies', tabBarIcon: tabIcon('✍️') }}
       />

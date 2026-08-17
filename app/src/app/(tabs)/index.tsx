@@ -37,7 +37,7 @@ export default function Reader() {
   const insets = useSafeAreaInsets();
   const [sel, setSel] = useState({ book: 'Gen', chapter: 1 });
   const [targetVerse, setTargetVerse] = useState<number | null>(null);
-  const [picker, setPicker] = useState<'book' | 'chapter' | null>(null);
+  const [picker, setPicker] = useState<'book' | 'chapter' | 'verse' | null>(null);
   const [version, setVersion] = useState<string | null>('BSB');
   const [showOriginal, setShowOriginal] = useState(true);
   const [wordSel, setWordSel] = useState<WordSelection | null>(null);
@@ -130,17 +130,18 @@ export default function Reader() {
     setTargetVerse(t.verse ?? null);
   };
 
+  // Picker flow: book -> chapter -> verse, each a grid of buttons.
   const setBook = (book: string) => {
     setSel({ book, chapter: 1 });
     setTargetVerse(null);
     setSelection(null);
-    setPicker(null);
+    setPicker('chapter');
   };
   const setChapterNum = (n: number) => {
     setSel((s) => ({ ...s, chapter: n }));
     setTargetVerse(null);
     setSelection(null);
-    setPicker(null);
+    setPicker('verse');
   };
 
   // Tap: open the verse sheet (or extend an active selection).
@@ -358,6 +359,38 @@ export default function Reader() {
                 ))}
               </View>
             </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={picker === 'verse'} animationType="slide" transparent>
+        <Pressable style={styles.modalScrim} onPress={() => setPicker(null)}>
+          <Pressable style={styles.modalSheet} onPress={() => {}}>
+            <Text style={styles.modalTitle}>
+              {sel.book} {sel.chapter}: verse
+            </Text>
+            <Pressable style={styles.wholeChapterBtn} onPress={() => setPicker(null)}>
+              <Text style={styles.wholeChapterText}>Whole chapter, start at the top</Text>
+            </Pressable>
+            {chapter.isLoading ? (
+              <ActivityIndicator style={{ marginVertical: 24 }} color={colors.accent} />
+            ) : (
+              <ScrollView>
+                <View style={styles.grid}>
+                  {(chapter.data?.verses ?? []).map((v) => (
+                    <Pressable
+                      key={v.verse}
+                      style={styles.gridCell}
+                      onPress={() => {
+                        setTargetVerse(v.verse);
+                        setPicker(null);
+                      }}>
+                      <Text style={styles.gridCellText}>{v.verse}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -941,6 +974,14 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     paddingVertical: 9,
   },
   goInputBad: { borderColor: colors.danger },
+  wholeChapterBtn: {
+    backgroundColor: colors.accentSoft,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  wholeChapterText: { color: colors.accent, fontWeight: '600', fontSize: 14 },
   goBtn: {
     backgroundColor: colors.accent,
     borderRadius: 8,

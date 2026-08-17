@@ -371,3 +371,53 @@ as $$
 $$;
 
 revoke execute on function set_embeddings(jsonb) from public, anon, authenticated;
+
+-- Library: browse the period corpora as books.
+create or replace function library_works()
+returns jsonb
+language sql stable
+as $$
+  select coalesce(jsonb_agg(row_json order by corpus, work), '[]'::jsonb)
+  from (
+    select corpus, work,
+      jsonb_build_object(
+        'corpus', corpus,
+        'work', work,
+        'passages', count(*),
+        'language', min(language)
+      ) as row_json
+    from period_docs
+    where corpus in ('Josephus', 'Philo', 'Second Temple')
+    group by corpus, work
+  ) t;
+$$;
+
+create or replace function library_passages(
+  p_corpus text,
+  p_work text,
+  p_limit int default 40,
+  p_offset int default 0
+) returns jsonb
+language sql stable
+as $$
+  select jsonb_build_object(
+    'total', (select count(*) from period_docs where corpus = p_corpus and work = p_work),
+    'rows', coalesce(jsonb_agg(row_json), '[]'::jsonb)
+  )
+  from (
+    select jsonb_build_object(
+      'id', id,
+      'ref', ref,
+      'language', language,
+      'content', content,
+      'content_en', content_en
+    ) as row_json
+    from period_docs
+    where corpus = p_corpus and work = p_work
+    order by id
+    limit least(p_limit, 100) offset greatest(p_offset, 0)
+  ) t;
+$$;
+
+grant execute on function library_works() to anon, authenticated;
+grant execute on function library_passages(text, text, int, int) to anon, authenticated;

@@ -33,6 +33,16 @@ const TOOLS = [
       required: ['term'],
     },
   },
+  {
+    name: 'search_witnesses',
+    description:
+      'Search Jewish writings from the centuries around the New Testament (Josephus, Philo, 1 Enoch, Jubilees, Testaments of the Twelve Patriarchs, Maccabees, and more) for passages related to an idea, by meaning. These are historical witnesses, NOT Scripture. Use when the question touches what Jews of the period believed or how an idea was understood in that world. Returns refs with English excerpts.',
+    input_schema: {
+      type: 'object',
+      properties: { query: { type: 'string', description: 'the idea to search for, a short phrase' } },
+      required: ['query'],
+    },
+  },
 ];
 
 const ANSWER_SCHEMA = {
@@ -67,6 +77,7 @@ Rules:
 2. Theme and big-idea questions: name the passage's themes from its own words and structure — repeated words, contrasts, movement of thought — not from a commentary tradition.
 3. Correlation questions ("how does this connect with the rest of Scripture?", "where else does this idea appear?"): use the search tools to find related passages by their distinctive words and phrases. Cite only verses the searches returned. Budget your searching: at most four searches total, run in parallel where possible, then answer from what you have — a few well-chosen connections beat an exhaustive hunt. If a connection did not surface in your searches, do not cite it.
 4. Where faithful readers genuinely differ, present the main readings fairly. You describe; you do not adjudicate doctrinal disputes.
+4b. The search_witnesses tool returns Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others). These illuminate the passage's world but are not Scripture: always attribute them by name ("Josephus writes...", "Jubilees retells this...") and never present them with scriptural authority. Their refs may appear in refs (e.g. "Ant. 1.27-33", "1 Enoch 6:1-4").
 5. Application questions are welcome, handled humbly: draw only on what the passage emphasizes, offer observations and questions worth pondering rather than personal directives, mark where the text ends and reflection begins ("Worth pondering:"), and for weighty personal matters suggest the group or a pastor.
 6. Plain, warm, precise English. No Strong's numbers in prose. Never mention your inputs, tools, or process — speak of the passage, the words, the witnesses, Scripture.
 7. refs: the references your answer leans on — from the passage material and from search results. Use exact reference strings (3-letter book codes like Gen, Psa, Jhn).`;
@@ -142,6 +153,27 @@ Deno.serve(async (req: Request) => {
       if (name === 'search_lexemes') {
         const { data } = await supabase.rpc('nl_search_lexemes', { p_term: input.term });
         return data ?? [];
+      }
+      if (name === 'search_witnesses') {
+        const key = Deno.env.get('OPENAI_API_KEY');
+        if (!key) return { error: 'witness search unavailable' };
+        const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({ model: 'text-embedding-3-small', input: String(input.query).slice(0, 300) }),
+        });
+        if (!embRes.ok) return { error: 'witness search failed' };
+        const embedding = (await embRes.json()).data[0].embedding as number[];
+        const { data } = await supabase.rpc('semantic_period_search', {
+          p_embedding: JSON.stringify(embedding),
+          p_corpora: ['Josephus', 'Philo', 'Second Temple'],
+          p_k: 6,
+        });
+        return ((data as Array<Record<string, unknown>>) ?? []).map((r) => ({
+          work: r.work,
+          ref: r.ref,
+          excerpt: String(r.content_en ?? r.content ?? '').slice(0, 700),
+        }));
       }
       return { error: 'unknown tool' };
     };
