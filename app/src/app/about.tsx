@@ -68,19 +68,6 @@ export default function About() {
         private or shared with your study group.
       </Text>
 
-      <Text style={styles.sectionTitle}>Keeping it free</Text>
-      <Text style={styles.body}>
-        Cheqer is free for personal study and always will be. If it blesses your study and you
-        want to help cover the small costs of running it, a coffee goes a long way.
-      </Text>
-      {SUPPORT_URL ? (
-        <Link label="Buy me a coffee ☕" url={SUPPORT_URL} />
-      ) : (
-        <Text style={[styles.body, { marginTop: 6, fontStyle: 'italic' }]}>
-          Support link coming soon.
-        </Text>
-      )}
-
       <Text style={styles.sectionTitle}>Hearing the words</Text>
       <Text style={styles.body}>
         Every pronunciation guide has a speaker button that reads the Hebrew or Greek aloud. The
@@ -103,6 +90,13 @@ export default function About() {
 
       <Text style={styles.sectionTitle}>Appearance</Text>
       <ThemePicker />
+
+      <Text style={styles.sectionTitle}>Keeping it free</Text>
+      <Text style={styles.body}>
+        Cheqer is free for personal study and always will be. If it blesses your study and you
+        want to help cover the small costs of running it, a coffee goes a long way.
+      </Text>
+      {SUPPORT_URL ? <Link label="Buy me a coffee ☕" url={SUPPORT_URL} /> : null}
 
       <Text style={styles.sectionTitle}>Data credits</Text>
       <Text style={styles.body}>

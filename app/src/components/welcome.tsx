@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,7 +11,6 @@ import {
 } from 'react-native';
 
 import { captureEmail } from '@/lib/api';
-import { SUPPORT_URL } from '@/lib/links';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 const SEEN_KEY = 'cheqer-welcome-v1';
@@ -118,12 +116,6 @@ export function WelcomeSheet() {
               <Text style={styles.secondaryBtnText}>Create a free account</Text>
             </Pressable>
 
-            {SUPPORT_URL ? (
-              <Pressable onPress={() => Linking.openURL(SUPPORT_URL!)} hitSlop={6}>
-                <Text style={styles.coffee}>Cheqer stays free. Enjoying it? Buy me a coffee ☕</Text>
-              </Pressable>
-            ) : null}
-
             <Pressable onPress={dismiss} hitSlop={8}>
               <Text style={styles.skip}>Maybe later, take me to the text</Text>
             </Pressable>
@@ -223,12 +215,5 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     marginTop: 10,
   },
   secondaryBtnText: { color: colors.accent, fontWeight: '700', fontSize: 14 },
-  coffee: {
-    color: colors.accent,
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: 16,
-    textDecorationLine: 'underline',
-  },
   skip: { color: colors.faint, fontSize: 13, textAlign: 'center', marginTop: 14, padding: 4 },
 }));

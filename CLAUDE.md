@@ -78,6 +78,7 @@ The AI layers in Cheqer, in build order:
 2. Never commit .env, Supabase service keys, or DATABASE_URL. Client app uses the anon key + RLS only.
 3. RLS on word_studies: owner can CRUD own rows; group members can read rows where is_shared = true. No public access.
 4. Keep the ingestion scripts idempotent (safe to re-run: truncate-and-load or upsert).
+5. Support: buymeacoffee.com/ONSQ (About screen only, alongside the Tyndale House / STEP Bible attribution; never gate any content or feature behind it, especially anything touching the CC BY-NC Dead Sea Scrolls data).
 
 ## Conventions
 
