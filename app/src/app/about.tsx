@@ -1,5 +1,6 @@
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { SUPPORT_URL } from '@/lib/links';
 import { themedSheets, useSheet, useTheme, type ThemeMode } from '@/lib/theme';
 
 const MODES: { value: ThemeMode; label: string }[] = [
@@ -66,6 +67,19 @@ export default function About() {
         explore themes and connections across chapters, and save what you find as notes, kept
         private or shared with your study group.
       </Text>
+
+      <Text style={styles.sectionTitle}>Keeping it free</Text>
+      <Text style={styles.body}>
+        Cheqer is free for personal study and always will be. If it blesses your study and you
+        want to help cover the small costs of running it, a coffee goes a long way.
+      </Text>
+      {SUPPORT_URL ? (
+        <Link label="Buy me a coffee ☕" url={SUPPORT_URL} />
+      ) : (
+        <Text style={[styles.body, { marginTop: 6, fontStyle: 'italic' }]}>
+          Support link coming soon.
+        </Text>
+      )}
 
       <Text style={styles.sectionTitle}>Hearing the words</Text>
       <Text style={styles.body}>

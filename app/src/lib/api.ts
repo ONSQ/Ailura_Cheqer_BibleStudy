@@ -259,6 +259,19 @@ export async function getSemanticWitnesses(strongs: string): Promise<SemanticWit
   return (data?.results ?? []) as SemanticWitness[];
 }
 
+/** First-run email capture; stores only with explicit consent. */
+export async function captureEmail(email: string, consent: boolean): Promise<boolean> {
+  if (!hasSupabase) return false;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('capture_email', {
+    p_email: email,
+    p_consent: consent,
+    p_source: 'welcome',
+  });
+  if (error) throw error;
+  return data === true;
+}
+
 export interface LibraryWork {
   corpus: string;
   work: string;

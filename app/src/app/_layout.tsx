@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
+import { WelcomeSheet } from '@/components/welcome';
 import { ThemeProvider, colors, useTheme } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -17,10 +18,15 @@ function BrandSplash({ onDone }: { onDone: () => void }) {
   const opacity = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     SplashScreen.hideAsync();
-    const timer = setTimeout(() => {
-      Animated.timing(opacity, { toValue: 0, duration: 450, useNativeDriver: true }).start(onDone);
+    const fade = setTimeout(() => {
+      Animated.timing(opacity, { toValue: 0, duration: 450, useNativeDriver: false }).start();
     }, 1500);
-    return () => clearTimeout(timer);
+    // The animation completion callback does not fire on web; use a timer.
+    const done = setTimeout(onDone, 2000);
+    return () => {
+      clearTimeout(fade);
+      clearTimeout(done);
+    };
   }, [onDone, opacity]);
   return (
     <Animated.View pointerEvents="none" style={[styles.splash, { opacity }]}>
@@ -55,6 +61,7 @@ function ThemedApp() {
         <Stack.Screen name="about" options={{ title: 'About Cheqer', presentation: 'modal' }} />
         <Stack.Screen name="ask" options={{ title: 'Ask' }} />
       </Stack>
+      {splashDone && <WelcomeSheet />}
       {!splashDone && <BrandSplash onDone={() => setSplashDone(true)} />}
     </>
   );

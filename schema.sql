@@ -421,3 +421,38 @@ $$;
 
 grant execute on function library_works() to anon, authenticated;
 grant execute on function library_passages(text, text, int, int) to anon, authenticated;
+
+-- First-run email capture with explicit marketing consent. The table has
+-- RLS with no policies; the only path in is the capture_email RPC, which
+-- stores nothing without consent.
+create table if not exists email_signups (
+  id bigint generated always as identity primary key,
+  email text not null unique,
+  consented boolean not null default false,
+  source text,
+  created_at timestamptz not null default now()
+);
+
+alter table email_signups enable row level security;
+
+create or replace function capture_email(p_email text, p_consent boolean, p_source text default 'app')
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_email is null or p_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]{2,}$' or length(p_email) > 320 then
+    return false;
+  end if;
+  if not coalesce(p_consent, false) then
+    return false;
+  end if;
+  insert into email_signups (email, consented, source)
+  values (lower(trim(p_email)), true, left(coalesce(p_source, 'app'), 40))
+  on conflict (email) do update set consented = true;
+  return true;
+end;
+$$;
+
+grant execute on function capture_email(text, boolean, text) to anon, authenticated;
