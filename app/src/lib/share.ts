@@ -1,6 +1,6 @@
 import { Platform, Share } from 'react-native';
 
-export const APP_URL = 'https://cheqer-oweneskew-7242s-projects.vercel.app';
+export const APP_URL = 'https://cheqer.vercel.app';
 
 /**
  * Share text via the platform share sheet; on web without navigator.share,

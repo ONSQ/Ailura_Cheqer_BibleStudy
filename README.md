@@ -4,7 +4,7 @@
 
 > "It is the glory of God to conceal a matter, but the glory of kings is to search out a matter." (Proverbs 25:2)
 
-**Live app:** https://cheqer-oweneskew-7242s-projects.vercel.app
+**Live app:** https://cheqer.vercel.app
 
 ## Using the app
 
