@@ -110,8 +110,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [system, setSystem] = useState<Scheme>(
     Appearance.getColorScheme() === 'dark' ? 'dark' : 'light',
   );
+  // Static-export pages are pre-rendered light, and React ignores styling
+  // mismatches while hydrating. Render the first frame to match, then flip
+  // hydrated in an effect: that update is ordinary and always applied.
+  const [hydrated, setHydrated] = useState(Platform.OS !== 'web');
 
   useEffect(() => {
+    setHydrated(true);
     AsyncStorage.getItem(STORAGE_KEY).then((v) => {
       if (v === 'light' || v === 'dark' || v === 'auto') setModeState(v);
     });
@@ -126,7 +131,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, m).catch(() => {});
   };
 
-  const scheme: Scheme = mode === 'auto' ? system : mode;
+  const scheme: Scheme = !hydrated ? 'light' : mode === 'auto' ? system : mode;
   const value = useMemo(
     () => ({ scheme, mode, palette: scheme === 'dark' ? dark : light, setMode }),
     [scheme, mode],
