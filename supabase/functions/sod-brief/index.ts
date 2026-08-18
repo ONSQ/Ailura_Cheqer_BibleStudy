@@ -36,16 +36,17 @@ const BRIEF_SCHEMA = {
   },
 };
 
-const SYSTEM = `You write word-study briefs for Cheqer, a Bible study app used by a men's church group. You receive retrieved evidence about one Hebrew or Greek word: its lexeme, how translators render it, where it occurs across the canon, representative verses with English text, and (where available) Septuagint data.
+const SYSTEM = `You write word-study briefs for Cheqer, a Bible study app used by a men's church group. You receive retrieved evidence about one Hebrew or Greek word: its lexeme, how translators render it, where it occurs across the canon, representative verses with English text, (where available) Septuagint data, and related passages from Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others).
 
 Hard rules:
-1. Every claim must be traceable to the evidence you were given. Cite the exact reference strings provided: "Gen 1:2" for Bible verses, "LXX Gen 1:2" style (LXX + work + ref) for Septuagint verses. Each section's citations array lists the references that section relies on.
+1. Every claim must be traceable to the evidence you were given. Cite the exact reference strings provided: "Gen 1:2" for Bible verses, "LXX Gen 1:2" style (LXX + work + ref) for Septuagint verses, and the given refs for Second Temple passages ("Ant. 1.27-33", "Opif. 26-27", "1 Enoch 6:1-4"). Each section's citations array lists the references that section relies on.
 2. Never state anything the evidence does not support. You summarize what the witnesses say; you never generate doctrine, theological conclusions, or application beyond what the texts themselves show.
-3. If the evidence is thin for some period or claim, say so plainly.
-4. Write for thoughtful laymen: plain, warm, precise English. Give the Hebrew/Greek word with transliteration on first use. No academic jargon without a one-phrase explanation.
-5. Never mention your inputs or process. Do not write "the bundle", "the data provided", "this dataset", "the JSON", or similar. The reader sees only Scripture and translation data on their screen — speak of "the tagged occurrences", "the translators' glosses", "the verses", or simply state the facts with their citations.
+3. Second Temple passages are historical witnesses, not Scripture: always attribute them by author or work ("Philo writes...", "Jubilees retells..."), never blend them into scriptural claims. They were retrieved by meaning, so weigh whether each actually concerns this word's idea before using it.
+4. If the evidence is thin for some period or claim, say so plainly.
+5. Write for thoughtful laymen: plain, warm, precise English. Give the Hebrew/Greek word with transliteration on first use. No academic jargon without a one-phrase explanation.
+6. Never mention your inputs or process. Do not write "the bundle", "the data provided", "this dataset", "the JSON", or similar. The reader sees only Scripture and translation data on their screen — speak of "the tagged occurrences", "the translators' glosses", "the verses", or simply state the facts with their citations.
 
-Structure: 3-5 sections tracing how the word's usage develops across the canon (for Hebrew words typically: Torah, Prophets and Writings, the Septuagint's Greek rendering choices, and where that Greek word then appears in the New Testament; adapt to the actual evidence). Keep the whole brief readable in about two minutes.`;
+Structure: 3-6 sections tracing how the word's usage develops (for Hebrew words typically: Torah, Prophets and Writings, the Septuagint's Greek rendering choices, how Second Temple writers use the idea, and where the Greek word then appears in the New Testament; adapt to the actual evidence). Keep the whole brief readable in about two minutes.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
@@ -78,6 +79,38 @@ Deno.serve(async (req: Request) => {
       p_strongs: strongs,
     });
     if (bundleErr || !bundle?.lexeme) return json({ error: 'unknown lexeme' }, 404);
+
+    // Second Temple witnesses by semantic retrieval (best effort: the brief
+    // still writes from canon + LXX evidence if this arm is unavailable).
+    const openaiKey = Deno.env.get('OPENAI_API_KEY');
+    if (openaiKey) {
+      try {
+        const gloss = String(bundle.lexeme.gloss ?? '').split('@')[0].split('»')[0];
+        const field = `${bundle.lexeme.lemma ?? ''}: ${gloss}`;
+        const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+          body: JSON.stringify({ model: 'text-embedding-3-small', input: field }),
+        });
+        if (embRes.ok) {
+          const embedding = (await embRes.json()).data[0].embedding as number[];
+          const { data: witnesses } = await supabase.rpc('semantic_period_search', {
+            p_embedding: JSON.stringify(embedding),
+            p_corpora: ['Josephus', 'Philo', 'Second Temple'],
+            p_k: 8,
+          });
+          bundle.second_temple_witnesses = ((witnesses as Array<Record<string, unknown>>) ?? []).map(
+            (w) => ({
+              work: w.work,
+              ref: w.ref,
+              excerpt: String(w.content_en ?? w.content ?? '').slice(0, 800),
+            }),
+          );
+        }
+      } catch {
+        // leave the bundle without witnesses
+      }
+    }
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
