@@ -14,7 +14,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Appearance } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 
 export interface Palette {
   bg: string;
@@ -87,8 +87,26 @@ const ThemeContext = createContext<{
   setMode: (m: ThemeMode) => void;
 }>({ scheme: 'light', mode: 'auto', palette: light, setMode: () => {} });
 
+/**
+ * On web the stored preference must be part of the very first render:
+ * the static-export pages hydrate, and a mode applied by a later effect
+ * loses to the hydrated markup. localStorage is synchronous there.
+ * Native keeps the async load in the effect below.
+ */
+function initialMode(): ThemeMode {
+  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      if (v === 'light' || v === 'dark' || v === 'auto') return v;
+    } catch {
+      // storage blocked (private browsing): fall through to auto
+    }
+  }
+  return 'auto';
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>('auto');
+  const [mode, setModeState] = useState<ThemeMode>(initialMode);
   const [system, setSystem] = useState<Scheme>(
     Appearance.getColorScheme() === 'dark' ? 'dark' : 'light',
   );
