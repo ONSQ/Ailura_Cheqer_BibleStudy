@@ -456,3 +456,61 @@ end;
 $$;
 
 grant execute on function capture_email(text, boolean, text) to anon, authenticated;
+
+-- Evaluation harness (AI layer 4, docs/eval/): the tagged LXX as ground
+-- truth for retrieval experiments. Read-only over world-readable data.
+create or replace function eval_lxx_truth(p_strongs text)
+returns jsonb
+language sql stable
+as $$
+  select jsonb_build_object(
+    'total_lxx', (select count(*) from period_docs where corpus = 'LXX'),
+    'truth_ids', coalesce(jsonb_agg(id), '[]'::jsonb)
+  )
+  from period_docs
+  where corpus = 'LXX' and strongs @> array[p_strongs];
+$$;
+
+create or replace function eval_semantic_lxx(
+  p_embedding extensions.vector(1536),
+  p_k int default 50
+) returns jsonb
+language plpgsql stable
+as $$
+begin
+  perform set_config('ivfflat.probes', '20', true);
+  return (
+    select coalesce(jsonb_agg(id order by rank), '[]'::jsonb)
+    from (
+      select id, row_number() over (order by embedding <=> p_embedding) as rank
+      from period_docs
+      where corpus = 'LXX' and embedding is not null
+      order by embedding <=> p_embedding
+      limit least(p_k, 200)
+    ) t
+  );
+end;
+$$;
+
+create or replace function eval_keyword_lxx(
+  p_terms text[],
+  p_k int default 50
+) returns jsonb
+language sql stable
+as $$
+  select coalesce(jsonb_agg(id order by score desc, id), '[]'::jsonb)
+  from (
+    select id,
+      (select count(*) from unnest(p_terms) term
+       where content_en ilike '%' || term || '%') as score
+    from period_docs
+    where corpus = 'LXX' and content_en is not null
+    order by score desc, id
+    limit least(p_k, 200)
+  ) t
+  where score > 0;
+$$;
+
+grant execute on function eval_lxx_truth(text) to anon, authenticated;
+grant execute on function eval_semantic_lxx(extensions.vector, int) to anon, authenticated;
+grant execute on function eval_keyword_lxx(text[], int) to anon, authenticated;

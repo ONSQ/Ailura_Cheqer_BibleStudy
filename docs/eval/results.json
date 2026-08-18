@@ -1,0 +1,471 @@
+{
+  "summary": {
+    "model": "text-embedding-3-small",
+    "n_lemmas": 25,
+    "macro": {
+      "semantic": {
+        "p10": 0.772,
+        "p25": 0.7184,
+        "r50": 0.6359
+      },
+      "keyword": {
+        "p10": 0.744,
+        "p25": 0.7472,
+        "r50": 0.715
+      },
+      "mean_base_rate": 0.0297
+    }
+  },
+  "lemmas": [
+    {
+      "strongs": "G2316",
+      "field": "θεός: God, God., God;, God?, God’s, gods",
+      "truth_size": 3314,
+      "base_rate": 0.1117,
+      "semantic": {
+        "p10": 1.0,
+        "p25": 1.0,
+        "r50": 0.94,
+        "lift": 8.9
+      },
+      "keyword": {
+        "p10": 1.0,
+        "p25": 1.0,
+        "r50": 1.0,
+        "lift": 8.9
+      }
+    },
+    {
+      "strongs": "G2962",
+      "field": "κύριος: Lord, master, Lord., Lord;, Sir, Lord?, masters, lord",
+      "truth_size": 6960,
+      "base_rate": 0.2347,
+      "semantic": {
+        "p10": 0.9,
+        "p25": 0.84,
+        "r50": 0.9,
+        "lift": 3.8
+      },
+      "keyword": {
+        "p10": 1.0,
+        "p25": 1.0,
+        "r50": 0.96,
+        "lift": 4.3
+      }
+    },
+    {
+      "strongs": "G3056",
+      "field": "λόγος: word, words, account, saying, speech, Word, message, statement",
+      "truth_size": 1119,
+      "base_rate": 0.0377,
+      "semantic": {
+        "p10": 0.8,
+        "p25": 0.76,
+        "r50": 0.66,
+        "lift": 21.2
+      },
+      "keyword": {
+        "p10": 0.4,
+        "p25": 0.6,
+        "r50": 0.7,
+        "lift": 10.6
+      }
+    },
+    {
+      "strongs": "G4151",
+      "field": "πνεῦμα: Spirit, spirit, spirits, in spirit, Spirit., by Spirit, with Spirit, Spirits",
+      "truth_size": 346,
+      "base_rate": 0.0117,
+      "semantic": {
+        "p10": 0.9,
+        "p25": 0.84,
+        "r50": 0.56,
+        "lift": 77.1
+      },
+      "keyword": {
+        "p10": 0.4,
+        "p25": 0.48,
+        "r50": 0.72,
+        "lift": 34.3
+      }
+    },
+    {
+      "strongs": "G3551",
+      "field": "νόμος: law, Law, law;, law., law?",
+      "truth_size": 412,
+      "base_rate": 0.0139,
+      "semantic": {
+        "p10": 0.7,
+        "p25": 0.72,
+        "r50": 0.48,
+        "lift": 50.4
+      },
+      "keyword": {
+        "p10": 0.6,
+        "p25": 0.6,
+        "r50": 0.7,
+        "lift": 43.2
+      }
+    },
+    {
+      "strongs": "G1242",
+      "field": "διαθήκη: covenant, covenants, there will, covenant;, will",
+      "truth_size": 331,
+      "base_rate": 0.0112,
+      "semantic": {
+        "p10": 0.9,
+        "p25": 0.88,
+        "r50": 0.86,
+        "lift": 80.6
+      },
+      "keyword": {
+        "p10": 0.8,
+        "p25": 0.6,
+        "r50": 0.34,
+        "lift": 71.7
+      }
+    },
+    {
+      "strongs": "G1391",
+      "field": "δόξα: glory, glory., glory!, glory?, with glory, Glory, glorious, brightness",
+      "truth_size": 430,
+      "base_rate": 0.0145,
+      "semantic": {
+        "p10": 0.7,
+        "p25": 0.88,
+        "r50": 0.68,
+        "lift": 48.3
+      },
+      "keyword": {
+        "p10": 0.8,
+        "p25": 0.88,
+        "r50": 0.8,
+        "lift": 55.2
+      }
+    },
+    {
+      "strongs": "G4678",
+      "field": "σοφία: wisdom, Wisdom, wisdom., with wisdom",
+      "truth_size": 246,
+      "base_rate": 0.0083,
+      "semantic": {
+        "p10": 0.7,
+        "p25": 0.76,
+        "r50": 0.78,
+        "lift": 84.4
+      },
+      "keyword": {
+        "p10": 0.8,
+        "p25": 0.72,
+        "r50": 0.76,
+        "lift": 96.5
+      }
+    },
+    {
+      "strongs": "G1515",
+      "field": "εἰρήνη: peace, Peace, peace., peace;, peace be, Peace be",
+      "truth_size": 261,
+      "base_rate": 0.0088,
+      "semantic": {
+        "p10": 1.0,
+        "p25": 0.84,
+        "r50": 0.64,
+        "lift": 113.6
+      },
+      "keyword": {
+        "p10": 1.0,
+        "p25": 0.8,
+        "r50": 0.46,
+        "lift": 113.6
+      }
+    },
+    {
+      "strongs": "G1343",
+      "field": "δικαιοσύνη: righteousness, righteousness., righteousness?, righteousness that, in righteousness, from righteousness., justice",
+      "truth_size": 336,
+      "base_rate": 0.0113,
+      "semantic": {
+        "p10": 0.8,
+        "p25": 0.64,
+        "r50": 0.62,
+        "lift": 70.6
+      },
+      "keyword": {
+        "p10": 0.5,
+        "p25": 0.6,
+        "r50": 0.64,
+        "lift": 44.1
+      }
+    },
+    {
+      "strongs": "G0266",
+      "field": "ἁμαρτία: sin, sins, sin., sins., sins;, sin?",
+      "truth_size": 499,
+      "base_rate": 0.0168,
+      "semantic": {
+        "p10": 0.3,
+        "p25": 0.6,
+        "r50": 0.58,
+        "lift": 17.8
+      },
+      "keyword": {
+        "p10": 0.9,
+        "p25": 0.88,
+        "r50": 0.82,
+        "lift": 53.5
+      }
+    },
+    {
+      "strongs": "G5485",
+      "field": "χάρις: grace, Grace, favor, Grace be, grace., by grace, credit, Thanks be",
+      "truth_size": 159,
+      "base_rate": 0.0054,
+      "semantic": {
+        "p10": 0.0,
+        "p25": 0.0,
+        "r50": 0.04,
+        "lift": 0.0
+      },
+      "keyword": {
+        "p10": 0.4,
+        "p25": 0.56,
+        "r50": 0.46,
+        "lift": 74.6
+      }
+    },
+    {
+      "strongs": "G5590",
+      "field": "ψυχή: soul, life, souls, Life, minds, lives, soul., our lives",
+      "truth_size": 893,
+      "base_rate": 0.0301,
+      "semantic": {
+        "p10": 0.9,
+        "p25": 0.72,
+        "r50": 0.56,
+        "lift": 29.9
+      },
+      "keyword": {
+        "p10": 0.8,
+        "p25": 0.84,
+        "r50": 0.76,
+        "lift": 26.6
+      }
+    },
+    {
+      "strongs": "G2588",
+      "field": "καρδία: heart, hearts, in heart, heart;, heart., hearts;, heart?",
+      "truth_size": 870,
+      "base_rate": 0.0293,
+      "semantic": {
+        "p10": 1.0,
+        "p25": 0.84,
+        "r50": 0.74,
+        "lift": 34.1
+      },
+      "keyword": {
+        "p10": 0.7,
+        "p25": 0.88,
+        "r50": 0.84,
+        "lift": 23.9
+      }
+    },
+    {
+      "strongs": "G0935",
+      "field": "βασιλεύς: King, king, kings, king;, O king, concerning kings",
+      "truth_size": 2660,
+      "base_rate": 0.0897,
+      "semantic": {
+        "p10": 0.9,
+        "p25": 0.88,
+        "r50": 0.88,
+        "lift": 10.0
+      },
+      "keyword": {
+        "p10": 1.0,
+        "p25": 1.0,
+        "r50": 1.0,
+        "lift": 11.2
+      }
+    },
+    {
+      "strongs": "G0032",
+      "field": "ἄγγελος: angel, angels, an angel, angel;, angels., messenger, messengers, An angel",
+      "truth_size": 296,
+      "base_rate": 0.01,
+      "semantic": {
+        "p10": 1.0,
+        "p25": 0.88,
+        "r50": 0.86,
+        "lift": 100.2
+      },
+      "keyword": {
+        "p10": 1.0,
+        "p25": 1.0,
+        "r50": 0.98,
+        "lift": 100.2
+      }
+    },
+    {
+      "strongs": "G2378",
+      "field": "θυσία: sacrifices, sacrifice, sacrifice;’, sacrifices., sacrifice ’, Sacrifice",
+      "truth_size": 357,
+      "base_rate": 0.012,
+      "semantic": {
+        "p10": 0.8,
+        "p25": 0.76,
+        "r50": 0.78,
+        "lift": 66.5
+      },
+      "keyword": {
+        "p10": 0.7,
+        "p25": 0.72,
+        "r50": 0.62,
+        "lift": 58.2
+      }
+    },
+    {
+      "strongs": "G2409",
+      "field": "ἱερεύς: priests, priest, priests?, priests.",
+      "truth_size": 776,
+      "base_rate": 0.0262,
+      "semantic": {
+        "p10": 0.8,
+        "p25": 0.72,
+        "r50": 0.72,
+        "lift": 30.6
+      },
+      "keyword": {
+        "p10": 0.7,
+        "p25": 0.76,
+        "r50": 0.82,
+        "lift": 26.8
+      }
+    },
+    {
+      "strongs": "G4166",
+      "field": "ποιμήν: shepherds, shepherd, shepherd., Shepherd",
+      "truth_size": 68,
+      "base_rate": 0.0023,
+      "semantic": {
+        "p10": 1.0,
+        "p25": 0.72,
+        "r50": 0.44,
+        "lift": 436.2
+      },
+      "keyword": {
+        "p10": 1.0,
+        "p25": 0.96,
+        "r50": 0.96,
+        "lift": 436.2
+      }
+    },
+    {
+      "strongs": "G0740",
+      "field": "ἄρτος: bread, loaves, bread., loaf, bread?, loaves?, Bread, loaves bread",
+      "truth_size": 279,
+      "base_rate": 0.0094,
+      "semantic": {
+        "p10": 0.8,
+        "p25": 0.8,
+        "r50": 0.68,
+        "lift": 85.0
+      },
+      "keyword": {
+        "p10": 1.0,
+        "p25": 0.88,
+        "r50": 0.88,
+        "lift": 106.3
+      }
+    },
+    {
+      "strongs": "G5204",
+      "field": "ὕδωρ, ὕδατος: water, waters, water., water;, with water, waters., water —, with water.",
+      "truth_size": 580,
+      "base_rate": 0.0196,
+      "semantic": {
+        "p10": 0.5,
+        "p25": 0.44,
+        "r50": 0.42,
+        "lift": 25.6
+      },
+      "keyword": {
+        "p10": 0.9,
+        "p25": 0.96,
+        "r50": 0.92,
+        "lift": 46.0
+      }
+    },
+    {
+      "strongs": "G5457",
+      "field": "φῶς: light, Light, light., Light., lights, light;, fire., in light",
+      "truth_size": 162,
+      "base_rate": 0.0055,
+      "semantic": {
+        "p10": 0.8,
+        "p25": 0.64,
+        "r50": 0.56,
+        "lift": 146.5
+      },
+      "keyword": {
+        "p10": 0.6,
+        "p25": 0.56,
+        "r50": 0.42,
+        "lift": 109.8
+      }
+    },
+    {
+      "strongs": "G2222",
+      "field": "ζωή: life, life., life;, living, lifetime, life —",
+      "truth_size": 282,
+      "base_rate": 0.0095,
+      "semantic": {
+        "p10": 0.9,
+        "p25": 0.8,
+        "r50": 0.58,
+        "lift": 94.7
+      },
+      "keyword": {
+        "p10": 0.8,
+        "p25": 0.64,
+        "r50": 0.54,
+        "lift": 84.1
+      }
+    },
+    {
+      "strongs": "G2288",
+      "field": "θάνατος: death, death., death;, Death, O death, in death, deaths, plague",
+      "truth_size": 345,
+      "base_rate": 0.0116,
+      "semantic": {
+        "p10": 1.0,
+        "p25": 0.8,
+        "r50": 0.66,
+        "lift": 86.0
+      },
+      "keyword": {
+        "p10": 0.8,
+        "p25": 0.72,
+        "r50": 0.72,
+        "lift": 68.8
+      }
+    },
+    {
+      "strongs": "G0026",
+      "field": "ἀγάπη: love, love., Love, in love, love feasts, beloved, Let love be, love .",
+      "truth_size": 18,
+      "base_rate": 0.0006,
+      "semantic": {
+        "p10": 0.2,
+        "p25": 0.2,
+        "r50": 0.2778,
+        "lift": 329.5
+      },
+      "keyword": {
+        "p10": 0.0,
+        "p25": 0.04,
+        "r50": 0.0556,
+        "lift": 0.0
+      }
+    }
+  ]
+}
