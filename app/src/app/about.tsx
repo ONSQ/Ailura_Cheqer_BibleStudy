@@ -54,6 +54,18 @@ export default function About() {
       <Text style={styles.byline}>powered by Ailura</Text>
       <Link label="ailura.net" url="https://ailura.net" />
 
+      {SUPPORT_URL ? (
+        <>
+          <Pressable style={styles.coffeeBtn} onPress={() => Linking.openURL(SUPPORT_URL!)}>
+            <Text style={styles.coffeeBtnText}>☕ Buy me a coffee</Text>
+          </Pressable>
+          <Text style={styles.coffeeCaption}>
+            Cheqer is free and always will be. A coffee helps cover the small costs of running
+            it.
+          </Text>
+        </>
+      ) : null}
+
       <Text style={styles.sectionTitle}>What this app does</Text>
       <Text style={styles.body}>
         Cheqer is a word-study Bible. Read in English with the Hebrew or Greek underneath, then
@@ -90,13 +102,6 @@ export default function About() {
 
       <Text style={styles.sectionTitle}>Appearance</Text>
       <ThemePicker />
-
-      <Text style={styles.sectionTitle}>Keeping it free</Text>
-      <Text style={styles.body}>
-        Cheqer is free for personal study and always will be. If it blesses your study and you
-        want to help cover the small costs of running it, a coffee goes a long way.
-      </Text>
-      {SUPPORT_URL ? <Link label="Buy me a coffee ☕" url={SUPPORT_URL} /> : null}
 
       <Text style={styles.sectionTitle}>Data credits</Text>
       <Text style={styles.body}>
@@ -154,6 +159,27 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     marginTop: 14,
   },
   byline: { fontSize: 13, color: colors.accent, marginTop: 18 },
+  coffeeBtn: {
+    backgroundColor: '#FFDD00',
+    borderRadius: 10,
+    paddingHorizontal: 28,
+    paddingVertical: 13,
+    marginTop: 22,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  coffeeBtnText: { color: '#26211A', fontWeight: '700', fontSize: 16 },
+  coffeeCaption: {
+    fontSize: 12,
+    color: colors.faint,
+    textAlign: 'center',
+    lineHeight: 17,
+    marginTop: 8,
+    maxWidth: 320,
+  },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '700',
