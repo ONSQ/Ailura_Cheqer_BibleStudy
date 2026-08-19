@@ -272,6 +272,29 @@ export async function captureEmail(email: string, consent: boolean): Promise<boo
   return data === true;
 }
 
+export interface SenseDriftEra {
+  era: string;
+  total: number;
+  counts: Record<string, number>;
+}
+
+export interface SenseDrift {
+  senses: string[];
+  eras: SenseDriftEra[];
+}
+
+/**
+ * Sense Drift: how a word's dominant sense shifts across canonical eras,
+ * computed purely from the tagged glosses. No AI involved.
+ */
+export async function getSenseDrift(strongs: string): Promise<SenseDrift | null> {
+  if (!hasSupabase) return null;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('sense_drift', { p_strongs: strongs });
+  if (error) throw error;
+  return (data ?? null) as SenseDrift | null;
+}
+
 export interface LibraryWork {
   corpus: string;
   work: string;

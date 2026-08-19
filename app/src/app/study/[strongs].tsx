@@ -24,6 +24,7 @@ import {
   getOccurrences,
   getPeriodUsage,
   getSemanticWitnesses,
+  getSenseDrift,
 } from '@/lib/api';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Occurrence } from '@/lib/types';
@@ -68,6 +69,15 @@ export default function WordStudy() {
     enabled: !!strongs,
     staleTime: Infinity,
   });
+  const drift = useQuery({
+    queryKey: ['sense-drift', strongs],
+    queryFn: () => getSenseDrift(strongs!),
+    enabled: !!strongs,
+    staleTime: Infinity,
+  });
+  // Only meaningful for polysemous words with enough data in 2+ eras.
+  const driftEras = drift.data?.eras.filter((e) => e.total >= 5) ?? [];
+  const driftVisible = (drift.data?.senses.length ?? 0) >= 2 && driftEras.length >= 2;
   const makeBrief = useMutation({
     mutationFn: () => generateSodBrief(strongs!),
     onSuccess: (data) => qc.setQueryData(['sod-brief', strongs], data),
@@ -190,6 +200,42 @@ export default function WordStudy() {
                     <Text style={styles.glossCount}>{g.count.toLocaleString()}</Text>
                   </View>
                 ))}
+              </View>
+            )}
+
+            {driftVisible && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>How the meaning moves</Text>
+                <Text style={styles.driftSub}>
+                  The share of each sense era by era, counted from the translators&apos;
+                  glosses. Watch which sense leads where.
+                </Text>
+                {driftEras.map((e) => (
+                  <View key={e.era} style={styles.driftRow}>
+                    <View style={styles.driftLabelRow}>
+                      <Text style={styles.driftEra}>{e.era}</Text>
+                      <Text style={styles.driftTotal}>{e.total}</Text>
+                    </View>
+                    <View style={styles.driftBar}>
+                      {[...drift.data!.senses, 'other'].map((s, i) =>
+                        e.counts[s] ? (
+                          <View
+                            key={s}
+                            style={{ flex: e.counts[s], backgroundColor: senseColor(s, i) }}
+                          />
+                        ) : null,
+                      )}
+                    </View>
+                  </View>
+                ))}
+                <View style={styles.driftLegend}>
+                  {[...drift.data!.senses, 'other'].map((s, i) => (
+                    <View key={s} style={styles.driftLegendItem}>
+                      <View style={[styles.driftDot, { backgroundColor: senseColor(s, i) }]} />
+                      <Text style={styles.driftLegendText}>{s}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             )}
 
@@ -363,6 +409,12 @@ export default function WordStudy() {
   );
 }
 
+/** Medium-saturation hues legible on both themes; other is always gray. */
+const SENSE_COLORS = ['#C9A96A', '#5B8AA6', '#8A6FA6', '#6FA66F', '#C97B5B'];
+function senseColor(sense: string, i: number): string {
+  return sense === 'other' ? '#8C8C8C' : SENSE_COLORS[i % SENSE_COLORS.length];
+}
+
 function languageName(code: string) {
   return code === 'heb' ? 'Hebrew' : code === 'grk' ? 'Greek' : 'Aramaic';
 }
@@ -428,6 +480,27 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
+  driftSub: { fontSize: 12, color: colors.faint, lineHeight: 17, marginBottom: 10 },
+  driftRow: { marginBottom: 9 },
+  driftLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 3,
+  },
+  driftEra: { fontSize: 12, fontWeight: '600', color: colors.ink },
+  driftTotal: { fontSize: 11, color: colors.faint },
+  driftBar: {
+    flexDirection: 'row',
+    height: 14,
+    borderRadius: 7,
+    overflow: 'hidden',
+    backgroundColor: colors.accentSoft,
+  },
+  driftLegend: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 },
+  driftLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  driftDot: { width: 10, height: 10, borderRadius: 5 },
+  driftLegendText: { fontSize: 11, color: colors.faint },
   lemma: { fontSize: 34, color: colors.ink },
   lemmaHebrew: { textAlign: 'left', fontSize: 40 },
   lexMeta: { color: colors.faint, marginTop: 4, fontSize: 13 },

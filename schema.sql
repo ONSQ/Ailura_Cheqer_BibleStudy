@@ -554,3 +554,39 @@ revoke execute on function ai_gate(text, text, int, int) from public, anon, auth
 -- semantic_period_search gains a similarity floor (p_min_sim, default 0.30):
 -- weak nearest neighbors are worse than no neighbors. Definition above is
 -- superseded by the 4-argument version applied in the migrations.
+
+-- Sense Drift: how a word's dominant sense shifts across canonical eras,
+-- computed purely from the tagged glosses. No AI involved.
+-- sense_of reduces a gloss to its head sense token; sense_drift groups
+-- occurrences into eras (Torah / Prophets / Writings, Gospels & Acts /
+-- Paul / General) and counts the top senses (plural-merged, min 3 hits).
+-- Full definitions in the sense_drift* migrations.
+
+create or replace function sense_of(g text)
+returns text
+immutable
+language sql
+as $fn$
+  select coalesce((
+    select w
+    from unnest(string_to_array(
+      regexp_replace(lower(split_part(split_part(coalesce(g, ''), '@', 1), chr(187), 1)), '[^a-z ]', ' ', 'g'),
+      ' ')) w
+    where w <> '' and w not in (
+      'the','a','an','and','of','my','his','her','your','their','its','he','she','it',
+      'i','you','they','who','whom','was','were','is','are','am','to','in','on','for',
+      'with','shall','will','be','been','being','have','has','had','not','that','this',
+      'which','them','him','me','us','we','then','when','from','by','at','as','but',
+      'or','so','do','did','does','o','let','there','all','one','any','out','up',
+      'into','unto','upon','over','against','before','after','through',
+      'toward','towards','among','within','without','about','also','no','nor','if',
+      'because','than','such','what','how','where','why','may','can','could','would',
+      'should','must','more','most','very','each','every','some','both','now','here',
+      'like','these','those','only','even','again','together','away','down','off',
+      'back','thus','yet','still','just','same','own','other','another','under'
+    )
+    limit 1
+  ), 'other');
+$fn$;
+
+grant execute on function sense_drift(text) to anon, authenticated;
