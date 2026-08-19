@@ -132,6 +132,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   const scheme: Scheme = !hydrated ? 'light' : mode === 'auto' ? system : mode;
+
+  // Keep the browser's own chrome (address bar, bottom toolbar, overscroll)
+  // in step with the app: it tints from the document background and the
+  // theme-color meta, not from anything React renders.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const bg = scheme === 'dark' ? dark.bg : light.bg;
+    document.body.style.backgroundColor = bg;
+    document.documentElement.style.colorScheme = scheme;
+    document
+      .querySelectorAll('meta[name="theme-color"]')
+      .forEach((m) => m.setAttribute('content', bg));
+  }, [scheme]);
   const value = useMemo(
     () => ({ scheme, mode, palette: scheme === 'dark' ? dark : light, setMode }),
     [scheme, mode],
