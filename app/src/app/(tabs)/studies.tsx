@@ -3,10 +3,8 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
-  Modal,
   Pressable,
-  ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -15,8 +13,8 @@ import {
 
 import { supabase } from '@/lib/supabase';
 import {
-  deleteStudy,
   listStudies,
+  relativeDate,
   signIn,
   signOut,
   signUp,
@@ -80,10 +78,10 @@ function SignIn() {
   return (
     <View style={styles.screen}>
       <View style={styles.card}>
-        <Text style={styles.title}>Shared studies</Text>
+        <Text style={styles.title}>Studies</Text>
         <Text style={styles.body}>
-          Sign in to save word studies and see what the group has shared. Notes stay private
-          unless you mark them shared.
+          Sign in to build word studies, keep notes, and publish the good ones for everyone
+          using Cheqer. Notes stay private unless you publish them.
         </Text>
         <TextInput
           style={styles.input}
@@ -123,70 +121,10 @@ function SignIn() {
   );
 }
 
-function jumpToStudyRef(ref: string) {
-  const m = ref.match(/^([1-3]?[A-Za-z]{2,3})\s+(\d+):(\d+)/);
-  if (m) {
-    router.push({ pathname: '/', params: { book: m[1], chapter: m[2], verse: m[3] } });
-  }
-}
-
-function EditStudyModal({
-  study,
-  onClose,
-  onSaved,
-}: {
-  study: WordStudy;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const styles = useSheet(sheets);
-  const { palette: colors } = useTheme();
-  const [title, setTitle] = useState(study.title ?? '');
-  const [notes, setNotes] = useState(study.notes ?? '');
-  const save = useMutation({
-    mutationFn: () => updateStudy(study.id, { title, notes }),
-    onSuccess: () => {
-      onSaved();
-      onClose();
-    },
-  });
-  return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalScrim} onPress={onClose}>
-        <Pressable style={styles.modalSheet} onPress={() => {}}>
-          <Text style={styles.title}>Edit note</Text>
-          <ScrollView keyboardShouldPersistTaps="handled">
-            <TextInput
-              style={styles.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Title"
-              placeholderTextColor={colors.faint}
-            />
-            <TextInput
-              style={[styles.input, styles.notesInput]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Notes — build your study here"
-              placeholderTextColor={colors.faint}
-              multiline
-            />
-            <View style={styles.buttonRow}>
-              <Pressable
-                style={[styles.button, save.isPending && styles.buttonDisabled]}
-                disabled={save.isPending}
-                onPress={() => save.mutate()}>
-                <Text style={styles.buttonText}>{save.isPending ? 'Saving…' : 'Save'}</Text>
-              </Pressable>
-              <Pressable style={[styles.button, styles.buttonGhost]} onPress={onClose}>
-                <Text style={[styles.buttonText, styles.buttonGhostText]}>Cancel</Text>
-              </Pressable>
-            </View>
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
+function studyIcon(s: WordStudy): string {
+  if (s.strongs) return '🔤';
+  if (s.ref) return '📖';
+  return '✍️';
 }
 
 function StudyList({ userId }: { userId: string }) {
@@ -195,90 +133,97 @@ function StudyList({ userId }: { userId: string }) {
   const qc = useQueryClient();
   const studies = useQuery({ queryKey: ['studies'], queryFn: listStudies });
   const invalidate = () => qc.invalidateQueries({ queryKey: ['studies'] });
-  const toggleShare = useMutation({
+  const togglePublish = useMutation({
     mutationFn: (s: WordStudy) => updateStudy(s.id, { is_shared: !s.is_shared }),
     onSuccess: invalidate,
   });
-  const remove = useMutation({ mutationFn: deleteStudy, onSuccess: invalidate });
-  const [editing, setEditing] = useState<WordStudy | null>(null);
+
+  const mine = (studies.data ?? []).filter((s) => s.owner === userId);
+  const community = (studies.data ?? []).filter((s) => s.owner !== userId);
+  const sections = [
+    { title: `My studies · ${mine.length}`, data: mine },
+    ...(community.length
+      ? [{ title: `From the community · ${community.length}`, data: community }]
+      : []),
+  ];
 
   return (
     <View style={styles.screen}>
-      <FlatList
-        data={studies.data ?? []}
+      <SectionList
+        sections={sections}
         keyExtractor={(s) => String(s.id)}
         contentContainerStyle={{ paddingBottom: 24 }}
+        stickySectionHeadersEnabled={false}
         ListHeaderComponent={
           <View style={styles.listHeader}>
             <Text style={styles.hint}>
-              Save studies from any word study screen. Shared notes are visible to the whole
-              group.
+              Tap a study to read and work on it. Publish your best ones for everyone using
+              Cheqer.
             </Text>
             <Pressable onPress={() => signOut()} hitSlop={8}>
               <Text style={styles.signOut}>Sign out</Text>
             </Pressable>
           </View>
         }
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectionHeader}>{section.title}</Text>
+        )}
         ListEmptyComponent={
           studies.isLoading ? (
             <ActivityIndicator style={{ marginTop: 32 }} color={colors.accent} />
-          ) : (
-            <View style={styles.card}>
-              <Text style={styles.body}>
-                No studies yet. Open a word study from the Reader and tap “Save study”.
-              </Text>
-            </View>
-          )
+          ) : null
         }
         renderItem={({ item }) => {
-          const mine = item.owner === userId;
+          const isMine = item.owner === userId;
           return (
             <Pressable
               style={styles.card}
-              onPress={() =>
-                item.strongs
-                  ? router.push(`/study/${item.strongs}` as never)
-                  : item.ref
-                    ? jumpToStudyRef(item.ref)
-                    : undefined
-              }>
+              onPress={() => router.push(`/study-note/${item.id}` as never)}>
               <View style={styles.cardTop}>
-                <Text style={styles.cardTitle}>{item.title ?? item.strongs ?? 'Study'}</Text>
-                <Text style={styles.badge}>
-                  {item.is_shared ? 'shared' : 'private'}
-                  {mine ? '' : ' · group'}
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {studyIcon(item)} {item.title ?? item.strongs ?? 'Study'}
+                </Text>
+                <Text style={[styles.badge, item.is_shared && styles.badgePublished]}>
+                  {item.is_shared ? '🌍' : '🔒'}
                 </Text>
               </View>
               {item.notes ? (
-                <Text style={styles.body} numberOfLines={6}>
+                <Text style={styles.body} numberOfLines={3}>
                   {item.notes}
                 </Text>
               ) : null}
-              {item.strongs || item.ref ? (
-                <Text style={styles.cardMeta}>{item.ref ?? item.strongs}</Text>
-              ) : null}
-              {mine && (
-                <View style={styles.buttonRow}>
-                  <Pressable onPress={() => setEditing(item)} hitSlop={6}>
-                    <Text style={styles.link}>Edit</Text>
-                  </Pressable>
-                  <Pressable onPress={() => toggleShare.mutate(item)} hitSlop={6}>
+              <View style={styles.cardMetaRow}>
+                <Text style={styles.cardMeta}>
+                  {item.ref ?? item.strongs ?? ''}
+                  {item.ref || item.strongs ? ' · ' : ''}
+                  {relativeDate(item.created_at)}
+                </Text>
+                {isMine && (
+                  <Pressable
+                    hitSlop={6}
+                    disabled={togglePublish.isPending}
+                    onPress={() => togglePublish.mutate(item)}>
                     <Text style={styles.link}>
-                      {item.is_shared ? 'Make private' : 'Share with group'}
+                      {item.is_shared ? 'Make private' : 'Publish'}
                     </Text>
                   </Pressable>
-                  <Pressable onPress={() => remove.mutate(item.id)} hitSlop={6}>
-                    <Text style={[styles.link, styles.danger]}>Delete</Text>
-                  </Pressable>
-                </View>
-              )}
+                )}
+              </View>
             </Pressable>
           );
         }}
+        SectionSeparatorComponent={() => <View style={{ height: 4 }} />}
+        ListFooterComponent={
+          !studies.isLoading && mine.length === 0 ? (
+            <View style={styles.card}>
+              <Text style={styles.body}>
+                No studies of your own yet. Open a word study from the Reader and tap “Save
+                study”, or save an answer from Ask as a note.
+              </Text>
+            </View>
+          ) : null
+        }
       />
-      {editing && (
-        <EditStudyModal study={editing} onClose={() => setEditing(null)} onSaved={invalidate} />
-      )}
     </View>
   );
 }
@@ -328,21 +273,31 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   },
   hint: { flex: 1, fontSize: 12, color: colors.faint, lineHeight: 17 },
   signOut: { color: colors.accent, fontSize: 13, fontWeight: '600' },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4, gap: 8 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.ink, flex: 1 },
-  badge: { fontSize: 12, color: colors.faint },
-  cardMeta: { fontSize: 12, color: colors.faint, marginTop: 6 },
-  link: { color: colors.accent, fontSize: 13, fontWeight: '600' },
-  danger: { color: colors.danger },
-  byline: { textAlign: 'center', color: colors.faint, fontSize: 12, marginTop: 'auto', marginBottom: 12 },
-  modalScrim: { flex: 1, backgroundColor: 'rgba(20,16,10,0.45)', justifyContent: 'flex-end' },
-  modalSheet: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    maxHeight: '85%',
-    padding: 16,
-    paddingBottom: 28,
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.accent,
+    marginTop: 10,
+    marginBottom: 8,
   },
-  notesInput: { minHeight: 180, textAlignVertical: 'top' },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 8,
+  },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.ink, flex: 1 },
+  badge: { fontSize: 13, color: colors.faint },
+  badgePublished: { color: colors.accent },
+  cardMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 8,
+  },
+  cardMeta: { fontSize: 12, color: colors.faint, flex: 1 },
+  link: { color: colors.accent, fontSize: 13, fontWeight: '600' },
+  byline: { textAlign: 'center', color: colors.faint, fontSize: 12, marginTop: 'auto', marginBottom: 12 },
 }));

@@ -47,6 +47,29 @@ export async function signOut() {
   if (error) throw error;
 }
 
+export async function getStudy(id: number): Promise<WordStudy | null> {
+  const { data, error } = await supabase
+    .from('word_studies')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** "3d ago" style relative dates for study cards. */
+export function relativeDate(iso: string): string {
+  const then = new Date(iso).getTime();
+  const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (mins < 60) return mins <= 1 ? 'just now' : `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.round(days / 30);
+  return months < 12 ? `${months}mo ago` : `${Math.round(months / 12)}y ago`;
+}
+
 export async function listStudies(): Promise<WordStudy[]> {
   const { data, error } = await supabase
     .from('word_studies')
