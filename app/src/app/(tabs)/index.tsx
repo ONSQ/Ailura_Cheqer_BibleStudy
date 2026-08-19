@@ -229,25 +229,6 @@ export default function Reader() {
         }}
       />
 
-      {selection && (
-        <View style={styles.selectionBar}>
-          <Pressable
-            style={styles.selectionAsk}
-            onPress={() => {
-              setSheetRange(selection);
-              setSelection(null);
-            }}>
-            <Text style={styles.selectionAskText}>
-              Ask about {sel.book} {sel.chapter}:{selection.start}
-              {selection.end > selection.start ? `–${selection.end}` : ''}
-            </Text>
-          </Pressable>
-          <Pressable onPress={() => setSelection(null)} hitSlop={10}>
-            <Text style={styles.selectionCancel}>✕</Text>
-          </Pressable>
-        </View>
-      )}
-
       {chapter.data && (
         <FlatList
           ref={listRef}
@@ -290,13 +271,34 @@ export default function Reader() {
               english={version != null ? englishByVerse.get(item.verse) : undefined}
               showOriginal={showOriginal}
               onEnglishWord={(query) =>
-                setWordSel({ query, verse: item, book: sel.book, chapter: sel.chapter, isRTL })
+                selection
+                  ? onVersePress(item.verse)
+                  : setWordSel({ query, verse: item, book: sel.book, chapter: sel.chapter, isRTL })
               }
               onVersePress={() => onVersePress(item.verse)}
               onVerseLongPress={() => onVerseLongPress(item.verse)}
             />
           )}
         />
+      )}
+
+      {selection && (
+        <View style={[styles.selectionBar, { bottom: insets.bottom + 16 }]}>
+          <Pressable
+            style={styles.selectionAsk}
+            onPress={() => {
+              setSheetRange(selection);
+              setSelection(null);
+            }}>
+            <Text style={styles.selectionAskText}>
+              Ask about {sel.book} {sel.chapter}:{selection.start}
+              {selection.end > selection.start ? `–${selection.end}` : ''}
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => setSelection(null)} hitSlop={10}>
+            <Text style={styles.selectionCancel}>✕</Text>
+          </Pressable>
+        </View>
       )}
 
       <Modal visible={picker === 'book'} animationType="slide" transparent>
@@ -917,6 +919,7 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   selectionBar: {
     position: 'absolute',
     bottom: 16,
+    zIndex: 20,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
