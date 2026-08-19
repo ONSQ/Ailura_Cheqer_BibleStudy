@@ -194,6 +194,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const evidence: unknown[] = [];
+    const trail: { tool: string; query: string; found: number }[] = [];
 
     const runTool = async (name: string, input: Record<string, unknown>) => {
       if (name === 'search_verses') {
@@ -246,6 +247,14 @@ Deno.serve(async (req: Request) => {
           if (block.type === 'tool_use') {
             const result = await runTool(block.name, block.input);
             evidence.push(result);
+            trail.push({
+              tool: block.name,
+              query: String(
+                block.input.query ?? block.input.term ??
+                (block.input.book ? `${block.input.book} ${block.input.chapter}:${block.input.verse}` : ''),
+              ),
+              found: Array.isArray(result) ? result.length : 0,
+            });
             results.push({
               type: 'tool_result',
               tool_use_id: block.id,
@@ -266,13 +275,20 @@ Deno.serve(async (req: Request) => {
       const valid = new Set<string>();
       collectRefs(evidence, valid);
       const evidenceText = JSON.stringify(evidence);
+      const before = (result.verses?.length ?? 0) + (result.lemmas?.length ?? 0);
       result.verses = (result.verses ?? []).filter(
         (v: { ref: string }) => valid.has(v.ref) || evidenceText.includes(v.ref),
       );
       result.lemmas = (result.lemmas ?? []).filter(
         (l: { strongs: string }) => evidenceText.includes(l.strongs),
       );
-      return json({ result, model: msg.model });
+      const kept = result.verses.length + result.lemmas.length;
+      return json({
+        result,
+        model: msg.model,
+        trail,
+        citations: { kept, dropped: before - kept },
+      });
     }
     return json({ error: 'too many search rounds' }, 502);
   } catch (e) {

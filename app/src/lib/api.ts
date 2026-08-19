@@ -382,7 +382,7 @@ export async function askQuestion(question: string): Promise<AskResult> {
   });
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
-  return data.result as AskResult;
+  return { ...data.result, trail: data.trail, citations: data.citations } as AskResult;
 }
 
 /** Direct questions on one verse, grounded in its words, context, and witnesses. */
@@ -398,7 +398,7 @@ export async function askVerse(input: {
   const { data, error } = await supabase.functions.invoke('ask-verse', { body: input });
   if (error) throw error;
   if (data?.error) throw new Error(data.error);
-  return data.result as VerseAnswer;
+  return { ...data.result, trail: data.trail, citations: data.citations } as VerseAnswer;
 }
 
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */

@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import { TrailPanel } from '@/components/trail';
 import { askQuestion } from '@/lib/api';
 import { formatQaShare, shareText } from '@/lib/share';
 import { createStudy, getUserId } from '@/lib/studies';
@@ -114,6 +115,7 @@ export default function Ask() {
       {ask.data && (
         <View style={styles.result}>
           <Text style={styles.answer}>{ask.data.answer}</Text>
+          <TrailPanel trail={ask.data.trail} citations={ask.data.citations} />
           <View style={styles.resultActions}>
             <Pressable onPress={saveResult} hitSlop={6}>
               <Text style={styles.resultActionText}>Save note</Text>

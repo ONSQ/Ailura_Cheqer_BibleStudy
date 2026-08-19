@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { TrailPanel } from '@/components/trail';
 import { WordSheet, type WordSelection } from '@/components/word-sheet';
 import { formatQaShare, shareText } from '@/lib/share';
 import { createStudy, getUserId } from '@/lib/studies';
@@ -28,7 +29,7 @@ import {
 } from '@/lib/api';
 import { parseRef } from '@/lib/refs';
 import { fonts, themedSheets, useSheet, useTheme } from '@/lib/theme';
-import type { Verse } from '@/lib/types';
+import type { Verse, VerseAnswer } from '@/lib/types';
 
 export default function Reader() {
   const styles = useSheet(sheets);
@@ -597,9 +598,7 @@ function AskVerseSection({
 }) {
   const styles = useSheet(sheets);
   const { palette: colors } = useTheme();
-  const [thread, setThread] = useState<
-    { question: string; answer: string; refs: { ref: string; note: string }[] }[]
-  >([]);
+  const [thread, setThread] = useState<({ question: string } & VerseAnswer)[]>([]);
   const [custom, setCustom] = useState('');
   const [turnStatus, setTurnStatus] = useState<Record<number, string>>({});
   const passageRef = `${book} ${chapter}:${verseStart}${verseEnd > verseStart ? `-${verseEnd}` : ''}`;
@@ -670,6 +669,7 @@ function AskVerseSection({
               ))}
             </View>
           )}
+          <TrailPanel trail={t.trail} citations={t.citations} />
           <View style={styles.turnActions}>
             <Pressable onPress={() => saveTurn(i)} hitSlop={6}>
               <Text style={styles.turnActionText}>Save note</Text>

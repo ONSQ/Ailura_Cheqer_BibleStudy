@@ -227,6 +227,7 @@ Deno.serve(async (req: Request) => {
       : '';
 
     const evidence: unknown[] = [context];
+    const trail: { tool: string; query: string; found: number }[] = [];
     const messages: unknown[] = [{
       role: 'user',
       content: `Passage evidence for ${context.ref}:\n\n${JSON.stringify(context)}${historyText}\n\nQuestion about this passage: ${question.trim()}`,
@@ -246,6 +247,11 @@ Deno.serve(async (req: Request) => {
           if (block.type === 'tool_use') {
             const result = await runTool(block.name, block.input);
             evidence.push(result);
+            trail.push({
+              tool: block.name,
+              query: String(block.input.query ?? block.input.term ?? ''),
+              found: Array.isArray(result) ? result.length : 0,
+            });
             results.push({
               type: 'tool_result',
               tool_use_id: block.id,
@@ -273,10 +279,16 @@ Deno.serve(async (req: Request) => {
       collectRefs(evidence, valid);
       for (let v = v1; v <= v2; v++) valid.add(`${book} ${chapter}:${v}`);
       const evidenceText = JSON.stringify(evidence);
+      const before = result.refs?.length ?? 0;
       result.refs = (result.refs ?? []).filter(
         (r: { ref: string }) => valid.has(r.ref) || evidenceText.includes(r.ref),
       );
-      return json({ result, model: msg.model });
+      return json({
+        result,
+        model: msg.model,
+        trail,
+        citations: { kept: result.refs.length, dropped: before - result.refs.length },
+      });
     }
     return json({ error: 'no answer produced' }, 502);
   } catch (e) {

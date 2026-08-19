@@ -92,15 +92,31 @@ export interface VerseWitness {
   content_en: string | null;
 }
 
+/** One retrieval step the AI took while answering (shown as its work). */
+export interface TrailStep {
+  tool: string;
+  query: string;
+  found: number;
+}
+
+export interface CitationCheck {
+  kept: number;
+  dropped: number;
+}
+
 export interface VerseAnswer {
   answer: string;
   refs: { ref: string; note: string }[];
+  trail?: TrailStep[];
+  citations?: CitationCheck;
 }
 
 export interface AskResult {
   answer: string;
   lemmas: { strongs: string; lemma: string; note: string }[];
   verses: { ref: string; note: string }[];
+  trail?: TrailStep[];
+  citations?: CitationCheck;
 }
 
 export interface SodBriefSection {

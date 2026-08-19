@@ -244,7 +244,10 @@ export default function WordStudy() {
 
             {!!renderings.data?.length && (
               <View style={[styles.card, styles.sodCard]}>
+                <View style={styles.tierRow}>
                 <Text style={styles.sodTitle}>Sod · How the Septuagint renders it</Text>
+                <Text style={styles.tierChip}>translation equivalents</Text>
+              </View>
                 <Text style={styles.sodSub}>
                   Greek words the LXX translators chose for this Hebrew word. Tap one to follow
                   it into the Greek scriptures. “The deeper counsel” (Jer 23:18).
@@ -268,9 +271,12 @@ export default function WordStudy() {
 
             {!!sod.data?.total && (
               <View style={[styles.card, styles.sodCard]}>
-                <Text style={styles.sodTitle}>
-                  Sod · Septuagint usage ({sod.data.total.toLocaleString()} verses)
-                </Text>
+                <View style={styles.tierRow}>
+                  <Text style={styles.sodTitle}>
+                    Sod · Septuagint usage ({sod.data.total.toLocaleString()} verses)
+                  </Text>
+                  <Text style={styles.tierChip}>same word, tagged</Text>
+                </View>
                 <Text style={styles.sodSub}>
                   The same Greek word in the LXX, centuries before the NT. “The deeper counsel”
                   (Jer 23:18).
@@ -302,7 +308,12 @@ export default function WordStudy() {
                 </Text>
                 {semantic.data.map((w) => (
                   <View key={`${w.work}-${w.ref}`} style={styles.sodRow}>
-                    <Text style={styles.sodRef}>{w.ref}</Text>
+                    <View style={styles.tierRow}>
+                      <Text style={styles.sodRef}>{w.ref}</Text>
+                      <Text style={styles.tierChip}>
+                        {w.similarity >= 0.4 ? 'close parallel' : 'thematic echo'}
+                      </Text>
+                    </View>
                     <Text style={styles.sodEn} numberOfLines={6}>
                       {w.content_en ?? w.content}
                     </Text>
@@ -396,6 +407,26 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     borderColor: colors.border,
     padding: 16,
     marginBottom: 14,
+  },
+  tierRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  tierChip: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.faint,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    overflow: 'hidden',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   lemma: { fontSize: 34, color: colors.ink },
   lemmaHebrew: { textAlign: 'left', fontSize: 40 },
