@@ -80,6 +80,22 @@ export default function About() {
         private or shared with your study group.
       </Text>
 
+      <Text style={styles.sectionTitle}>What Sod means</Text>
+      <Text style={styles.body}>
+        The panels marked Sod (סוֹד) on word-study screens take their name from the Hebrew word
+        for close counsel: the circle where trusted friends speak plainly. "For who has stood in
+        the council of the LORD to see and hear His word?" (Jeremiah 23:18); "The LORD confides
+        in those who fear Him" (Psalm 25:14).
+      </Text>
+      <Text style={[styles.body, { marginTop: 12 }]}>
+        In Cheqer, Sod gathers the oldest witnesses around a word: how the Greek Septuagint
+        translated it centuries before the New Testament, how the Aramaic Targum carried it, how
+        Jewish writers between the testaments used the idea, and a written brief tracing that
+        history with a citation for every claim. Not hidden knowledge and not Scripture; the
+        counsel of the oldest witnesses, gathered around the text so you can weigh them
+        yourself.
+      </Text>
+
       <Text style={styles.sectionTitle}>Hearing the words</Text>
       <Text style={styles.body}>
         Every pronunciation guide has a speaker button that reads the Hebrew or Greek aloud. The
