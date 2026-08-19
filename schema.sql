@@ -514,3 +514,43 @@ $$;
 grant execute on function eval_lxx_truth(text) to anon, authenticated;
 grant execute on function eval_semantic_lxx(extensions.vector, int) to anon, authenticated;
 grant execute on function eval_keyword_lxx(text[], int) to anon, authenticated;
+
+-- Rate limiting for the paid AI endpoints (per-IP hourly + global daily
+-- caps). Checked-and-recorded in one call; service role only.
+create table if not exists ai_calls (
+  id bigint generated always as identity primary key,
+  fn text not null,
+  ip text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_ai_calls_fn_ip_time on ai_calls (fn, ip, created_at);
+create index if not exists idx_ai_calls_fn_time on ai_calls (fn, created_at);
+alter table ai_calls enable row level security;
+
+create or replace function ai_gate(p_fn text, p_ip text, p_per_ip_hour int, p_per_day int)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  ip_n int;
+  day_n int;
+begin
+  select count(*) into ip_n from ai_calls
+    where fn = p_fn and ip = p_ip and created_at > now() - interval '1 hour';
+  select count(*) into day_n from ai_calls
+    where fn = p_fn and created_at > now() - interval '24 hours';
+  if ip_n >= p_per_ip_hour or day_n >= p_per_day then
+    return false;
+  end if;
+  insert into ai_calls (fn, ip) values (p_fn, p_ip);
+  return true;
+end;
+$$;
+
+revoke execute on function ai_gate(text, text, int, int) from public, anon, authenticated;
+
+-- semantic_period_search gains a similarity floor (p_min_sim, default 0.30):
+-- weak nearest neighbors are worse than no neighbors. Definition above is
+-- superseded by the 4-argument version applied in the migrations.

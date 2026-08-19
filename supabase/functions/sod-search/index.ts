@@ -12,6 +12,44 @@ const CORS = {
 };
 const CLIENT_KEY = 'sb_publishable_mPC9RUurQIxHzR6ESYwgPw_TRAhzBIs';
 
+async function gate(supa: ReturnType<typeof createClient>, fn: string, req: Request, perHour: number, perDay: number): Promise<boolean> {
+  try {
+    const ip = (req.headers.get('x-forwarded-for') ?? 'unknown').split(',')[0].trim().slice(0, 64);
+    const { data, error } = await supa.rpc('ai_gate', {
+      p_fn: fn, p_ip: ip, p_per_ip_hour: perHour, p_per_day: perDay,
+    });
+    if (error) return true; // fail open: a gate outage must not take the app down
+    return data === true;
+  } catch {
+    return true;
+  }
+}
+
+// Deterministic citation check: collect every reference string derivable
+// from the retrieved evidence, so model output can be filtered to it.
+function collectRefs(node: unknown, out: Set<string>) {
+  if (Array.isArray(node)) {
+    for (const n of node) collectRefs(n, out);
+    return;
+  }
+  if (node && typeof node === 'object') {
+    const o = node as Record<string, unknown>;
+    if (typeof o.ref === 'string') {
+      out.add(o.ref);
+      if (typeof o.work === 'string') {
+        out.add(`${o.work} ${o.ref}`);
+        out.add(`LXX ${o.work} ${o.ref}`);
+        out.add(`Targum ${o.work} ${o.ref}`);
+      }
+      if (typeof o.corpus === 'string') out.add(`${o.corpus} ${o.ref}`);
+    }
+    if (typeof o.book === 'string' && o.chapter != null && o.verse != null) {
+      out.add(`${o.book} ${o.chapter}:${o.verse}`);
+    }
+    for (const v of Object.values(o)) collectRefs(v, out);
+  }
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -37,6 +75,10 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
+
+  if (!(await gate(supa, 'sod-search', req, 60, 2000))) {
+    return json({ error: 'rate limit reached, try again later' }, 429);
+  }
 
   // Semantic field of the lemma: the lemma plus its distinct gloss senses
   // across all occurrences, so the embedding covers the word's whole range

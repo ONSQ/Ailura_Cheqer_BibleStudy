@@ -10,6 +10,44 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 const CLIENT_KEY = 'sb_publishable_mPC9RUurQIxHzR6ESYwgPw_TRAhzBIs';
+
+async function gate(supa: ReturnType<typeof createClient>, fn: string, req: Request, perHour: number, perDay: number): Promise<boolean> {
+  try {
+    const ip = (req.headers.get('x-forwarded-for') ?? 'unknown').split(',')[0].trim().slice(0, 64);
+    const { data, error } = await supa.rpc('ai_gate', {
+      p_fn: fn, p_ip: ip, p_per_ip_hour: perHour, p_per_day: perDay,
+    });
+    if (error) return true; // fail open: a gate outage must not take the app down
+    return data === true;
+  } catch {
+    return true;
+  }
+}
+
+// Deterministic citation check: collect every reference string derivable
+// from the retrieved evidence, so model output can be filtered to it.
+function collectRefs(node: unknown, out: Set<string>) {
+  if (Array.isArray(node)) {
+    for (const n of node) collectRefs(n, out);
+    return;
+  }
+  if (node && typeof node === 'object') {
+    const o = node as Record<string, unknown>;
+    if (typeof o.ref === 'string') {
+      out.add(o.ref);
+      if (typeof o.work === 'string') {
+        out.add(`${o.work} ${o.ref}`);
+        out.add(`LXX ${o.work} ${o.ref}`);
+        out.add(`Targum ${o.work} ${o.ref}`);
+      }
+      if (typeof o.corpus === 'string') out.add(`${o.corpus} ${o.ref}`);
+    }
+    if (typeof o.book === 'string' && o.chapter != null && o.verse != null) {
+      out.add(`${o.book} ${o.chapter}:${o.verse}`);
+    }
+    for (const v of Object.values(o)) collectRefs(v, out);
+  }
+}
 const MAX_RANGE = 15;
 
 const TOOLS = [
@@ -137,6 +175,10 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
+    if (!(await gate(supabase, 'ask-verse', req, 20, 300))) {
+      return json({ error: 'rate limit reached, try again later' }, 429);
+    }
+
     const { data: context, error: ctxErr } = await supabase.rpc('passage_context', {
       p_book: book, p_chapter: chapter, p_v1: v1, p_v2: v2,
     });
@@ -184,6 +226,7 @@ Deno.serve(async (req: Request) => {
           .join('\n\n')}`
       : '';
 
+    const evidence: unknown[] = [context];
     const messages: unknown[] = [{
       role: 'user',
       content: `Passage evidence for ${context.ref}:\n\n${JSON.stringify(context)}${historyText}\n\nQuestion about this passage: ${question.trim()}`,
@@ -201,10 +244,12 @@ Deno.serve(async (req: Request) => {
         const results = [];
         for (const block of msg.content) {
           if (block.type === 'tool_use') {
+            const result = await runTool(block.name, block.input);
+            evidence.push(result);
             results.push({
               type: 'tool_result',
               tool_use_id: block.id,
-              content: JSON.stringify(await runTool(block.name, block.input)),
+              content: JSON.stringify(result),
             });
           }
         }
@@ -222,7 +267,16 @@ Deno.serve(async (req: Request) => {
       const text = (msg.content as Array<{ type: string; text?: string }>)
         .find((b) => b.type === 'text')?.text;
       if (!text) return json({ error: 'empty response' }, 502);
-      return json({ result: JSON.parse(text), model: msg.model });
+      const result = JSON.parse(text);
+      // Structural guarantee: only references from retrieved evidence survive.
+      const valid = new Set<string>();
+      collectRefs(evidence, valid);
+      for (let v = v1; v <= v2; v++) valid.add(`${book} ${chapter}:${v}`);
+      const evidenceText = JSON.stringify(evidence);
+      result.refs = (result.refs ?? []).filter(
+        (r: { ref: string }) => valid.has(r.ref) || evidenceText.includes(r.ref),
+      );
+      return json({ result, model: msg.model });
     }
     return json({ error: 'no answer produced' }, 502);
   } catch (e) {

@@ -10,6 +10,44 @@ const CORS = {
 };
 const CLIENT_KEY = 'sb_publishable_mPC9RUurQIxHzR6ESYwgPw_TRAhzBIs';
 
+async function gate(supa: ReturnType<typeof createClient>, fn: string, req: Request, perHour: number, perDay: number): Promise<boolean> {
+  try {
+    const ip = (req.headers.get('x-forwarded-for') ?? 'unknown').split(',')[0].trim().slice(0, 64);
+    const { data, error } = await supa.rpc('ai_gate', {
+      p_fn: fn, p_ip: ip, p_per_ip_hour: perHour, p_per_day: perDay,
+    });
+    if (error) return true; // fail open: a gate outage must not take the app down
+    return data === true;
+  } catch {
+    return true;
+  }
+}
+
+// Deterministic citation check: collect every reference string derivable
+// from the retrieved evidence, so model output can be filtered to it.
+function collectRefs(node: unknown, out: Set<string>) {
+  if (Array.isArray(node)) {
+    for (const n of node) collectRefs(n, out);
+    return;
+  }
+  if (node && typeof node === 'object') {
+    const o = node as Record<string, unknown>;
+    if (typeof o.ref === 'string') {
+      out.add(o.ref);
+      if (typeof o.work === 'string') {
+        out.add(`${o.work} ${o.ref}`);
+        out.add(`LXX ${o.work} ${o.ref}`);
+        out.add(`Targum ${o.work} ${o.ref}`);
+      }
+      if (typeof o.corpus === 'string') out.add(`${o.corpus} ${o.ref}`);
+    }
+    if (typeof o.book === 'string' && o.chapter != null && o.verse != null) {
+      out.add(`${o.book} ${o.chapter}:${o.verse}`);
+    }
+    for (const v of Object.values(o)) collectRefs(v, out);
+  }
+}
+
 const BRIEF_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -60,7 +98,7 @@ Deno.serve(async (req: Request) => {
     const auth = req.headers.get('apikey') ?? req.headers.get('authorization') ?? '';
     if (!auth.includes(CLIENT_KEY)) return json({ error: 'unauthorized' }, 401);
 
-    const { strongs, refresh } = await req.json();
+    const { strongs } = await req.json();
     if (!/^[HG]\d{4}$/.test(strongs ?? '')) return json({ error: 'bad strongs' }, 400);
 
     const supabase = createClient(
@@ -68,11 +106,13 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    if (!refresh) {
-      const { data: cached } = await supabase
-        .from('sod_briefs').select('brief, model, created_at')
-        .eq('strongs', strongs).maybeSingle();
-      if (cached) return json({ ...cached, cached: true });
+    const { data: cached } = await supabase
+      .from('sod_briefs').select('brief, model, created_at')
+      .eq('strongs', strongs).maybeSingle();
+    if (cached) return json({ ...cached, cached: true });
+
+    if (!(await gate(supabase, 'sod-brief', req, 6, 60))) {
+      return json({ error: 'rate limit reached, try again later' }, 429);
     }
 
     const { data: bundle, error: bundleErr } = await supabase.rpc('study_bundle', {
@@ -139,6 +179,15 @@ Deno.serve(async (req: Request) => {
       .find((b) => b.type === 'text')?.text;
     if (!text) return json({ error: 'empty response' }, 502);
     const brief = JSON.parse(text);
+    // Structural guarantee: citations must trace to the evidence bundle.
+    const valid = new Set<string>();
+    collectRefs(bundle, valid);
+    const bundleText = JSON.stringify(bundle);
+    for (const s of brief.sections ?? []) {
+      s.citations = (s.citations ?? []).filter(
+        (c: string) => valid.has(c) || bundleText.includes(c),
+      );
+    }
 
     await supabase.from('sod_briefs').upsert({ strongs, brief, model: msg.model });
     return json({ brief, model: msg.model, cached: false });
