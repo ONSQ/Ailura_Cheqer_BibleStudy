@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { SUPPORT_URL } from '@/lib/links';
@@ -65,6 +66,10 @@ export default function About() {
           </Text>
         </>
       ) : null}
+
+      <Pressable style={styles.guideBtn} onPress={() => router.push('/guide' as never)}>
+        <Text style={styles.guideBtnText}>📖 How to Cheqer — a two-minute tour</Text>
+      </Pressable>
 
       <Text style={styles.sectionTitle}>What this app does</Text>
       <Text style={styles.body}>
@@ -188,6 +193,14 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     elevation: 3,
   },
   coffeeBtnText: { color: '#26211A', fontWeight: '700', fontSize: 16 },
+  guideBtn: {
+    backgroundColor: colors.accentSoft,
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    marginTop: 20,
+  },
+  guideBtnText: { color: colors.accent, fontWeight: '700', fontSize: 14 },
   coffeeCaption: {
     fontSize: 12,
     color: colors.faint,
