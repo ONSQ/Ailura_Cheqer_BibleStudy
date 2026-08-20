@@ -13,6 +13,7 @@ import {
 
 import { TrailPanel } from '@/components/trail';
 import { askQuestion } from '@/lib/api';
+import { displayRef } from '@/lib/names';
 import { formatQaShare, shareText } from '@/lib/share';
 import { createStudy, getUserId } from '@/lib/studies';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
@@ -131,7 +132,7 @@ export default function Ask() {
               <Text style={styles.sectionTitle}>Passages</Text>
               {ask.data.verses.map((v) => (
                 <Pressable key={v.ref} style={styles.verseRow} onPress={() => jumpToRef(v.ref)}>
-                  <Text style={styles.verseRef}>{v.ref}</Text>
+                  <Text style={styles.verseRef}>{displayRef(v.ref)}</Text>
                   <Text style={styles.verseNote}>{v.note}</Text>
                 </Pressable>
               ))}
@@ -210,7 +211,7 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 6,
   },
-  verseRef: { width: 74, color: colors.accent, fontWeight: '700', fontSize: 13 },
+  verseRef: { width: 108, color: colors.accent, fontWeight: '700', fontSize: 13 },
   verseNote: { flex: 1, color: colors.ink, fontSize: 13, lineHeight: 19 },
   lemmaRow: {
     backgroundColor: colors.card,

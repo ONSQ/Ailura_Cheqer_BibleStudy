@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { EditStudyModal } from '@/components/edit-study';
+import { displayRef } from '@/lib/names';
 import { shareText } from '@/lib/share';
 import {
   createStudy,
@@ -112,7 +113,7 @@ export default function StudyNote() {
             <View style={styles.anchorRow}>
               {s.ref ? (
                 <Pressable style={styles.anchor} onPress={() => jumpToRef(s.ref!)}>
-                  <Text style={styles.anchorText}>📖 {s.ref}</Text>
+                  <Text style={styles.anchorText}>📖 {displayRef(s.ref!)}</Text>
                 </Pressable>
               ) : null}
               {s.strongs ? (

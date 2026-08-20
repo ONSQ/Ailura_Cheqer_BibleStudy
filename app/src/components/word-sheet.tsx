@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Pronunciation } from '@/components/pronunciation';
 import { displaySurface } from '@/lib/api';
 import { matchEnglishToOriginal } from '@/lib/match';
+import { bookName } from '@/lib/names';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Verse, Word } from '@/lib/types';
 
@@ -52,7 +53,7 @@ export function WordSheet({
       <Pressable style={styles.scrim} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
           <Text style={styles.title}>
-            “{query.replace(/^[^A-Za-z'’-]+|[^A-Za-z'’-]+$/g, '')}” · {book} {chapter}:
+            “{query.replace(/^[^A-Za-z'’-]+|[^A-Za-z'’-]+$/g, '')}” · {bookName(book)} {chapter}:
             {verse.verse}
           </Text>
           <Text style={styles.subtitle}>

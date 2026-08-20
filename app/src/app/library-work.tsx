@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { getLibraryPassages } from '@/lib/api';
+import { workTitle } from '@/lib/names';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 const PAGE = 40;
@@ -38,7 +39,7 @@ export default function LibraryWork() {
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen options={{ title: work ?? 'Library' }} />
+      <Stack.Screen options={{ title: work ? workTitle(work) : 'Library' }} />
       <FlatList
         data={rows}
         keyExtractor={(p) => String(p.id)}

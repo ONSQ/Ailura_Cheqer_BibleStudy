@@ -1,6 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import {
   ActivityIndicator,
   FlatList,
@@ -27,16 +29,51 @@ import {
   getVersions,
   getVerseWitnesses,
 } from '@/lib/api';
+import { bookName, displayRef } from '@/lib/names';
 import { parseRef } from '@/lib/refs';
 import { fonts, themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Verse, VerseAnswer } from '@/lib/types';
+
+const LAST_READ_KEY = 'cheqer-last-read';
+
+/** Pick up where the reader left off; falls back to Genesis 1. */
+function initialSel(): { book: string; chapter: number } {
+  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+    try {
+      const v = JSON.parse(localStorage.getItem(LAST_READ_KEY) ?? '');
+      if (typeof v?.book === 'string' && typeof v?.chapter === 'number') return v;
+    } catch {
+      // fall through to the default
+    }
+  }
+  return { book: 'Gen', chapter: 1 };
+}
 
 export default function Reader() {
   const styles = useSheet(sheets);
   const { palette: colors } = useTheme();
   const params = useLocalSearchParams<{ book?: string; chapter?: string; verse?: string }>();
   const insets = useSafeAreaInsets();
-  const [sel, setSel] = useState({ book: 'Gen', chapter: 1 });
+  const [sel, setSel] = useState(initialSel);
+
+  // Native storage is async; restore once unless a jump link brought us here.
+  useEffect(() => {
+    if (Platform.OS === 'web' || params.book) return;
+    AsyncStorage.getItem(LAST_READ_KEY).then((v) => {
+      try {
+        const s = JSON.parse(v ?? '');
+        if (typeof s?.book === 'string' && typeof s?.chapter === 'number') setSel(s);
+      } catch {
+        // keep the default
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Remember the spot for next time.
+  useEffect(() => {
+    AsyncStorage.setItem(LAST_READ_KEY, JSON.stringify(sel)).catch(() => {});
+  }, [sel]);
   const [targetVerse, setTargetVerse] = useState<number | null>(null);
   const [picker, setPicker] = useState<'book' | 'chapter' | 'verse' | null>(null);
   const [version, setVersion] = useState<string | null>('BSB');
@@ -171,7 +208,9 @@ export default function Reader() {
           <Text style={styles.navArrowText}>‹</Text>
         </Pressable>
         <Pressable style={styles.pickerBtn} onPress={() => setPicker('book')}>
-          <Text style={styles.pickerBtnText}>{sel.book}</Text>
+          <Text style={styles.pickerBtnText} numberOfLines={1}>
+            {bookName(sel.book)}
+          </Text>
         </Pressable>
         <Pressable style={styles.pickerBtn} onPress={() => setPicker('chapter')}>
           <Text style={styles.pickerBtnText}>{sel.chapter}</Text>
@@ -291,7 +330,7 @@ export default function Reader() {
               setSelection(null);
             }}>
             <Text style={styles.selectionAskText}>
-              Ask about {sel.book} {sel.chapter}:{selection.start}
+              Ask about {bookName(sel.book)} {sel.chapter}:{selection.start}
               {selection.end > selection.start ? `–${selection.end}` : ''}
             </Text>
           </Pressable>
@@ -325,7 +364,7 @@ export default function Reader() {
                               styles.gridCellText,
                               b.book === sel.book && styles.gridCellTextActive,
                             ]}>
-                            {b.book}
+                            {bookName(b.book)}
                           </Text>
                         </Pressable>
                       ))}
@@ -341,7 +380,7 @@ export default function Reader() {
         <Pressable style={styles.modalScrim} onPress={() => setPicker(null)}>
           <Pressable style={styles.modalSheet} onPress={() => {}}>
             <Text style={styles.modalTitle}>
-              {sel.book}: chapter
+              {bookName(sel.book)}: chapter
             </Text>
             <GoToRef onGo={goToRef} />
             <ScrollView>
@@ -569,7 +608,7 @@ function AnswerRefChip({ refStr, onJump }: { refStr: string; onJump: () => void 
   const styles = useSheet(sheets);
   const m = refStr.match(/^([1-3]?[A-Z][a-z]{1,2})\s+(\d+):(\d+)/);
   const tappable = !!m && BOOK_CODES.has(m[1]);
-  if (!tappable) return <Text style={styles.answerRef}>{refStr}</Text>;
+  if (!tappable) return <Text style={styles.answerRef}>{displayRef(refStr)}</Text>;
   return (
     <Pressable
       onPress={() => {
@@ -580,7 +619,7 @@ function AnswerRefChip({ refStr, onJump }: { refStr: string; onJump: () => void 
         });
       }}
       hitSlop={4}>
-      <Text style={[styles.answerRef, styles.answerRefLink]}>{refStr}</Text>
+      <Text style={[styles.answerRef, styles.answerRefLink]}>{displayRef(refStr)}</Text>
     </Pressable>
   );
 }
@@ -751,7 +790,7 @@ function VerseSheet({
         <Pressable style={styles.modalSheet} onPress={() => {}}>
           <View style={styles.sheetHeader}>
             <Text style={styles.modalTitle}>
-              {book} {chapter}:{range.start}
+              {bookName(book)} {chapter}:{range.start}
               {range.end > range.start ? `–${range.end}` : ''}
             </Text>
             <Pressable onPress={onStartSelection} hitSlop={8}>

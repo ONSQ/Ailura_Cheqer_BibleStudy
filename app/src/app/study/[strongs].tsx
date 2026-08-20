@@ -26,6 +26,7 @@ import {
   getSemanticWitnesses,
   getSenseDrift,
 } from '@/lib/api';
+import { bookName, displayRef } from '@/lib/names';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Occurrence } from '@/lib/types';
 
@@ -330,7 +331,7 @@ export default function WordStudy() {
                 {sod.data.rows.map((h) => (
                   <View key={h.id} style={styles.sodRow}>
                     <Text style={styles.sodRef}>
-                      {h.work} {h.ref}
+                      {bookName(h.work)} {h.ref}
                     </Text>
                     <Text style={styles.sodText}>{h.content}</Text>
                     {h.content_en ? <Text style={styles.sodEn}>{h.content_en}</Text> : null}
@@ -355,7 +356,7 @@ export default function WordStudy() {
                 {semantic.data.map((w) => (
                   <View key={`${w.work}-${w.ref}`} style={styles.sodRow}>
                     <View style={styles.tierRow}>
-                      <Text style={styles.sodRef}>{w.ref}</Text>
+                      <Text style={styles.sodRef}>{displayRef(w.ref)}</Text>
                       <Text style={styles.tierChip}>
                         {w.similarity >= 0.4 ? 'close parallel' : 'thematic echo'}
                       </Text>
@@ -376,7 +377,7 @@ export default function WordStudy() {
         renderItem={({ item }) => (
           <Pressable style={styles.occRow} onPress={() => jumpTo(item)}>
             <Text style={styles.occRef}>
-              {item.book} {item.chapter}:{item.verse}
+              {bookName(item.book)} {item.chapter}:{item.verse}
             </Text>
             <Text style={[styles.occSurface, isHebrew && styles.occSurfaceHebrew]}>
               {displaySurface(item.surface)}
@@ -432,7 +433,9 @@ function CitationChip({ citation }: { citation: string }) {
   const m = citation.match(/^([1-3]?[A-Z][a-z]{1,2})\s+(\d+):(\d+)$/);
   const tappable = !!m && BOOK_CODES.has(m[1]);
   const chip = (
-    <Text style={[styles.citation, tappable && styles.citationLink]}>{citation}</Text>
+    <Text style={[styles.citation, tappable && styles.citationLink]}>
+      {displayRef(citation)}
+    </Text>
   );
   if (!tappable) return chip;
   return (
@@ -579,7 +582,7 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     paddingVertical: 9,
     marginBottom: 6,
   },
-  occRef: { width: 86, color: colors.accent, fontWeight: '600', fontSize: 13 },
+  occRef: { width: 108, color: colors.accent, fontWeight: '600', fontSize: 12 },
   occSurface: { fontSize: 17, color: colors.ink },
   occSurfaceHebrew: { fontSize: 20 },
   occGloss: { flex: 1, textAlign: 'right', color: colors.faint, fontSize: 13 },

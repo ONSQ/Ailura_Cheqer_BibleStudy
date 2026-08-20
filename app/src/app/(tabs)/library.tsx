@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { getLibraryWorks, type LibraryWork } from '@/lib/api';
+import { workTitle } from '@/lib/names';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 const CORPUS_LABEL: Record<string, string> = {
@@ -61,7 +62,7 @@ export default function Library() {
         renderItem={({ item }) => (
           <Pressable style={styles.row} onPress={() => open(item)}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.workTitle}>{item.work}</Text>
+              <Text style={styles.workTitle}>{workTitle(item.work)}</Text>
               <Text style={styles.workMeta}>{item.passages.toLocaleString()} passages</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
