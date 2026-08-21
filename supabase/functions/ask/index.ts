@@ -145,7 +145,7 @@ Hard rules:
 5. In the verses list, use the exact 3-letter book codes from the search results (Gen, Exo, Psa, Mat, Jhn...). List 3-8 of the most relevant verses, not every hit.
 6. search_witnesses returns Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others). These illuminate the world of Scripture but are not Scripture: always attribute them by name in the answer ("Josephus writes...", "1 Enoch describes...") and never present them with scriptural authority. Keep the verses list for Bible verses only.`;
 
-async function callClaude(messages: unknown[]) {
+async function callClaude(messages: unknown[], final = false) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -154,11 +154,12 @@ async function callClaude(messages: unknown[]) {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-opus-5',
+      model: 'claude-haiku-4-5',
       max_tokens: 16000,
       system: SYSTEM,
       tools: TOOLS,
-      output_config: { format: { type: 'json_schema', schema: ANSWER_SCHEMA }, effort: 'medium' },
+      ...(final ? { tool_choice: { type: 'none' } } : {}),
+      output_config: { format: { type: 'json_schema', schema: ANSWER_SCHEMA } },
       messages,
     }),
   });
@@ -236,11 +237,14 @@ Deno.serve(async (req: Request) => {
     };
 
     const messages: unknown[] = [{ role: 'user', content: question.trim() }];
-    for (let i = 0; i < 6; i++) {
-      const msg = await callClaude(messages);
+    const MAX_ROUNDS = 5;
+    for (let i = 0; i <= MAX_ROUNDS; i++) {
+      // Last round: no more tools — answer from what was gathered.
+      const final = i === MAX_ROUNDS;
+      const msg = await callClaude(messages, final);
       if (msg.stop_reason === 'refusal') return json({ error: 'model declined' }, 502);
 
-      if (msg.stop_reason === 'tool_use') {
+      if (msg.stop_reason === 'tool_use' && !final) {
         messages.push({ role: 'assistant', content: msg.content });
         const results = [];
         for (const block of msg.content) {
@@ -263,6 +267,13 @@ Deno.serve(async (req: Request) => {
           }
         }
         messages.push({ role: 'user', content: results });
+        if (i === MAX_ROUNDS - 1) {
+          messages.push({
+            role: 'user',
+            content:
+              'That is enough searching. Answer the question now using only what your searches already returned.',
+          });
+        }
         continue;
       }
 

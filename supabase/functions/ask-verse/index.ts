@@ -129,12 +129,12 @@ async function callClaude(messages: unknown[], final = false) {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-opus-5',
+      model: 'claude-haiku-4-5',
       max_tokens: 16000,
       system: SYSTEM,
       tools: TOOLS,
       ...(final ? { tool_choice: { type: 'none' } } : {}),
-      output_config: { format: { type: 'json_schema', schema: ANSWER_SCHEMA }, effort: 'medium' },
+      output_config: { format: { type: 'json_schema', schema: ANSWER_SCHEMA } },
       messages,
     }),
   });
