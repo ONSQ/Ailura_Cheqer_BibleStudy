@@ -210,7 +210,7 @@ export default function WordStudy() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.entityName}>{e.name}</Text>
                       <Text style={styles.entityDesc} numberOfLines={2}>
-                        {e.brief ?? e.description ?? ''}
+                        {e.description ?? ''}
                       </Text>
                     </View>
                     <Text style={styles.entityCount}>

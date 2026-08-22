@@ -435,7 +435,6 @@ export interface EntitySummary {
   etype: string | null;
   name: string;
   description: string | null;
-  brief: string | null;
   refs_count?: number | null;
   strongs?: string[];
 }
@@ -453,9 +452,6 @@ export interface EntityCard {
     openbible_name: string | null;
     lat: number | null;
     lng: number | null;
-    brief: string | null;
-    short_desc: string | null;
-    article: string | null;
     refs_count: number | null;
   };
   names: { dstrong: string; significance: string; form: string | null; translated: string | null }[];

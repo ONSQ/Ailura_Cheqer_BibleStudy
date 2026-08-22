@@ -575,7 +575,9 @@ create table if not exists entities (
     founder text, inhabitants text,
     openbible_name text,
     lat double precision, lng double precision,   -- from OpenBible via TIPNR map URLs
-    brief text, short_desc text, article text,    -- AI-written by STEPBible (Claude 3); label in UI
+    brief text, short_desc text, article text,    -- ALWAYS NULL: TIPNR's AI-written blurbs are
+                                                  -- deliberately not ingested (evidence, not
+                                                  -- opinion; docs/historical-context.md)
     refs_count     int
 );
 

@@ -142,13 +142,11 @@ def parse_records(path: Path):
                             translated=clean(cols[ci + 1]) if len(cols) > ci + 1 else None,
                             refs=parse_refs(cols[ci + 3]) if len(cols) > ci + 3 else [],
                         ))
-            elif first.startswith("@"):
-                for chunk in re.split(r"\t&?\s*(?=@)", line):
-                    chunk = chunk.strip()
-                    for key, col in (("@Briefest=", None), ("@Brief=", "brief"),
-                                     ("@Short=", "short_desc"), ("@Article=", "article")):
-                        if chunk.startswith(key) and col:
-                            rec[col] = clean(chunk[len(key):])
+            # @Briefest/@Brief/@Short/@Article lines are AI-written (Claude 3
+            # Opus, 2024, adapted by STEPBible). Deliberately NOT ingested:
+            # Cheqer ships evidence, not unauditable prose (Owen, 2026-08-21;
+            # see docs/historical-context.md ground rule). The brief/
+            # short_desc/article columns stay null.
     if rec:
         yield rec
 

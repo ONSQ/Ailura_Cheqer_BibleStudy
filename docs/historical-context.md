@@ -5,6 +5,24 @@ when a passage sits in history, and what the surrounding world looked
 like. Everything below is openly licensed and joins onto data structures
 the app already has.
 
+## Ground rule (Owen, 2026-08-21): no interpretive commentary
+
+Cheqer shows evidence, not opinion. Sources must be one of: linguistic
+data (tags, glosses, morphology), primary sources clearly attributed to
+their era (Josephus, Philo, LXX...), structured curated facts (TIPNR
+family/refs/coordinates), or auditable synthesis under the sod-brief
+rule (written only from retrieved passages, a citation per claim,
+labeled AI). Modern editorial commentary fails this test. Consequences:
+
+- Tyndale Open Study Notes are OUT (formerly phase B). They are the NLT
+  Study Bible apparatus: an editorial voice explaining what passages
+  mean. Well made, but there is no citation trail to audit.
+- The AI-written TIPNR description fields (@Brief/@Short/@Article) are
+  not ingested or displayed; only TIPNR's curated structure ships.
+- If the Theographic timeline is ever added, it shows relative sequence
+  and named periods only, never asserted year dates (chronology is
+  itself contested interpretation).
+
 ## Sources
 
 | Source | Content | License | Join key |
@@ -36,21 +54,22 @@ Notes:
 
 ## Phases
 
-A. **TIPNR ingest + entity layer** (this change). `entities`,
-   `entity_names`, `entity_refs` tables; `entity_for_word` +
-   `entity_refs_page` RPCs; person/place card in the app when a tapped
-   word names an entity. Tap "Zechariah" and Cheqer knows which
-   Zechariah, shows family and every appearance; places get a map link.
-B. **Tyndale Open Study Notes**: "Context" card on the Reader (verse
-   notes, book intro at chapter top) plus profile/dictionary lookups
-   from entity cards. New CC BY-SA attribution in About.
-C. **Theographic periods/events**: a "when is this" timeline strip on
-   Reader and entity cards.
-D. **Grounded historical brief** (sod-brief pattern): retrieve the TOSN
-   notes + dictionary entry + period_docs witnesses for a passage,
-   synthesize with citations, cache per chapter. Sod synergy: entity
-   cards for NT-era figures (Herod, Pilate) can pull Josephus passages
-   through the existing semantic_period_search.
+A. **TIPNR ingest + entity layer** (shipped 2026-08-21). `entities`,
+   `entity_names`, `entity_refs`, `entity_links` tables; verse-anchored
+   RPCs; entity chips on the word sheet, Who & where on Word Study, and
+   the /entity/[ustrong] card. Curated structure only (see ground rule).
+B. ~~Tyndale Open Study Notes~~ — dropped per the ground rule above.
+C. **Theographic periods/events** (optional): relative-sequence
+   timeline only, no asserted dates. Low priority.
+D. **Grounded historical brief** (sod-brief pattern): retrieve
+   period_docs witnesses for a passage, synthesize with citations,
+   cache per chapter. Sod synergy: entity cards for NT-era figures
+   (Herod, Pilate) can pull Josephus passages through the existing
+   semantic_period_search.
+E. **Entity-retrieval eval** (UTSA): TIPNR refs as ground truth for
+   whether semantic search recovers passages about a person in the
+   untagged corpora; entity-alias query expansion vs plain semantic
+   field. Reuses the docs/eval/ harness.
 
 ## TIPNR format notes (for the ingest)
 

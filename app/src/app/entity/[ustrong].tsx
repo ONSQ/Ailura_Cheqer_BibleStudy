@@ -1,6 +1,5 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -32,25 +31,16 @@ const ROLE_LABEL: Record<string, string> = {
   inhabitant: 'People here',
 };
 
-/** TIPNR text carries light markup: <ref="...">, <strong="...">, <br>, <BR>. */
-function cleanTipnr(text: string): string {
-  return text
-    .replace(/<BR>/g, '\n\n')
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/[ \t]+/g, ' ')
-    .trim();
-}
-
 /**
  * Who or where card: one TIPNR entity (person, place, or other named thing)
- * with family, name forms, and every appearance in Scripture.
+ * with family, name forms, and every appearance in Scripture. Curated
+ * structure only; the dataset's AI-written blurbs are not ingested (see
+ * docs/historical-context.md ground rule).
  */
 export default function EntityScreen() {
   const styles = useSheet(sheets);
   const { palette: colors } = useTheme();
   const { ustrong } = useLocalSearchParams<{ ustrong: string }>();
-  const [showArticle, setShowArticle] = useState(false);
 
   const card = useQuery({
     queryKey: ['entity', ustrong],
@@ -112,9 +102,6 @@ export default function EntityScreen() {
                   </View>
                   {e.description ? <Text style={styles.desc}>{e.description}</Text> : null}
                   {e.tribe ? <Text style={styles.meta}>{e.tribe}</Text> : null}
-                  {e.short_desc ? (
-                    <Text style={styles.shortDesc}>{cleanTipnr(e.short_desc)}</Text>
-                  ) : null}
                   {e.kind === 'place' && e.lat != null && e.lng != null && (
                     <Pressable
                       style={styles.mapBtn}
@@ -172,25 +159,6 @@ export default function EntityScreen() {
                     ))}
                   </View>
                 )}
-
-                {e.article ? (
-                  <View style={styles.card}>
-                    <Pressable onPress={() => setShowArticle((v) => !v)}>
-                      <Text style={styles.sectionTitle}>
-                        About {e.name} {showArticle ? '▾' : '▸'}
-                      </Text>
-                    </Pressable>
-                    {showArticle && (
-                      <>
-                        <Text style={styles.article}>{cleanTipnr(e.article)}</Text>
-                        <Text style={styles.aiNote}>
-                          Background summary from the STEPBible dataset (AI-assisted, curated
-                          by Tyndale House). Weigh it against the verses below.
-                        </Text>
-                      </>
-                    )}
-                  </View>
-                ) : null}
 
                 <Text style={styles.sectionTitle}>
                   Appearances{total ? ` (${total.toLocaleString()})` : ''}
@@ -256,7 +224,6 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   },
   desc: { fontSize: 14, color: colors.ink, marginTop: 6, lineHeight: 20 },
   meta: { fontSize: 12, color: colors.faint, marginTop: 3 },
-  shortDesc: { fontSize: 13, color: colors.faint, marginTop: 8, lineHeight: 19 },
   mapBtn: {
     alignSelf: 'flex-start',
     backgroundColor: colors.accentSoft,
@@ -293,8 +260,6 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   formScript: { fontSize: 18, color: colors.ink },
   formMeta: { flex: 1, fontSize: 12, color: colors.faint },
   formStrongs: { fontSize: 12, color: colors.accent, fontWeight: '600' },
-  article: { fontSize: 14, color: colors.ink, lineHeight: 21, marginTop: 2 },
-  aiNote: { fontSize: 11, color: colors.faint, marginTop: 8, lineHeight: 16 },
   refRow: {
     backgroundColor: colors.card,
     borderWidth: 1,
