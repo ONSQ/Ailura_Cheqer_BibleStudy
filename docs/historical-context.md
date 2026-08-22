@@ -38,10 +38,9 @@ Notes:
 - TIPNR lives in the same STEPBible-Data repo the word ingest already
   clones and carries the same attribution we already show (Tyndale House,
   Cambridge + STEPBible.org). Its `@Brief/@Short/@Article` descriptions
-  were AI-written (Claude 3 Opus, April 2024, adapted by STEPBible);
-  Cheqer stores them but the UI should label them as convenience
-  summaries, not scholarship. The structured fields (family, refs,
-  coordinates, tribe, type) are curated data.
+  were AI-written (Claude 3 Opus, April 2024, adapted by STEPBible) and
+  are not ingested (ground rule above). The structured fields (family,
+  refs, coordinates, tribe, type) are curated data and are what ships.
 - TIPNR place records embed OpenBible-derived lat/lng in their map URLs,
   so phase A alone gives us mappable places; the OpenBible JSONL is only
   needed later for regions/rivers geometry and photos.
