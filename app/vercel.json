@@ -4,6 +4,7 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/study/:strongs", "destination": "/study/%5Bstrongs%5D" },
-    { "source": "/entity/:ustrong", "destination": "/entity/%5Bustrong%5D" }
+    { "source": "/entity/:ustrong", "destination": "/entity/%5Bustrong%5D" },
+    { "source": "/study-note/:id", "destination": "/study-note/%5Bid%5D" }
   ]
 }
