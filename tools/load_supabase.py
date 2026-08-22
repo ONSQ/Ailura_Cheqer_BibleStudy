@@ -40,6 +40,28 @@ TABLES = {
         cols="version, book, chapter, verse, text",
         conflict="(version, book, chapter, verse) do update set text = excluded.text",
     ),
+    # TIPNR entity layer (ingest/ingest_tipnr.py --sqlite first). entities
+    # must load before the three tables that reference it.
+    "entities": dict(
+        cols="ustrong, kind, etype, name, unified_name, description, summary, "
+             "parents, siblings, partners, offspring, tribe, founder, inhabitants, "
+             "openbible_name, lat, lng, brief, short_desc, article, refs_count",
+        conflict="(ustrong) do update set summary = excluded.summary, "
+                 "brief = excluded.brief, short_desc = excluded.short_desc, "
+                 "article = excluded.article, refs_count = excluded.refs_count",
+    ),
+    "entity_names": dict(
+        cols="ustrong, dstrong, estrong, significance, form, translated",
+        conflict="do nothing",
+    ),
+    "entity_refs": dict(
+        cols="ustrong, book, chapter, verse",
+        conflict="(ustrong, book, chapter, verse) do nothing",
+    ),
+    "entity_links": dict(
+        cols="ustrong, role, name, target",
+        conflict="do nothing",
+    ),
 }
 
 
@@ -54,6 +76,14 @@ def main():
     lite = sqlite3.connect(args.db)
     pg = psycopg2.connect(os.environ["DATABASE_URL"])
     cur = pg.cursor()
+
+    # entity_names/entity_links have no natural key; truncate-and-load keeps
+    # re-runs idempotent (cascades from entities cover all four tables).
+    if lite.execute(
+        "select count(*) from sqlite_master where type='table' and name='entities'"
+    ).fetchone()[0]:
+        cur.execute("truncate entity_refs, entity_names, entity_links, entities cascade")
+        pg.commit()
 
     for table, spec in TABLES.items():
         try:

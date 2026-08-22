@@ -97,6 +97,11 @@ git clone --depth 1 --filter=blob:none --sparse https://github.com/STEPBible/STE
 cd data/STEPBible-Data && git sparse-checkout set --no-cone "/Translators Amalgamated OT+NT" && cd ../..
 python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators Amalgamated OT+NT" --sqlite wordstudy.db
 
+# Proper-name entities (who/where cards; docs/historical-context.md)
+mkdir -p data/TIPNR
+curl -sL -o data/TIPNR/TIPNR.txt "https://raw.githubusercontent.com/STEPBible/STEPBible-Data/master/Proper%20Nouns/TIPNR%20-%20Translators%20Individualised%20Proper%20Names%20with%20all%20References%20-%20STEPBible.org%20CC%20BY.txt"
+python3 ingest/ingest_tipnr.py --file data/TIPNR/TIPNR.txt --sqlite wordstudy.db
+
 # Load Supabase (run schema.sql in Supabase SQL editor first)
 export DATABASE_URL="postgresql://postgres:...@db.<project>.supabase.co:5432/postgres"
 python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators Amalgamated OT+NT" --postgres

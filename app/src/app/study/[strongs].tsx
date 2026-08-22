@@ -18,6 +18,7 @@ import {
   displaySurface,
   generateSodBrief,
   getCachedSodBrief,
+  getEntitiesForStrongs,
   getGlossDistribution,
   getLexeme,
   getLxxRenderings,
@@ -73,6 +74,12 @@ export default function WordStudy() {
   const drift = useQuery({
     queryKey: ['sense-drift', strongs],
     queryFn: () => getSenseDrift(strongs!),
+    enabled: !!strongs,
+    staleTime: Infinity,
+  });
+  const entities = useQuery({
+    queryKey: ['entities-for', strongs],
+    queryFn: () => getEntitiesForStrongs(strongs!),
     enabled: !!strongs,
     staleTime: Infinity,
   });
@@ -184,6 +191,40 @@ export default function WordStudy() {
                 </>
               )}
             </View>
+
+            {!!entities.data?.length && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>
+                  Who & where{entities.data.length > 1 ? ` (${entities.data.length})` : ''}
+                </Text>
+                <Text style={styles.entitySub}>
+                  {entities.data.length > 1
+                    ? 'This name belongs to more than one individual. Tap one to see who is who.'
+                    : 'The person or place behind this name.'}
+                </Text>
+                {entities.data.slice(0, 8).map((e) => (
+                  <Pressable
+                    key={e.ustrong}
+                    style={styles.entityRow}
+                    onPress={() => router.push(`/entity/${e.ustrong}` as never)}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.entityName}>{e.name}</Text>
+                      <Text style={styles.entityDesc} numberOfLines={2}>
+                        {e.brief ?? e.description ?? ''}
+                      </Text>
+                    </View>
+                    <Text style={styles.entityCount}>
+                      {e.refs_count ? `${e.refs_count.toLocaleString()} refs ›` : '›'}
+                    </Text>
+                  </Pressable>
+                ))}
+                {entities.data.length > 8 && (
+                  <Text style={styles.entitySub}>
+                    + {entities.data.length - 8} more individuals share this name
+                  </Text>
+                )}
+              </View>
+            )}
 
             {!!glosses.data?.length && (
               <View style={styles.card}>
@@ -565,6 +606,18 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   },
   briefBtnText: { color: '#22304A', fontWeight: '700', fontSize: 14 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 10 },
+  entitySub: { fontSize: 12, color: colors.faint, lineHeight: 17, marginBottom: 8 },
+  entityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  entityName: { fontSize: 15, fontWeight: '600', color: colors.ink },
+  entityDesc: { fontSize: 12, color: colors.faint, marginTop: 1, lineHeight: 16 },
+  entityCount: { fontSize: 12, color: colors.accent, fontWeight: '600' },
   glossRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 8 },
   glossLabel: { width: 110, fontSize: 13, color: colors.ink },
   glossBarTrack: { flex: 1, height: 10, backgroundColor: colors.accentSoft, borderRadius: 5 },

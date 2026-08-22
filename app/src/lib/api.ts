@@ -424,6 +424,102 @@ export async function askVerse(input: {
   return { ...data.result, trail: data.trail, citations: data.citations } as VerseAnswer;
 }
 
+// ---------------------------------------------------------------------------
+// Historical context (phase A): TIPNR proper-name entities. Who a person is,
+// where a place is, resolved per verse. See docs/historical-context.md.
+// ---------------------------------------------------------------------------
+
+export interface EntitySummary {
+  ustrong: string;
+  kind: 'person' | 'place' | 'other';
+  etype: string | null;
+  name: string;
+  description: string | null;
+  brief: string | null;
+  refs_count?: number | null;
+  strongs?: string[];
+}
+
+export interface EntityCard {
+  entity: {
+    ustrong: string;
+    kind: 'person' | 'place' | 'other';
+    etype: string | null;
+    name: string;
+    unified_name: string | null;
+    description: string | null;
+    summary: string | null;
+    tribe: string | null;
+    openbible_name: string | null;
+    lat: number | null;
+    lng: number | null;
+    brief: string | null;
+    short_desc: string | null;
+    article: string | null;
+    refs_count: number | null;
+  };
+  names: { dstrong: string; significance: string; form: string | null; translated: string | null }[];
+  links: { role: string; name: string; target: string | null; target_kind: string | null }[];
+  refs_total: number;
+}
+
+export interface EntityRef {
+  book: string;
+  chapter: number;
+  verse: number;
+  text: string | null;
+}
+
+/** Everyone named in one verse, anchored so common-noun homographs cannot match. */
+export async function getVerseEntities(
+  book: string,
+  chapter: number,
+  verse: number,
+): Promise<EntitySummary[]> {
+  if (!hasSupabase) return [];
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('verse_entities', {
+    p_book: book,
+    p_chapter: chapter,
+    p_verse: verse,
+  });
+  if (error) throw error;
+  return (data ?? []) as EntitySummary[];
+}
+
+/** The individuals behind one Strong's number (all the Zechariahs). */
+export async function getEntitiesForStrongs(strongs: string): Promise<EntitySummary[]> {
+  if (!hasSupabase) return [];
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('entities_for_strongs', { p_strongs: strongs });
+  if (error) throw error;
+  return (data ?? []) as EntitySummary[];
+}
+
+export async function getEntityCard(ustrong: string): Promise<EntityCard | null> {
+  if (!hasSupabase) return null;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('entity_card', { p_ustrong: ustrong });
+  if (error) throw error;
+  return (data ?? null) as EntityCard | null;
+}
+
+export async function getEntityRefs(
+  ustrong: string,
+  limit = 50,
+  offset = 0,
+): Promise<{ total: number; rows: EntityRef[] }> {
+  if (!hasSupabase) return { total: 0, rows: [] };
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('entity_refs_page', {
+    p_ustrong: ustrong,
+    p_limit: limit,
+    p_offset: offset,
+  });
+  if (error) throw error;
+  return (data ?? { total: 0, rows: [] }) as { total: number; rows: EntityRef[] };
+}
+
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */
 export function displaySurface(surface: string): string {
   return surface.replace(/[/\\]/g, '');

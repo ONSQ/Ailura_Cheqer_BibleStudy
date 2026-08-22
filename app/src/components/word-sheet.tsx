@@ -1,8 +1,9 @@
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Pronunciation } from '@/components/pronunciation';
-import { displaySurface } from '@/lib/api';
+import { displaySurface, getVerseEntities } from '@/lib/api';
 import { matchEnglishToOriginal } from '@/lib/match';
 import { bookName } from '@/lib/names';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
@@ -29,6 +30,19 @@ export function WordSheet({
   onClose: () => void;
 }) {
   const styles = useSheet(sheets);
+  // Who and where: TIPNR entities anchored to this exact verse. Declared
+  // before the early return so the hook order never changes.
+  const entities = useQuery({
+    queryKey: [
+      'verse-entities',
+      selection?.book,
+      selection?.chapter,
+      selection?.verse.verse,
+    ],
+    queryFn: () => getVerseEntities(selection!.book, selection!.chapter, selection!.verse.verse),
+    enabled: !!selection,
+    staleTime: Infinity,
+  });
   if (!selection) return null;
   const { query, verse, book, chapter, isRTL } = selection;
   // One row per lexeme: the same word repeated in a verse collapses.
@@ -48,6 +62,11 @@ export function WordSheet({
     if (w.strongs) router.push(`/study/${w.strongs}` as never);
   };
 
+  const openEntity = (ustrong: string) => {
+    onClose();
+    router.push(`/entity/${ustrong}` as never);
+  };
+
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.scrim} onPress={onClose}>
@@ -62,6 +81,18 @@ export function WordSheet({
               : 'No direct match on this word; here is every tagged word in the verse.'}
           </Text>
           <ScrollView style={{ maxHeight: 420 }}>
+            {!!entities.data?.length && (
+              <View style={styles.entityRow}>
+                {entities.data.map((e) => (
+                  <Pressable key={e.ustrong} onPress={() => openEntity(e.ustrong)}>
+                    <Text style={styles.entityChip}>
+                      {e.kind === 'place' ? '◉ ' : e.kind === 'person' ? '◈ ' : '◆ '}
+                      {e.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
             {matches.map(({ word }) => (
               <WordRow key={word.id} word={word} isRTL={isRTL} onPress={() => open(word)} />
             ))}
@@ -145,4 +176,15 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   morph: { fontSize: 11, color: colors.faint, marginTop: 2 },
   chevron: { fontSize: 24, color: colors.faint, marginLeft: 8 },
   restLabel: { fontSize: 12, color: colors.faint, marginTop: 6, marginBottom: 8 },
+  entityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+  entityChip: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent,
+    backgroundColor: colors.accentSoft,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    overflow: 'hidden',
+  },
 }));

@@ -555,6 +555,82 @@ revoke execute on function ai_gate(text, text, int, int) from public, anon, auth
 -- weak nearest neighbors are worse than no neighbors. Definition above is
 -- superseded by the 4-argument version applied in the migrations.
 
+-- =============================================================
+-- Historical context phase A: TIPNR proper-name entities (people,
+-- places, other named things). Source: STEPBible-Data "Proper Nouns"
+-- (CC BY 4.0, same attribution as the word data). Loaded by
+-- ingest/ingest_tipnr.py; see docs/historical-context.md.
+-- =============================================================
+
+create table if not exists entities (
+    ustrong        text primary key,   -- unified Strong's: unique per individual (H0175, G2264G)
+    kind           text not null check (kind in ('person','place','other')),
+    etype          text,               -- Male, Female, Group, Place, Supernatural, Title...
+    name           text not null,      -- most common English name (ESV)
+    unified_name   text,               -- unique key incl. first-ref anchor: Aaron@Exo.4.14-Heb
+    description    text,
+    summary        text,               -- standard-sentence summary with <ref>/<strong> markup
+    parents text, siblings text, partners text, offspring text,
+    tribe          text,               -- person: Tribe of Levi; place: geographical area
+    founder text, inhabitants text,
+    openbible_name text,
+    lat double precision, lng double precision,   -- from OpenBible via TIPNR map URLs
+    brief text, short_desc text, article text,    -- AI-written by STEPBible (Claude 3); label in UI
+    refs_count     int
+);
+
+create table if not exists entity_names (
+    id bigserial primary key,
+    ustrong text not null references entities (ustrong) on delete cascade,
+    dstrong text,        -- joins ol_words.dstrongs; left(dstrong,5) is the simple Strong's
+    estrong text,
+    significance text,   -- Named, Greek, Spelled, Mentioned...
+    form text,           -- Hebrew/Greek script
+    translated text      -- ESV rendering (with KJV/NIV when they differ)
+);
+create index if not exists idx_entity_names_dstrong on entity_names (dstrong);
+create index if not exists idx_entity_names_ustrong on entity_names (ustrong);
+
+-- Exhaustive verse refs per entity. The verse anchor is what disambiguates:
+-- the same dstrong can serve a name in one verse and a common noun elsewhere
+-- (H3820A is "heart" in most verses but Leb-kamai = Chaldea in Jer 51:1).
+create table if not exists entity_refs (
+    ustrong text not null references entities (ustrong) on delete cascade,
+    book text not null, chapter int not null, verse int not null,
+    primary key (ustrong, book, chapter, verse)
+);
+create index if not exists idx_entity_refs_ref on entity_refs (book, chapter, verse);
+
+-- Family/founder relations resolved to uStrongs at ingest (target null when
+-- the relative is an unnamed genealogy placeholder).
+create table if not exists entity_links (
+    id bigserial primary key,
+    ustrong text not null references entities (ustrong) on delete cascade,
+    role text not null,  -- parent, sibling, partner, offspring, founder, inhabitant
+    name text not null,
+    target text
+);
+create index if not exists idx_entity_links_ustrong on entity_links (ustrong);
+
+alter table entities     enable row level security;
+alter table entity_names enable row level security;
+alter table entity_refs  enable row level security;
+alter table entity_links enable row level security;
+drop policy if exists entities_read on entities;
+drop policy if exists entity_names_read on entity_names;
+drop policy if exists entity_refs_read on entity_refs;
+drop policy if exists entity_links_read on entity_links;
+create policy entities_read     on entities     for select using (true);
+create policy entity_names_read on entity_names for select using (true);
+create policy entity_refs_read  on entity_refs  for select using (true);
+create policy entity_links_read on entity_links for select using (true);
+
+-- Entity RPCs (verse_entities, entities_for_strongs, entity_card,
+-- entity_refs_page) are defined in the tipnr_entity_rpcs migration:
+-- verse-anchored lookups for the Reader word sheet, one-lemma individual
+-- lists for Word Study, the full card, and a canonical-order refs page
+-- joined with the BSB text.
+
 -- Sense Drift: how a word's dominant sense shifts across canonical eras,
 -- computed purely from the tagged glosses. No AI involved.
 -- sense_of reduces a gloss to its head sense token; sense_drift groups
