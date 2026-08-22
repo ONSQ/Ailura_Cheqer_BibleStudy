@@ -627,6 +627,13 @@ create policy entity_names_read on entity_names for select using (true);
 create policy entity_refs_read  on entity_refs  for select using (true);
 create policy entity_links_read on entity_links for select using (true);
 
+-- entity_briefs (ustrong pk, brief jsonb, model, created_at): cached
+-- who-they-are synthesis under the sod-brief rule, written only by the
+-- entity-brief edge function from the entity_bundle() RPC (curated
+-- structure + first appearance per book with BSB text + per-book
+-- counts) plus semantically retrieved period witnesses. World-readable;
+-- definitions in the entity_brief_infrastructure migration.
+
 -- Entity RPCs (verse_entities, entities_for_strongs, entity_card,
 -- entity_refs_page) are defined in the tipnr_entity_rpcs migration:
 -- verse-anchored lookups for the Reader word sheet, one-lemma individual

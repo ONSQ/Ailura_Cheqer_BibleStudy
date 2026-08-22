@@ -61,11 +61,14 @@ A. **TIPNR ingest + entity layer** (shipped 2026-08-21). `entities`,
 B. ~~Tyndale Open Study Notes~~ — dropped per the ground rule above.
 C. **Theographic periods/events** (optional): relative-sequence
    timeline only, no asserted dates. Low priority.
-D. **Grounded historical brief** (sod-brief pattern): retrieve
-   period_docs witnesses for a passage, synthesize with citations,
-   cache per chapter. Sod synergy: entity cards for NT-era figures
-   (Herod, Pilate) can pull Josephus passages through the existing
-   semantic_period_search.
+D. **Grounded briefs** (sod-brief pattern). Entity half SHIPPED
+   2026-08-21: the entity-brief edge function writes "who they are and
+   why they matter" strictly from the entity's own verses (first
+   appearance per book + per-book counts via the entity_bundle RPC) and
+   semantically retrieved period witnesses, a citation per claim,
+   server-side citation filter, cached in entity_briefs, ai_gate 6/hr
+   60/day. "Sod · Who they are" card on the entity screen. The
+   per-passage chapter brief remains future work.
 E. **Entity-retrieval eval** (UTSA): TIPNR refs as ground truth for
    whether semantic search recovers passages about a person in the
    untagged corpora; entity-alias query expansion vs plain semantic

@@ -516,6 +516,33 @@ export async function getEntityRefs(
   return (data ?? { total: 0, rows: [] }) as { total: number; rows: EntityRef[] };
 }
 
+/**
+ * Entity brief (sod-brief rule): who this person or place is and why they
+ * matter, written strictly from retrieved verses and witnesses with a
+ * citation per claim. Generated once per entity, then cached.
+ */
+export async function getCachedEntityBrief(ustrong: string): Promise<SodBrief | null> {
+  if (!hasSupabase) return null;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('entity_briefs')
+    .select('brief')
+    .eq('ustrong', ustrong)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.brief as SodBrief) ?? null;
+}
+
+export async function generateEntityBrief(ustrong: string): Promise<SodBrief> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.functions.invoke('entity-brief', {
+    body: { ustrong },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data.brief as SodBrief;
+}
+
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */
 export function displaySurface(surface: string): string {
   return surface.replace(/[/\\]/g, '');
