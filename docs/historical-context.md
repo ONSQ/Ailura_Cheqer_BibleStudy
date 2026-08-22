@@ -63,8 +63,12 @@ C. **Theographic periods/events** (optional): relative-sequence
    timeline only, no asserted dates. Low priority.
 D. **Grounded briefs** (sod-brief pattern). Entity half SHIPPED
    2026-08-21: the entity-brief edge function writes "who they are and
-   why they matter" strictly from the entity's own verses (first
-   appearance per book + per-book counts via the entity_bundle RPC) and
+   why they matter" strictly from the entity's own verses (SCENES: windows of BSB
+   verses around each appearance, one before and three after, sampled
+   where mentions concentrate with at least one chapter per book, plus
+   the full chapter distribution, via the entity_bundle RPC; first
+   version used only first-appearance-per-book and produced briefs about
+   name occurrences instead of acts, fixed 2026-08-21) and
    semantically retrieved period witnesses, a citation per claim,
    server-side citation filter, cached in entity_briefs, ai_gate 6/hr
    60/day. "Sod · Who they are" card on the entity screen. The
