@@ -419,17 +419,19 @@ export default function Reader() {
             ) : (
               <ScrollView>
                 <View style={styles.grid}>
-                  {(chapter.data?.verses ?? []).map((v) => (
-                    <Pressable
-                      key={v.verse}
-                      style={styles.gridCell}
-                      onPress={() => {
-                        setTargetVerse(v.verse);
-                        setPicker(null);
-                      }}>
-                      <Text style={styles.gridCellText}>{v.verse}</Text>
-                    </Pressable>
-                  ))}
+                  {(chapter.data?.verses ?? [])
+                    .filter((v) => v.verse > 0)
+                    .map((v) => (
+                      <Pressable
+                        key={v.verse}
+                        style={styles.gridCell}
+                        onPress={() => {
+                          setTargetVerse(v.verse);
+                          setPicker(null);
+                        }}>
+                        <Text style={styles.gridCellText}>{v.verse}</Text>
+                      </Pressable>
+                    ))}
                 </View>
               </ScrollView>
             )}
@@ -510,7 +512,7 @@ function OriginalLine({
         isRTL && { writingDirection: 'rtl', textAlign: 'right' },
         { fontSize: size, lineHeight: size * 1.6 },
       ]}>
-      {primary && <Text style={styles.verseNum}>{verse.verse} </Text>}
+      {primary && verse.verse > 0 && <Text style={styles.verseNum}>{verse.verse} </Text>}
       {verse.words.map((w) => (
         <Text
           key={w.id}

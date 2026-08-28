@@ -27,7 +27,14 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-REF_RE = re.compile(r"^([1-3]?[A-Za-z]{2,3})\.(\d+)\.(\d+)#(\d+)=(\S+)")
+# Reference column: "Gen.1.1#01=L". Where editions number verses differently
+# the English ref carries the alternate in brackets: "Psa.18.0(18.1)#01=L"
+# (Hebrew numbering counts the psalm title as verse 1), "Rom.16.25{14.24}#01=NKO",
+# "Act.19.41[19.40]#01=NKO". We keep the English numbering, which is what the
+# translations table and the app's refs use; titles become verse 0.
+REF_RE = re.compile(
+    r"^([1-3]?[A-Za-z]{2,3})\.(\d+)\.(\d+)(?:[(\[{]\d+\.\d+[)\]}])?#(\d+)=(\S+)"
+)
 # dStrong tags look like H7225G, G0976, H9003; root is wrapped in {curly braces}
 DSTRONG_ROOT_RE = re.compile(r"\{([HG]\d{4}[A-Za-z]?)")
 STRONG_SIMPLE_RE = re.compile(r"([HG])(\d{4})([A-Za-z]?)")

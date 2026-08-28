@@ -89,7 +89,7 @@ Expo React Native app (web today; Android/iOS from the same codebase)
         |
 Supabase: Postgres + pgvector + Auth + Row Level Security + edge functions
         |
-  ol_words / lexemes   <- STEPBible tagging (425k tokens, 13.6k lexemes)
+  ol_words / lexemes   <- STEPBible tagging (448k tokens, 13.9k lexemes)
   translations         <- helloao (BSB, KJV, WEB)
   period_docs          <- LXX, Targum, Josephus, Philo, Second Temple (43k passages, embedded)
   word_studies         <- group notes behind Auth + RLS
@@ -138,4 +138,4 @@ cd app && npm install && npm run web   # or npm start for a device
 #   EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-Verified queries against the built database: H0430 (elohim) returns 2,246 occurrences with pointed Hebrew and transliteration; G3056 (logos) returns 332 occurrences with per-gloss counts; John 1:1 renders as a complete interlinear with Robinson morphology codes.
+Verified queries against the built database: H0430 (elohim) returns 2,603 occurrences with pointed Hebrew and transliteration; G3056 (logos) returns 332 occurrences with per-gloss counts; John 1:1 renders as a complete interlinear with Robinson morphology codes.
