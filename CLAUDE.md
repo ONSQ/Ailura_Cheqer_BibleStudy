@@ -18,7 +18,7 @@ Cheqer (חֵקֶר, KHAY-ker: "searching out, deep inquiry") is a word-study Bib
 Phase 1 is complete and verified:
 - `schema.sql` — Postgres schema for Supabase (word tokens, lexemes, translations, period_docs with pgvector, shared word_studies)
 - `ingest/ingest_stepbible.py` — parses STEPBible TAHOT (Hebrew OT) and TAGNT (Greek NT) into SQLite or Postgres
-- Verified locally: 425,454 word tokens, 13,616 lexemes. H0430 elohim returns 2,246 occurrences; John 1:1 renders as a full interlinear with Robinson morphology.
+- Verified locally: 447,748 word tokens, 13,940 lexemes. H0430 elohim returns 2,603 occurrences; John 1:1 renders as a full interlinear with Robinson morphology.
 
 ## Architecture
 
@@ -127,7 +127,8 @@ cheqer/
 
 ## Verification queries (sanity checks after any ingestion change)
 
-- `select count(*) from ol_words;` expect ~425k
-- `select occurrences from lexemes where strongs='H0430';` expect ~2,246
+- `select count(*) from ol_words;` expect ~448k
+- `select occurrences from lexemes where strongs='H0430';` expect ~2,603
+- `select count(distinct chapter) from ol_words where book='Psa';` expect 150 (dual-versification refs like Psa.18.1(18.2) must not be dropped)
 - John 1:1 should return 17 word rows ordered by word_num
 - G3056 top gloss should be "word"

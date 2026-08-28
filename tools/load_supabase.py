@@ -114,10 +114,10 @@ def main():
     pg.commit()
 
     for q, want in [
-        ("select count(*) from ol_words", "~425,454"),
-        ("select count(*) from lexemes", "~13,616"),
+        ("select count(*) from ol_words", "~447,748"),
+        ("select count(*) from lexemes", "~13,940"),
         ("select count(*) from translations", "~93,286"),
-        ("select occurrences from lexemes where strongs='H0430'", "2,246"),
+        ("select occurrences from lexemes where strongs='H0430'", "2,603"),
     ]:
         cur.execute(q)
         print(f"  {q} -> {cur.fetchone()[0]} (expect {want})")
