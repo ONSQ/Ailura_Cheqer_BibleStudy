@@ -33,7 +33,7 @@ from pathlib import Path
 # "Act.19.41[19.40]#01=NKO". We keep the English numbering, which is what the
 # translations table and the app's refs use; titles become verse 0.
 REF_RE = re.compile(
-    r"^([1-3]?[A-Za-z]{2,3})\.(\d+)\.(\d+)(?:[(\[{]\d+\.\d+[)\]}])?#(\d+)=(\S+)"
+    r"^([1-3]?[A-Za-z]{2,3})\.(\d+)\.(\d+)(?:[(\[{](\d+\.\d+)[)\]}])?#(\d+)=(\S+)"
 )
 # dStrong tags look like H7225G, G0976, H9003; root is wrapped in {curly braces}
 DSTRONG_ROOT_RE = re.compile(r"\{([HG]\d{4}[A-Za-z]?)")
@@ -54,7 +54,7 @@ def parse_tahot_line(cols):
     ref = REF_RE.match(cols[0])
     if not ref:
         return None
-    book, ch, vs, wn, ttype = ref.groups()
+    book, ch, vs, alt, wn, ttype = ref.groups()
     dstrongs_raw = cols[4] if len(cols) > 4 else ""
     root_field = cols[8] if len(cols) > 8 else ""
     # Prefer the explicit root column; fall back to {root} inside dStrongs
@@ -64,7 +64,7 @@ def parse_tahot_line(cols):
         root = m.group(1) if m else None
     return dict(
         corpus="OT", book=book, chapter=int(ch), verse=int(vs), word_num=int(wn),
-        source_tag=ttype,
+        alt_ref=alt, source_tag=ttype,
         surface=cols[1].strip(),
         translit=cols[2].strip() if len(cols) > 2 else None,
         gloss=cols[3].strip() if len(cols) > 3 else None,
@@ -84,7 +84,7 @@ def parse_tagnt_line(cols):
     ref = REF_RE.match(cols[0])
     if not ref:
         return None
-    book, ch, vs, wn, editions_tag = ref.groups()
+    book, ch, vs, alt, wn, editions_tag = ref.groups()
     surface_tr = cols[1].strip() if len(cols) > 1 else ""
     m = re.match(r"^(.*?)\s*\(([^)]*)\)\s*$", surface_tr)
     surface, translit = (m.group(1).strip(), m.group(2)) if m else (surface_tr, None)
@@ -95,7 +95,7 @@ def parse_tagnt_line(cols):
     lemma = lemma_meaning[0].strip() or None
     return dict(
         corpus="NT", book=book, chapter=int(ch), verse=int(vs), word_num=int(wn),
-        source_tag=editions_tag,
+        alt_ref=alt, source_tag=editions_tag,
         surface=surface,
         translit=translit,
         gloss=cols[2].strip() if len(cols) > 2 else None,
@@ -115,6 +115,14 @@ HEB_LEMMA_RE = re.compile(r"\{[HG]\d{4}[A-Za-z]?=([^=]+)=([^}]*)\}")
 def iter_rows(path: Path):
     is_ot = "TAHOT" in path.name
     parse = parse_tahot_line if is_ot else parse_tagnt_line
+    # When two source verses merge into one English verse (split verses like
+    # 1Ki 22:43(43+44), Hebrew psalm titles spanning two verses), each source
+    # verse restarts word numbering at 1, which would collide on the
+    # (verse, word_num, source_tag) key. Shift each later source verse so
+    # numbering continues; the offset is calibrated from the group's first
+    # word so sources that already continue the numbering are left alone.
+    offsets = {}  # (book, chapter, verse) -> {alt_ref: word_num offset}
+    max_wn = {}   # (book, chapter, verse) -> highest word_num emitted
     with open(path, encoding="utf-8", errors="ignore") as fh:
         for line in fh:
             if line.startswith("#") or "\t" not in line:
@@ -122,6 +130,14 @@ def iter_rows(path: Path):
             cols = line.rstrip("\n").split("\t")
             row = parse(cols)
             if row:
+                key = (row["book"], row["chapter"], row["verse"])
+                alts = offsets.setdefault(key, {})
+                alt = row.pop("alt_ref")
+                if alt not in alts:
+                    alts[alt] = max(0, max_wn.get(key, 0) - row["word_num"] + 1)
+                row["word_num"] += alts[alt]
+                if row["word_num"] > max_wn.get(key, 0):
+                    max_wn[key] = row["word_num"]
                 # Hebrew: pull lemma + gloss for the ROOT from expanded tags
                 if is_ot and row["dstrongs"] and row["expanded"]:
                     m = re.search(
