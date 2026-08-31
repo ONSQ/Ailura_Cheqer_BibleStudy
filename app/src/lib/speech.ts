@@ -46,10 +46,31 @@ function romanized(translit: string): string {
 }
 
 function hasVoiceFor(lang: string): boolean {
-  if (Platform.OS !== 'web') return true; // native TTS resolves per-language itself
   if (typeof speechSynthesis === 'undefined') return false;
   const prefix = lang.split('-')[0];
   return speechSynthesis.getVoices().some((v) => v.lang?.toLowerCase().startsWith(prefix));
+}
+
+// Native TTS engines vary: many Android devices have no Hebrew or Greek
+// voice, and expo-speech goes silent rather than erroring when asked for
+// one. Ask the engine what it actually has, once.
+let nativeLangPrefixes: Promise<Set<string> | null> | null = null;
+
+function nativeHasVoiceFor(lang: string): Promise<boolean> {
+  nativeLangPrefixes ??= Speech.getAvailableVoicesAsync()
+    .then((voices) => {
+      const prefixes = new Set(
+        voices
+          .map((v) => v.language?.toLowerCase().split(/[-_]/)[0])
+          .filter((p): p is string => !!p),
+      );
+      // Some engines list nothing; treat that as unknown, not empty.
+      return prefixes.size ? prefixes : null;
+    })
+    .catch(() => null);
+  return nativeLangPrefixes.then(
+    (prefixes) => prefixes === null || prefixes.has(lang.split('-')[0]),
+  );
 }
 
 /**
@@ -78,17 +99,34 @@ function bestWebVoice(lang: string): SpeechSynthesisVoice | null {
   return [...candidates].sort((a, b) => score(b) - score(a))[0];
 }
 
-function speakWeb(text: string, lang: string) {
+// Chrome quirks, all of which end in silence: speak() right after cancel()
+// is dropped some of the time, a paused engine swallows everything queued,
+// and an utterance with no live JS reference can be garbage-collected
+// mid-speech. Keep a module reference and queue the utterance on a short
+// delay so the cancel settles first.
+let currentUtterance: SpeechSynthesisUtterance | null = null;
+let speakTimer: ReturnType<typeof setTimeout> | null = null;
+
+function speakWeb(text: string, lang: string, onFail?: () => void) {
+  speechSynthesis.resume();
   speechSynthesis.cancel();
+  if (speakTimer) clearTimeout(speakTimer);
   const u = new SpeechSynthesisUtterance(text);
   const voice = bestWebVoice(lang);
   if (voice) u.voice = voice;
   u.lang = lang;
   u.rate = 0.75;
-  speechSynthesis.speak(u);
+  if (onFail) {
+    u.onerror = (e) => {
+      // interrupted/canceled just means another word started; not a failure
+      if (e.error !== 'interrupted' && e.error !== 'canceled') onFail();
+    };
+  }
+  currentUtterance = u;
+  speakTimer = setTimeout(() => speechSynthesis.speak(u), 60);
 }
 
-export function speakWord(
+export async function speakWord(
   surface: string,
   strongs: string | null | undefined,
   translit?: string | null,
@@ -96,17 +134,23 @@ export function speakWord(
   const lang = speechLang(strongs);
   if (Platform.OS === 'web') {
     if (typeof speechSynthesis === 'undefined') return;
+    const fallback = translit
+      ? () => speakWeb(romanized(translit), 'en-US')
+      : undefined;
     if (hasVoiceFor(lang)) {
-      speakWeb(surface, lang);
+      speakWeb(surface, lang, fallback);
     } else if (translit) {
       speakWeb(romanized(translit), 'en-US');
     }
     return;
   }
   Speech.stop();
-  if (hasVoiceFor(lang)) {
-    Speech.speak(surface, { language: lang, rate: 0.75 });
-  } else if (translit) {
-    Speech.speak(romanized(translit), { rate: 0.75 });
+  const sayTranslit = translit
+    ? () => Speech.speak(romanized(translit), { rate: 0.75 })
+    : undefined;
+  if (await nativeHasVoiceFor(lang)) {
+    Speech.speak(surface, { language: lang, rate: 0.75, onError: sayTranslit });
+  } else if (sayTranslit) {
+    sayTranslit();
   }
 }
