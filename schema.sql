@@ -33,7 +33,6 @@ create table if not exists ol_words (
 create index if not exists idx_ol_words_strongs  on ol_words (strongs);
 create index if not exists idx_ol_words_dstrongs on ol_words (dstrongs);
 create index if not exists idx_ol_words_ref      on ol_words (book, chapter, verse);
-create index if not exists idx_ol_words_lemma    on ol_words (lemma);
 
 -- One row per lexeme (aggregated during ingestion)
 create table if not exists lexemes (
@@ -67,7 +66,7 @@ create table if not exists period_docs (
     license   text,                       -- track per-source licensing (e.g. CC BY-NC for ETCBC DSS)
     strongs   text[],                     -- exact-match arm of hybrid retrieval (tagged corpora)
     lemmas    text[],
-    embedding vector(1536)                -- pgvector, for RAG over period witnesses
+    embedding halfvec(1536)               -- pgvector halfvec (2 bytes/dim), for RAG over period witnesses
 );
 create index if not exists idx_period_docs_work on period_docs (corpus, work);
 create index if not exists idx_period_docs_strongs on period_docs using gin (strongs);
@@ -315,15 +314,23 @@ create policy word_studies_delete on word_studies for delete
 
 -- Semantic arm of hybrid retrieval: nearest period passages by embedding.
 -- Exact-lemma matches stay with period_usage(); this covers untagged corpora
--- (Josephus, Philo, Second Temple apocrypha). plpgsql so ivfflat.probes can
--- be raised per call (the function SET clause is not permitted on Supabase).
-create index if not exists idx_period_docs_embedding
-  on period_docs using ivfflat (embedding extensions.vector_cosine_ops) with (lists = 200);
+-- (Josephus, Philo, Second Temple apocrypha).
+--
+-- No ANN index: at the current corpus size (~43k rows) pgvector's exact scan
+-- runs in tens of milliseconds and returns exact rather than approximate
+-- neighbours. An ivfflat index over these vectors cost 340 MB against a 500 MB
+-- database budget for 93 scans, so it was dropped. Add an index back only if
+-- period_docs grows past a few hundred thousand rows, and use
+--   hnsw (embedding extensions.halfvec_cosine_ops)
+-- rather than ivfflat. The set_config('ivfflat.probes', ...) calls below are
+-- harmless no-ops while no ivfflat index exists; they are kept so the index can
+-- be reinstated without touching the function bodies.
 
 create or replace function semantic_period_search(
-  p_embedding extensions.vector(1536),
+  p_embedding extensions.halfvec(1536),
   p_corpora text[] default null,
-  p_k int default 8
+  p_k int default 8,
+  p_min_sim numeric default 0.30
 ) returns jsonb
 language plpgsql stable
 as $$
@@ -344,6 +351,7 @@ begin
       from period_docs
       where embedding is not null
         and (p_corpora is null or corpus = any(p_corpora))
+        and (1 - (embedding <=> p_embedding))::numeric >= p_min_sim
       order by embedding <=> p_embedding
       limit least(p_k, 25)
     ) t
@@ -351,7 +359,7 @@ begin
 end;
 $$;
 
-grant execute on function semantic_period_search(extensions.vector, text[], int) to anon, authenticated;
+grant execute on function semantic_period_search(extensions.halfvec, text[], int, numeric) to anon, authenticated;
 
 -- Bulk-write embeddings from the embed batch loader (service role only).
 create or replace function set_embeddings(p jsonb)
@@ -362,7 +370,7 @@ set search_path = public, extensions
 as $$
   with updated as (
     update period_docs d
-    set embedding = (e->>'embedding')::extensions.vector(1536)
+    set embedding = (e->>'embedding')::extensions.halfvec(1536)
     from jsonb_array_elements(p) e
     where d.id = (e->>'id')::bigint
     returning 1
@@ -472,7 +480,7 @@ as $$
 $$;
 
 create or replace function eval_semantic_lxx(
-  p_embedding extensions.vector(1536),
+  p_embedding extensions.halfvec(1536),
   p_k int default 50
 ) returns jsonb
 language plpgsql stable
@@ -512,7 +520,7 @@ as $$
 $$;
 
 grant execute on function eval_lxx_truth(text) to anon, authenticated;
-grant execute on function eval_semantic_lxx(extensions.vector, int) to anon, authenticated;
+grant execute on function eval_semantic_lxx(extensions.halfvec, int) to anon, authenticated;
 grant execute on function eval_keyword_lxx(text[], int) to anon, authenticated;
 
 -- Rate limiting for the paid AI endpoints (per-IP hourly + global daily
