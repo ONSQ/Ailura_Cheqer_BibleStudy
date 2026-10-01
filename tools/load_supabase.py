@@ -34,7 +34,17 @@ TABLES = {
     "lexemes": dict(
         cols="strongs, language, lemma, gloss, occurrences",
         conflict="(strongs) do update set occurrences = excluded.occurrences, "
-                 "lemma = excluded.lemma, gloss = excluded.gloss",
+                 "language = excluded.language, lemma = excluded.lemma, gloss = excluded.gloss",
+    ),
+    # Versification maps (ingest_stepbible.py, then build_lxx_map.py). After
+    # loading, run: select rebuild_lxx_equivalents();
+    "verse_map": dict(
+        cols="book, chapter, verse, heb_chapter, heb_verse",
+        conflict="(book, chapter, verse, heb_chapter, heb_verse) do nothing",
+    ),
+    "lxx_verse_map": dict(
+        cols="book, chapter, verse, lxx_chapter, lxx_verse",
+        conflict="do nothing",
     ),
     "translations": dict(
         cols="version, book, chapter, verse, text",
@@ -83,6 +93,13 @@ def main():
         "select count(*) from sqlite_master where type='table' and name='entities'"
     ).fetchone()[0]:
         cur.execute("truncate entity_refs, entity_names, entity_links, entities cascade")
+        pg.commit()
+
+    # lxx_verse_map has no natural key either (null targets): truncate-and-load.
+    if lite.execute(
+        "select count(*) from sqlite_master where type='table' and name='lxx_verse_map'"
+    ).fetchone()[0]:
+        cur.execute("truncate lxx_verse_map")
         pg.commit()
 
     for table, spec in TABLES.items():

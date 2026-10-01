@@ -21,6 +21,7 @@ stdlib only, no dependencies.
 
 import argparse
 import json
+import re
 import sqlite3
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -50,6 +51,16 @@ def tag_priority(corpus, tag):
     return 0
 
 
+def word_variant(corpus, source_tag, editions):
+    """Mirror of word_variant() in schema.sql: where a word outside the base
+    text comes from, or None for base-text words."""
+    if corpus == "NT" and "NA28" not in (editions or ""):
+        return re.sub(r"[«»]\d+", "", editions or "").replace("+", ", ") or "other editions"
+    if corpus == "OT" and (source_tag or "").startswith("X"):
+        return "LXX"
+    return None
+
+
 def get_books():
     rows = db().execute(
         """select book, corpus, max(chapter) as chapters, min(id) as ord
@@ -62,7 +73,7 @@ def get_books():
 def get_chapter(book, chapter):
     rows = db().execute(
         """select id, verse, word_num, source_tag, surface, translit, gloss,
-                  strongs, morph, corpus
+                  strongs, morph, corpus, editions
            from ol_words where book = ? and chapter = ?
            order by verse, word_num, id""",
         (book, chapter),
@@ -83,6 +94,7 @@ def get_chapter(book, chapter):
                 id=r["id"], word_num=r["word_num"], surface=r["surface"],
                 translit=r["translit"], gloss=r["gloss"], strongs=r["strongs"],
                 morph=r["morph"],
+                variant=word_variant(r["corpus"], r["source_tag"], r["editions"]),
             )
         )
     return dict(
@@ -121,14 +133,24 @@ def get_occurrences(strongs, limit, offset):
     total = db().execute(
         "select count(*) from ol_words where strongs = ?", (strongs,)
     ).fetchone()[0]
+    tagged = db().execute(
+        "select corpus, source_tag, editions from ol_words where strongs = ?", (strongs,)
+    ).fetchall()
+    base_total = sum(1 for r in tagged if word_variant(*r) is None)
     rows = db().execute(
-        f"""select book, chapter, verse, word_num, surface, translit, gloss
+        f"""select book, chapter, verse, word_num, surface, translit, gloss,
+                  corpus, source_tag, editions
            from ol_words where strongs = ?
            order by {BOOK_ORDER_SQL}, chapter, verse, word_num
            limit ? offset ?""",
         (strongs, limit, offset),
     ).fetchall()
-    return dict(total=total, rows=[dict(r) for r in rows])
+    out = []
+    for r in rows:
+        d = dict(r)
+        d["variant"] = word_variant(d.pop("corpus"), d.pop("source_tag"), d.pop("editions"))
+        out.append(d)
+    return dict(total=total, base_total=base_total, rows=out)
 
 
 def get_translation(version, book, chapter):

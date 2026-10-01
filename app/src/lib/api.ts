@@ -543,6 +543,18 @@ export async function generateEntityBrief(ustrong: string): Promise<SodBrief> {
   return data.brief as SodBrief;
 }
 
+/**
+ * TAHOT and TAGNT carry every word some translation renders. A word outside
+ * the base text (NA28 for Greek, the Hebrew text for the OT) arrives with a
+ * variant label from word_variant() in schema.sql; this says it in plain words.
+ */
+export function variantNote(variant: string | null | undefined): string | null {
+  if (!variant) return null;
+  return variant === 'LXX'
+    ? 'Not in the Hebrew text. Translators supply it from the Septuagint.'
+    : `Not in the NA28 Greek text. Found in: ${variant}.`;
+}
+
 /** Hebrew surfaces carry morpheme dividers (בְּ/רֵאשִׁית) and escapes; strip for display. */
 export function displaySurface(surface: string): string {
   return surface.replace(/[/\\]/g, '');

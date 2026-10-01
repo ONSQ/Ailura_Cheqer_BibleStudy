@@ -126,6 +126,25 @@ as $$
     limit 15
 $$;
 
+-- TAHOT and TAGNT are amalgamated texts: they carry every word some
+-- translation renders. word_variant() names where a word comes from when it
+-- is outside the base text (NA28 for Greek, the Hebrew text for the OT), and
+-- is null for base-text words. NT: the editions that do have it ("TR, Byz").
+-- OT: 'LXX' for words translators supply from the Septuagint (source_tag X).
+create or replace function word_variant(p_corpus text, p_source_tag text, p_editions text)
+returns text
+language sql immutable
+set search_path = public
+as $$
+    select case
+        when p_corpus = 'NT' and coalesce(p_editions, '') not like '%NA28%' then
+            coalesce(nullif(regexp_replace(regexp_replace(
+                coalesce(p_editions, ''), '[«»]\d+', '', 'g'), '\+', ', ', 'g'), ''),
+                'other editions')
+        when p_corpus = 'OT' and p_source_tag like 'X%' then 'LXX'
+    end
+$$;
+
 -- Whole chapter as one JSON value: PostgREST row caps do not apply,
 -- and word order is preserved server-side.
 create or replace function chapter_words(p_book text, p_chapter int)
@@ -136,20 +155,24 @@ as $$
     select coalesce(jsonb_agg(jsonb_build_object(
         'id', id, 'verse', verse, 'word_num', word_num,
         'source_tag', source_tag, 'surface', surface, 'translit', translit,
-        'gloss', gloss, 'strongs', strongs, 'morph', morph, 'corpus', corpus
+        'gloss', gloss, 'strongs', strongs, 'morph', morph, 'corpus', corpus,
+        'variant', word_variant(corpus, source_tag, editions)
     ) order by verse, word_num, id), '[]'::jsonb)
     from ol_words
     where book = p_book and chapter = p_chapter
 $$;
 
--- Occurrence page in canonical book order with total count, as one JSON value.
+-- Occurrence page in canonical book order, as one JSON value. total counts
+-- every word in the amalgamated text; base_total counts only the base text
+-- (NA28 / the Hebrew text), and each row carries its variant label if any.
 create or replace function occurrences_page(p_strongs text, p_limit int, p_offset int)
 returns jsonb
 language sql stable
 set search_path = public
 as $$
     with ordered as (
-        select book, chapter, verse, word_num, surface, translit, gloss
+        select book, chapter, verse, word_num, surface, translit, gloss,
+               word_variant(corpus, source_tag, editions) as variant
         from ol_words
         where strongs = p_strongs
         order by array_position(array[
@@ -163,29 +186,169 @@ as $$
     )
     select jsonb_build_object(
         'total', (select count(*) from ol_words where strongs = p_strongs),
+        'base_total', (select count(*) from ol_words
+                       where strongs = p_strongs
+                         and word_variant(corpus, source_tag, editions) is null),
         'rows', coalesce((select jsonb_agg(to_jsonb(o)) from ordered o), '[]'::jsonb)
     )
 $$;
 
 -- =============================================================
+-- Versification. ol_words and translations use English verse refs.
+-- The period witnesses do not: Targum Onkelos follows the Hebrew
+-- numbering, and the LXX (Rahlfs) follows it in most places, numbers
+-- the psalter one behind, and arranges Jeremiah 25-51 differently.
+-- Looking a witness up by the English ref returns a different verse
+-- in about 4,500 OT verses, so both lookups go through these maps.
+-- =============================================================
+
+-- Hebrew ref of every OT verse whose English ref differs (from the
+-- bracketed refs in TAHOT; loaded by ingest/ingest_stepbible.py). A
+-- psalm title (verse 0) can cover two Hebrew verses.
+create table if not exists verse_map (
+    book        text not null,
+    chapter     int  not null,
+    verse       int  not null,
+    heb_chapter int  not null,
+    heb_verse   int  not null,
+    primary key (book, chapter, verse, heb_chapter, heb_verse)
+);
+
+-- LXX verse behind an OT verse, wherever it is not the same
+-- chapter:verse. A row with null lxx columns means "no counterpart":
+-- the same-numbered LXX verse exists but is a different verse. Built
+-- and checked by ingest/build_lxx_map.py (truncate-and-load).
+create table if not exists lxx_verse_map (
+    book        text not null,
+    chapter     int  not null,
+    verse       int  not null,
+    lxx_chapter int,
+    lxx_verse   int
+);
+create index if not exists idx_lxx_verse_map on lxx_verse_map (book, chapter, verse);
+
+alter table verse_map     enable row level security;
+alter table lxx_verse_map enable row level security;
+drop policy if exists verse_map_read on verse_map;
+drop policy if exists lxx_verse_map_read on lxx_verse_map;
+create policy verse_map_read     on verse_map     for select using (true);
+create policy lxx_verse_map_read on lxx_verse_map for select using (true);
+
+-- =============================================================
 -- Hebrew -> LXX bridge (Phase 3). No external alignment data:
 -- OT verses carry Hebrew Strong's, LXX verses carry Greek Strong's,
--- and they share versification. Verse-level co-occurrence recovers
--- translation equivalents; a lift filter (>= 2 vs corpus baseline)
--- keeps Greek function words from dominating. Rebuild lxx_equivalents
--- after reloading either corpus (see migration hebrew_lxx_bridge).
+-- and lxx_verse_map pairs the verses. Verse-level co-occurrence
+-- recovers translation equivalents; a lift filter (>= 2 vs corpus
+-- baseline) keeps Greek function words from dominating.
 -- =============================================================
 
 create table if not exists lxx_book_map (
     ot_book  text primary key,
     lxx_work text not null
 );
--- Values: 38 OT books mapped (Neh omitted; LXX 2Esdras shifts chapters).
--- Psalms chapters remapped through lxx_ps_chapter() during the build.
+-- Values: all 39 OT books (Ezr and Neh both map to 2Esdr; Dan to DanTh).
+
+-- The witness verses for one English OT ref.
+create or replace function witness_refs(p_book text, p_chapter int, p_verse int)
+returns table (corpus text, work text, ref text)
+language sql stable
+set search_path = public
+as $$
+    select 'Targum', 'Onkelos ' || p_book, h.heb_chapter || ':' || h.heb_verse
+    from verse_map h
+    where h.book = p_book and h.chapter = p_chapter and h.verse = p_verse
+    union all
+    select 'Targum', 'Onkelos ' || p_book, p_chapter || ':' || p_verse
+    where not exists (select 1 from verse_map h
+                      where h.book = p_book and h.chapter = p_chapter and h.verse = p_verse)
+    union all
+    select 'LXX', m.lxx_work, x.lxx_chapter || ':' || x.lxx_verse
+    from lxx_book_map m
+    join lxx_verse_map x on x.book = m.ot_book and x.chapter = p_chapter and x.verse = p_verse
+    where m.ot_book = p_book and x.lxx_chapter is not null
+    union all
+    select 'LXX', m.lxx_work, p_chapter || ':' || p_verse
+    from lxx_book_map m
+    where m.ot_book = p_book
+      and not exists (select 1 from lxx_verse_map x
+                      where x.book = p_book and x.chapter = p_chapter and x.verse = p_verse)
+$$;
 
 -- lxx_equivalents (heb_strongs, grk_strongs, pair_count, share, lift):
--- materialized by the hebrew_lxx_bridge migration from ol_words x
--- period_docs. RLS: world-readable like the other text tables.
+-- world-readable like the other text tables. Run
+--   select rebuild_lxx_equivalents();
+-- after reloading ol_words, the LXX rows of period_docs, or lxx_verse_map.
+create table if not exists lxx_equivalents (
+    heb_strongs text not null,
+    grk_strongs text not null,
+    pair_count  bigint,
+    share       numeric,
+    lift        numeric,
+    primary key (heb_strongs, grk_strongs)
+);
+create index if not exists idx_lxx_equiv_heb on lxx_equivalents (heb_strongs);
+alter table lxx_equivalents enable row level security;
+drop policy if exists lxx_equivalents_read on lxx_equivalents;
+create policy lxx_equivalents_read on lxx_equivalents for select using (true);
+
+create or replace function rebuild_lxx_equivalents()
+returns int
+language plpgsql
+set search_path = public
+as $$
+declare
+    n int;
+begin
+    delete from lxx_equivalents where true;
+    insert into lxx_equivalents (heb_strongs, grk_strongs, pair_count, share, lift)
+    with ot_verses as (
+        select distinct strongs as heb, book, chapter, verse
+        from ol_words
+        where corpus = 'OT' and strongs is not null
+    ),
+    paired as (   -- each OT verse with the Greek lemmas of its LXX verse(s)
+        select distinct v.heb, v.book, v.chapter, v.verse, g.g as grk
+        from ot_verses v
+        join lxx_book_map m on m.ot_book = v.book
+        left join lxx_verse_map x
+            on x.book = v.book and x.chapter = v.chapter and x.verse = v.verse
+        join period_docs p
+            on p.corpus = 'LXX' and p.work = m.lxx_work
+           and p.ref = coalesce(x.lxx_chapter, v.chapter) || ':' || coalesce(x.lxx_verse, v.verse)
+        cross join lateral unnest(p.strongs) as g(g)
+        where x.book is null or x.lxx_chapter is not null
+    ),
+    pairs as (
+        select heb, grk, count(*) as pair_count from paired group by 1, 2
+    ),
+    heb_totals as (
+        select v.heb, count(*) as n_heb
+        from ot_verses v
+        where exists (select 1 from lxx_book_map m where m.ot_book = v.book)
+        group by v.heb
+    ),
+    grk_totals as (
+        select g.g as grk, count(*) as n_grk
+        from period_docs p cross join lateral unnest(p.strongs) as g(g)
+        where p.corpus = 'LXX'
+        group by 1
+    ),
+    n_total as (select count(*) as n from period_docs where corpus = 'LXX')
+    select p.heb, p.grk, p.pair_count,
+           round(p.pair_count::numeric / h.n_heb, 3),
+           round((p.pair_count::numeric / h.n_heb) / (g.n_grk::numeric / t.n), 2)
+    from pairs p
+    join heb_totals h on h.heb = p.heb
+    join grk_totals g on g.grk = p.grk
+    cross join n_total t
+    where p.pair_count >= 3
+      and (p.pair_count::numeric / h.n_heb) / (g.n_grk::numeric / t.n) >= 2;
+    get diagnostics n = row_count;
+    return n;
+end;
+$$;
+
+revoke execute on function rebuild_lxx_equivalents() from public, anon, authenticated;
 
 -- Top LXX renderings of a Hebrew lemma, with the Greek lexeme joined in.
 create or replace function lxx_renderings(p_strongs text)
@@ -210,28 +373,74 @@ as $$
     left join lexemes l on l.strongs = e.grk_strongs
 $$;
 
--- Period witnesses for one MT verse: Targum Onkelos shares refs directly,
--- the LXX joins through the book map (with the psalm-chapter remap).
+-- Period witnesses for one OT verse, each looked up by its own numbering.
 create or replace function verse_witnesses(p_book text, p_chapter int, p_verse int)
 returns jsonb
 language sql stable
 set search_path = public
 as $$
-    with refs as (
-        select 'Targum'::text as corpus, 'Onkelos ' || p_book as work,
-               p_chapter || ':' || p_verse as ref
-        union all
-        select 'LXX', m.lxx_work,
-               (case when p_book = 'Psa' then lxx_ps_chapter(p_chapter) else p_chapter end)
-                 || ':' || p_verse
-        from lxx_book_map m where m.ot_book = p_book
-    )
     select coalesce(jsonb_agg(jsonb_build_object(
         'corpus', p.corpus, 'work', p.work, 'ref', p.ref,
-        'language', p.language, 'content', p.content
-    ) order by p.corpus), '[]'::jsonb)
+        'language', p.language, 'content', p.content, 'content_en', p.content_en
+    ) order by p.corpus, p.id), '[]'::jsonb)
     from period_docs p
-    join refs r on p.corpus = r.corpus and p.work = r.work and p.ref = r.ref
+    join witness_refs(p_book, p_chapter, p_verse) r
+        on p.corpus = r.corpus and p.work = r.work and p.ref = r.ref
+$$;
+
+-- One verse's words for the AI functions (ask directly, ask-verse through
+-- passage_context, which applies the same rule). Every row is a distinct
+-- word in reading order: the Qere where the scribes corrected the text, and
+-- the few words translators take from the LXX (source_tag X). Filtering to
+-- the Leningrad rows would drop them. Words outside the base text carry a
+-- "variant" key so the model can say which editions have them.
+create or replace function verse_words(p_book text, p_chapter int, p_verse int)
+returns jsonb
+language sql stable
+set search_path = public
+as $$
+    select coalesce(jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+        'surface', surface, 'translit', translit,
+        'gloss', gloss, 'strongs', strongs,
+        'variant', word_variant(corpus, source_tag, editions)
+    )) order by word_num, id), '[]'::jsonb)
+    from ol_words
+    where book = p_book and chapter = p_chapter and verse = p_verse
+$$;
+
+-- English text search for the AI functions. When a phrase has more hits than
+-- the limit, return an evenly spaced sample across the whole canon (in
+-- canonical order) instead of the first hits from Genesis onward.
+create or replace function nl_search_verses(p_query text, p_limit int default 20)
+returns jsonb
+language sql stable
+set search_path = public
+as $$
+    with canon as (
+        select array[
+            'Gen','Exo','Lev','Num','Deu','Jos','Jdg','Rut','1Sa','2Sa','1Ki','2Ki',
+            '1Ch','2Ch','Ezr','Neh','Est','Job','Psa','Pro','Ecc','Sng','Isa','Jer',
+            'Lam','Ezk','Dan','Hos','Jol','Amo','Oba','Jon','Mic','Nam','Hab','Zep',
+            'Hag','Zec','Mal','Mat','Mrk','Luk','Jhn','Act','Rom','1Co','2Co','Gal',
+            'Eph','Php','Col','1Th','2Th','1Ti','2Ti','Tit','Phm','Heb','Jas','1Pe',
+            '2Pe','1Jn','2Jn','3Jn','Jud','Rev'] as books
+    ),
+    lim as (select least(greatest(p_limit, 1), 25) as k),
+    matches as (
+        select t.book, t.chapter, t.verse, t.text,
+               row_number() over (order by array_position((select books from canon), t.book),
+                                           t.chapter, t.verse) as rn,
+               count(*) over () as n
+        from translations t
+        where t.version = 'BSB' and t.text ilike '%' || p_query || '%'
+    )
+    select coalesce(jsonb_agg(jsonb_build_object(
+        'book', book, 'chapter', chapter, 'verse', verse, 'text', text)
+        order by rn), '[]'::jsonb)
+    from matches, lim
+    where n <= k
+       or rn = 1
+       or ((rn - 1) * k) / n <> ((rn - 2) * k) / n
 $$;
 
 -- =============================================================
@@ -266,7 +475,6 @@ select corpus, book, chapter, verse,
        string_agg(coalesce(gloss,''), ' | ' order by word_num)             as gloss_line,
        array_agg(strongs order by word_num)                                as strongs_list
 from ol_words
-where source_tag is null or source_tag in ('L','Q','R','X') or corpus = 'NT'
 group by corpus, book, chapter, verse;
 
 -- =============================================================
