@@ -102,6 +102,10 @@ mkdir -p data/TIPNR
 curl -sL -o data/TIPNR/TIPNR.txt "https://raw.githubusercontent.com/STEPBible/STEPBible-Data/master/Proper%20Nouns/TIPNR%20-%20Translators%20Individualised%20Proper%20Names%20with%20all%20References%20-%20STEPBible.org%20CC%20BY.txt"
 python3 ingest/ingest_tipnr.py --file data/TIPNR/TIPNR.txt --sqlite wordstudy.db
 
+# LXX verse alignment (after ingest_stepbible.py and ingest_lxx.py; then
+# run "select rebuild_lxx_equivalents();" on Supabase once it is loaded)
+python3 ingest/build_lxx_map.py --sqlite wordstudy.db
+
 # Load Supabase (run schema.sql in Supabase SQL editor first)
 export DATABASE_URL="postgresql://postgres:...@db.<project>.supabase.co:5432/postgres"
 python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators Amalgamated OT+NT" --postgres
@@ -132,3 +136,10 @@ cheqer/
 - `select count(distinct chapter) from ol_words where book='Psa';` expect 150 (dual-versification refs like Psa.18.1(18.2) must not be dropped)
 - John 1:1 should return 17 word rows ordered by word_num
 - G3056 top gloss should be "word"
+- `tools/accuracy_checks.sql` runs these and the rest (lexeme definitions, English/original verse alignment, LXX and Targum verse alignment) in one read-only query; every row should come back `ok = true`. Run it before each release.
+
+## Versification (read before touching refs)
+
+- ol_words and translations use English verse refs. TAHOT gives the Hebrew ref in round brackets and TAGNT the KJV ref in square brackets where they differ.
+- Targum Onkelos follows the Hebrew numbering; the LXX follows Rahlfs. Never join a witness on the English ref: go through `witness_refs()`, which reads `verse_map` (Hebrew refs) and `lxx_verse_map` (LXX refs, built by `ingest/build_lxx_map.py`).
+- Words numbered WWXX in TAHOT (LXX additions, restored text) are inserted after word WW; the ingest renumbers the verse so every word has its own slot in reading order.
