@@ -14,6 +14,8 @@ export interface Word {
   gloss: string | null;
   strongs: string | null;
   morph: string | null;
+  /** Set when the word is outside the base text: the editions that carry it, or 'LXX'. */
+  variant?: string | null;
 }
 
 export interface Verse {
@@ -61,10 +63,13 @@ export interface Occurrence {
   surface: string;
   translit: string | null;
   gloss: string | null;
+  variant?: string | null;
 }
 
 export interface OccurrencePage {
   total: number;
+  /** Occurrences in the base text only (NA28 / the Hebrew text). */
+  base_total?: number;
   rows: Occurrence[];
 }
 

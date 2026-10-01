@@ -45,6 +45,7 @@ KJV_NUMBERED = {("2Co", 13, 12), ("2Co", 13, 13), ("3Jn", 1, 15), ("Rev", 12, 18
 # dStrong tags look like H7225G, G0976, H9003; root is wrapped in {curly braces}
 DSTRONG_ROOT_RE = re.compile(r"\{([HG]\d{4}[A-Za-z]?)")
 STRONG_SIMPLE_RE = re.compile(r"([HG])(\d{4})([A-Za-z]?)")
+VERSE_MARK_RE = re.compile(r"^\[\d+(?:\.\d+)?\]\s+")
 
 
 def simple_strongs(dstrong: str):
@@ -140,7 +141,8 @@ def parse_tagnt_line(cols):
         ref, corpus="NT", lex_gloss=meaning or None,
         surface=surface,
         translit=translit,
-        gloss=cols[2].strip() if len(cols) > 2 else None,
+        # TAGNT opens a KJV-numbered verse with its number: "[14] The".
+        gloss=VERSE_MARK_RE.sub("", cols[2].strip()) if len(cols) > 2 else None,
         dstrongs=dstrong or None,
         strongs=simple_strongs(dstrong),
         dstrongs_raw=cols[3].strip() if len(cols) > 3 else "",

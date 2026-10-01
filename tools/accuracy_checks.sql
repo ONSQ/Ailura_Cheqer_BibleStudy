@@ -27,6 +27,19 @@ with checks (name, expected, actual) as (
             from (select 1 from ol_words
                   group by book, chapter, verse, word_num having count(*) > 1) d)
 
+    -- Words outside the base text are labelled, and counted both ways ---------
+    union all
+    select 'words outside the base text (NA28 / Hebrew text)', '4329',
+           (select count(*)::text from ol_words
+            where word_variant(corpus, source_tag, editions) is not null)
+    union all
+    select 'G2424 Jesus: all editions / NA28', '992 / 915',
+           (select (p ->> 'total') || ' / ' || (p ->> 'base_total')
+            from occurrences_page('G2424', 0, 0) p)
+    union all
+    select 'glosses that open with a verse-number marker', '0',
+           (select count(*)::text from ol_words where gloss ~ '^\[[0-9]+(\.[0-9]+)?\]\s')
+
     -- Lexeme definitions come from the lexicon, not from one occurrence ------
     union all
     select 'lexeme glosses G1722 / G2316 / G3056 / H3318 / H7307',

@@ -103,6 +103,8 @@ export default function WordStudy() {
 
   const rows = occurrences.data?.pages.flatMap((p) => p.rows) ?? [];
   const total = occurrences.data?.pages[0]?.total ?? 0;
+  // Occurrences in the base text alone, shown when the amalgamated count is higher.
+  const baseTotal = occurrences.data?.pages[0]?.base_total;
 
   // Pronunciation guide: the most common attested form of this lexeme.
   const commonForm = useMemo(() => {
@@ -117,6 +119,7 @@ export default function WordStudy() {
     return top ? { translit: top[0], surface: top[1].surface } : null;
   }, [rows]);
   const isHebrew = strongs?.startsWith('H');
+  const baseText = isHebrew ? 'the Hebrew text' : 'NA28';
   const maxGloss = glosses.data?.[0]?.count ?? 1;
 
   const jumpTo = (o: Occurrence) =>
@@ -171,6 +174,9 @@ export default function WordStudy() {
                   <Text style={styles.lexMeta}>
                     {lexeme.data.strongs} · {languageName(lexeme.data.language)} ·{' '}
                     {lexeme.data.occurrences.toLocaleString()} occurrences
+                    {baseTotal != null && baseTotal < lexeme.data.occurrences
+                      ? ` (${baseTotal.toLocaleString()} in ${baseText})`
+                      : ''}
                   </Text>
                   {displayGloss(lexeme.data.gloss) ? (
                     <Text style={styles.lexGloss}>{displayGloss(lexeme.data.gloss)}</Text>
@@ -426,6 +432,11 @@ export default function WordStudy() {
             <Text style={styles.occGloss} numberOfLines={1}>
               {item.gloss ?? ''}
             </Text>
+            {item.variant ? (
+              <Text style={styles.occVariant}>
+                {item.variant === 'LXX' ? 'from LXX' : `${item.variant} only`}
+              </Text>
+            ) : null}
           </Pressable>
         )}
         onEndReached={() => {
@@ -639,5 +650,17 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   occSurface: { fontSize: 17, color: colors.ink },
   occSurfaceHebrew: { fontSize: 20 },
   occGloss: { flex: 1, textAlign: 'right', color: colors.faint, fontSize: 13 },
+  occVariant: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.faint,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 8,
+    overflow: 'hidden',
+  },
   empty: { textAlign: 'center', color: colors.faint, marginTop: 24 },
 }));

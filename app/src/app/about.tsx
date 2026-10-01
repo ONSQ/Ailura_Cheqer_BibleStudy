@@ -132,6 +132,14 @@ export default function About() {
       <Link label="www.TyndaleHouse.com" url="https://www.TyndaleHouse.com" />
       <Link label="www.STEPBible.org" url="https://www.STEPBible.org" />
       <Text style={[styles.body, { marginTop: 12 }]}>
+        These texts are amalgamated: they include every word that a major translation renders.
+        Greek words absent from the Nestle-Aland text (NA28), and Hebrew words that translators
+        supply from the Septuagint, appear in [brackets] in the Reader, and the word sheet names
+        the editions that carry them. Word counts include them, with the NA28 or Hebrew-text
+        count beside the total where the two differ. Verse numbers follow the Berean Standard
+        Bible; the KJV and WEB divide a few verses differently.
+      </Text>
+      <Text style={[styles.body, { marginTop: 12 }]}>
         Septuagint text and tagging: CenterBLC LXX (Rahlfs 1935), MIT license.
       </Text>
       <Link label="github.com/CenterBLC/LXX" url="https://github.com/CenterBLC/LXX" />

@@ -143,3 +143,8 @@ cheqer/
 - ol_words and translations use English verse refs. TAHOT gives the Hebrew ref in round brackets and TAGNT the KJV ref in square brackets where they differ.
 - Targum Onkelos follows the Hebrew numbering; the LXX follows Rahlfs. Never join a witness on the English ref: go through `witness_refs()`, which reads `verse_map` (Hebrew refs) and `lxx_verse_map` (LXX refs, built by `ingest/build_lxx_map.py`).
 - Words numbered WWXX in TAHOT (LXX additions, restored text) are inserted after word WW; the ingest renumbers the verse so every word has its own slot in reading order.
+
+## Editions (read before touching counts)
+
+- TAHOT and TAGNT are amalgamated: they carry every word a major translation renders, including Greek words absent from NA28 and Hebrew words supplied from the LXX. `word_variant()` in schema.sql is the one rule for which words those are. The Reader brackets them, the word sheet names the editions, and occurrence counts show the base-text figure beside the total ("992 occurrences (915 in NA28)"). Do not filter them out of counts or text silently.
+- Brenton's English is aligned to the Greek LXX rows by `ingest/ingest_witness_en.py` before it is attached; his verse numbers differ from Rahlfs in places.

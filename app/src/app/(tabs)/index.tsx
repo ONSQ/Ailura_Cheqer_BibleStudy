@@ -517,9 +517,10 @@ function OriginalLine({
         <Text
           key={w.id}
           suppressHighlighting
-          style={w.strongs ? undefined : styles.wordUntagged}
+          style={w.variant ? styles.wordVariant : w.strongs ? undefined : styles.wordUntagged}
           onPress={w.strongs ? () => router.push(`/study/${w.strongs}` as never) : undefined}>
-          {displaySurface(w.surface)}{' '}
+          {/* Bracketed: not in the base text (NA28 / the Hebrew text). */}
+          {w.variant ? `[${displaySurface(w.surface)}]` : displaySurface(w.surface)}{' '}
         </Text>
       ))}
     </Text>
@@ -994,6 +995,7 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   selectMoreLink: { color: colors.accent, fontSize: 13, fontWeight: '600' },
   word: { color: colors.ink },
   wordUntagged: { color: colors.faint },
+  wordVariant: { color: colors.faint, fontStyle: 'italic' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   errorText: { color: colors.faint, textAlign: 'center', lineHeight: 22 },
   modalScrim: { flex: 1, backgroundColor: 'rgba(20,16,10,0.45)', justifyContent: 'flex-end' },

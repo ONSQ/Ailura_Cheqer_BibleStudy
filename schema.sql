@@ -126,6 +126,25 @@ as $$
     limit 15
 $$;
 
+-- TAHOT and TAGNT are amalgamated texts: they carry every word some
+-- translation renders. word_variant() names where a word comes from when it
+-- is outside the base text (NA28 for Greek, the Hebrew text for the OT), and
+-- is null for base-text words. NT: the editions that do have it ("TR, Byz").
+-- OT: 'LXX' for words translators supply from the Septuagint (source_tag X).
+create or replace function word_variant(p_corpus text, p_source_tag text, p_editions text)
+returns text
+language sql immutable
+set search_path = public
+as $$
+    select case
+        when p_corpus = 'NT' and coalesce(p_editions, '') not like '%NA28%' then
+            coalesce(nullif(regexp_replace(regexp_replace(
+                coalesce(p_editions, ''), '[«»]\d+', '', 'g'), '\+', ', ', 'g'), ''),
+                'other editions')
+        when p_corpus = 'OT' and p_source_tag like 'X%' then 'LXX'
+    end
+$$;
+
 -- Whole chapter as one JSON value: PostgREST row caps do not apply,
 -- and word order is preserved server-side.
 create or replace function chapter_words(p_book text, p_chapter int)
@@ -136,20 +155,24 @@ as $$
     select coalesce(jsonb_agg(jsonb_build_object(
         'id', id, 'verse', verse, 'word_num', word_num,
         'source_tag', source_tag, 'surface', surface, 'translit', translit,
-        'gloss', gloss, 'strongs', strongs, 'morph', morph, 'corpus', corpus
+        'gloss', gloss, 'strongs', strongs, 'morph', morph, 'corpus', corpus,
+        'variant', word_variant(corpus, source_tag, editions)
     ) order by verse, word_num, id), '[]'::jsonb)
     from ol_words
     where book = p_book and chapter = p_chapter
 $$;
 
--- Occurrence page in canonical book order with total count, as one JSON value.
+-- Occurrence page in canonical book order, as one JSON value. total counts
+-- every word in the amalgamated text; base_total counts only the base text
+-- (NA28 / the Hebrew text), and each row carries its variant label if any.
 create or replace function occurrences_page(p_strongs text, p_limit int, p_offset int)
 returns jsonb
 language sql stable
 set search_path = public
 as $$
     with ordered as (
-        select book, chapter, verse, word_num, surface, translit, gloss
+        select book, chapter, verse, word_num, surface, translit, gloss,
+               word_variant(corpus, source_tag, editions) as variant
         from ol_words
         where strongs = p_strongs
         order by array_position(array[
@@ -163,6 +186,9 @@ as $$
     )
     select jsonb_build_object(
         'total', (select count(*) from ol_words where strongs = p_strongs),
+        'base_total', (select count(*) from ol_words
+                       where strongs = p_strongs
+                         and word_variant(corpus, source_tag, editions) is null),
         'rows', coalesce((select jsonb_agg(to_jsonb(o)) from ordered o), '[]'::jsonb)
     )
 $$;
@@ -366,16 +392,18 @@ $$;
 -- passage_context, which applies the same rule). Every row is a distinct
 -- word in reading order: the Qere where the scribes corrected the text, and
 -- the few words translators take from the LXX (source_tag X). Filtering to
--- the Leningrad rows would drop them.
+-- the Leningrad rows would drop them. Words outside the base text carry a
+-- "variant" key so the model can say which editions have them.
 create or replace function verse_words(p_book text, p_chapter int, p_verse int)
 returns jsonb
 language sql stable
 set search_path = public
 as $$
-    select coalesce(jsonb_agg(jsonb_build_object(
+    select coalesce(jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
         'surface', surface, 'translit', translit,
-        'gloss', gloss, 'strongs', strongs
-    ) order by word_num, id), '[]'::jsonb)
+        'gloss', gloss, 'strongs', strongs,
+        'variant', word_variant(corpus, source_tag, editions)
+    )) order by word_num, id), '[]'::jsonb)
     from ol_words
     where book = p_book and chapter = p_chapter and verse = p_verse
 $$;

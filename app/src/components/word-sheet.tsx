@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Pronunciation } from '@/components/pronunciation';
-import { displaySurface, getVerseEntities } from '@/lib/api';
+import { displaySurface, getVerseEntities, variantNote } from '@/lib/api';
 import { matchEnglishToOriginal } from '@/lib/match';
 import { bookName } from '@/lib/names';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
@@ -141,6 +141,7 @@ function WordRow({
           {word.strongs}
           {word.morph ? ` · ${word.morph}` : ''}
         </Text>
+        {word.variant ? <Text style={styles.variant}>{variantNote(word.variant)}</Text> : null}
       </View>
       <Text style={styles.chevron}>›</Text>
     </Pressable>
@@ -174,6 +175,7 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   surfaceHebrew: { fontSize: 26 },
   meta: { fontSize: 13, color: colors.ink, marginTop: 2 },
   morph: { fontSize: 11, color: colors.faint, marginTop: 2 },
+  variant: { fontSize: 12, color: colors.accent, marginTop: 4, lineHeight: 16 },
   chevron: { fontSize: 24, color: colors.faint, marginLeft: 8 },
   restLabel: { fontSize: 12, color: colors.faint, marginTop: 6, marginBottom: 8 },
   entityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
