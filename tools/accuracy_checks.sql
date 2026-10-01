@@ -107,6 +107,11 @@ with checks (name, expected, actual) as (
                               where p.corpus = 'LXX' and p.work = m.lxx_work
                                 and p.ref = x.lxx_chapter || ':' || x.lxx_verse))
     union all
+    -- Brenton numbers Deut 29 one verse ahead of the Greek; the English must follow the Greek
+    select 'English under LXX Deut 29:1', 'And Moses called all the sons of Israel',
+           (select left(content_en, 39) from period_docs
+            where corpus = 'LXX' and work = 'Deut' and ref = '29:1')
+    union all
     select 'top LXX rendering of H2617 (chesed)', 'G1656',
            (select lxx_renderings('H2617') -> 0 ->> 'grk_strongs')
 
