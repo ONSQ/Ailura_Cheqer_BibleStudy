@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { BrandHeader } from '@/components/brand';
 import { SUPPORT_URL } from '@/lib/links';
 import { themedSheets, useSheet, useTheme, type ThemeMode } from '@/lib/theme';
 
@@ -42,7 +43,7 @@ export default function About() {
   const styles = useSheet(sheets);
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.hebrew}>חֵקֶר</Text>
+      <BrandHeader width={260} />
       <Text style={styles.name}>Cheqer Bible Study</Text>
       <Text style={styles.definition}>
         Cheqer (חֵקֶר, pronounced KHAY-ker) is Hebrew for a searching out, a deep inquiry into a
@@ -170,8 +171,7 @@ export default function About() {
 const sheets = themedSheets((colors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 24, alignItems: 'center' },
-  hebrew: { fontSize: 44, color: colors.ink, marginTop: 12 },
-  name: { fontSize: 24, fontWeight: '700', color: colors.ink, marginTop: 4 },
+  name: { fontSize: 20, fontWeight: '700', color: colors.ink, marginTop: 10 },
   definition: {
     fontSize: 14,
     color: colors.ink,

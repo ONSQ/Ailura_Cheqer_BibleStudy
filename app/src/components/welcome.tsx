@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { BrandEmblem } from '@/components/brand';
 import { captureEmail } from '@/lib/api';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
@@ -64,7 +65,9 @@ export function WelcomeSheet() {
     <View style={styles.scrim}>
       <View style={styles.card}>
           <ScrollView keyboardShouldPersistTaps="handled">
-            <Text style={styles.hebrew}>חֵקֶר</Text>
+            <View style={styles.emblem}>
+              <BrandEmblem size={88} />
+            </View>
             <Text style={styles.title}>Welcome to Cheqer</Text>
             <Text style={styles.body}>
               A free word-study Bible. Tap any word to see the Hebrew or Greek behind it, ask
@@ -148,7 +151,7 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     maxWidth: 440,
     maxHeight: '90%',
   },
-  hebrew: { fontSize: 36, color: colors.ink, textAlign: 'center' },
+  emblem: { alignItems: 'center' },
   title: {
     fontSize: 21,
     fontWeight: '700',

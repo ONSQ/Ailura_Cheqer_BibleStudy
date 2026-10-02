@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
+import { BrandHeader } from '@/components/brand';
 import { WelcomeSheet } from '@/components/welcome';
 import { ThemeProvider, colors, useTheme } from '@/lib/theme';
 
@@ -30,8 +31,7 @@ function BrandSplash({ onDone }: { onDone: () => void }) {
   }, [onDone, opacity]);
   return (
     <Animated.View pointerEvents="none" style={[styles.splash, { opacity }]}>
-      <Text style={styles.splashHebrew}>חֵקֶר</Text>
-      <Text style={styles.splashName}>Cheqer</Text>
+      <BrandHeader width={280} onDark />
       <View style={styles.splashRule} />
       <Text style={styles.splashVerse}>
         “It is the glory of God to conceal a matter, but the glory of kings is to search out a
@@ -93,8 +93,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     zIndex: 10,
   },
-  splashHebrew: { color: colors.splashInk, fontSize: 56, marginBottom: 4 },
-  splashName: { color: colors.splashInk, fontSize: 34, fontWeight: '700', letterSpacing: 1 },
   splashRule: { width: 56, height: 2, backgroundColor: colors.bar, marginVertical: 18 },
   splashVerse: {
     color: colors.splashInk,

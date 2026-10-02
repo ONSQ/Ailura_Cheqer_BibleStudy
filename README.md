@@ -85,7 +85,7 @@ Original-language tagging data is from [Tyndale House, Cambridge](https://www.Ty
 ## Architecture
 
 ```
-Expo React Native app (web today; Android/iOS from the same codebase)
+Expo React Native app (web, Android, and iOS from the same codebase)
         |
 Supabase: Postgres + pgvector + Auth + Row Level Security + edge functions
         |
@@ -98,9 +98,34 @@ Supabase: Postgres + pgvector + Auth + Row Level Security + edge functions
 
 The AI layers follow one rule: no claim without a retrievable citation. Hybrid retrieval uses exact lemma matching where tagging exists (OT, NT, LXX, Targum) and semantic search over embeddings where it does not (Josephus, Philo, Second Temple). Briefs and answers are written from retrieved passages only.
 
+## Android and iOS builds
+
+The phone apps come from the same `app/` code as the web app, built in the cloud by [EAS](https://docs.expo.dev/build/introduction/). Both use the identifier `net.onsq.cheqer`. Profiles live in `app/eas.json`.
+
+```bash
+cd app
+npm install -g eas-cli && eas login     # once; app.json is already linked to the EAS project @onsq27/cheqer
+
+# Android: an APK the men's group can install from a link
+eas build --platform android --profile preview
+
+# Android: Play Store bundle
+eas build --platform android --profile production
+eas submit --platform android
+
+# iOS: needs an Apple Developer account; the first run signs in to Apple
+# and creates the certificates, so run it in a terminal you can type in
+eas build --platform ios --profile production
+eas submit --platform ios               # uploads to TestFlight
+```
+
+For the group on iPhone, TestFlight is the simplest path: one build, then invite testers by email. The `preview` profile on iOS is ad hoc and needs each phone registered first (`eas device:create`).
+
+To try a change on an Android emulator without EAS: `npx expo prebuild --platform android`, then `cd android && ./gradlew assembleRelease`. On Windows, do this from a short path outside OneDrive (for example `C:\tmp\cq\app`); the native build exceeds the 260-character path limit otherwise. The generated `android/` and `ios/` folders are not committed.
+
 ## Remaining roadmap
 
-- Android build via EAS internal testing for the group, then iOS/TestFlight
+- Store listings (Play Console, App Store Connect) once the group has tested the builds
 - Dead Sea Scrolls (ETCBC, non-commercial) into period_docs
 - Evaluation harness (UTSA independent study): precision/recall of semantic retrieval vs. concordance baseline over a gold-standard lemma set
 
