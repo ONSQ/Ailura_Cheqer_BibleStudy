@@ -31,5 +31,5 @@ export function formatQaShare(input: {
   refs?: string[];
 }): string {
   const refLine = input.refs?.length ? `\n\n${input.refs.join(' · ')}` : '';
-  return `${input.heading}\n\nQ: ${input.question}\n\n${input.answer}${refLine}\n\n— Cheqer Bible Study · ${APP_URL}`;
+  return `${input.heading}\n\nQ: ${input.question}\n\n${input.answer}${refLine}\n\n— Cheqer Word Study Bible · ${APP_URL}`;
 }
