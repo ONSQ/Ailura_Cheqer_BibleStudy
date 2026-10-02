@@ -47,6 +47,18 @@ export async function signOut() {
   if (error) throw error;
 }
 
+/**
+ * Erase the signed-in account: the delete_my_account RPC removes the
+ * user's studies, any mailing-list row under the same address, and the
+ * auth user. The server session is gone with it, so only the local one
+ * is cleared here.
+ */
+export async function deleteAccount() {
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw error;
+  await supabase.auth.signOut({ scope: 'local' });
+}
+
 export async function getStudy(id: number): Promise<WordStudy | null> {
   const { data, error } = await supabase
     .from('word_studies')

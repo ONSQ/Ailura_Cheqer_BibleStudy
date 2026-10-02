@@ -115,6 +115,11 @@ function SignIn() {
             <Text style={[styles.buttonText, styles.buttonGhostText]}>Create account</Text>
           </Pressable>
         </View>
+        <Pressable onPress={() => router.push('/privacy' as never)} hitSlop={6}>
+          <Text style={styles.privacy}>
+            What Cheqer stores and how to delete it: <Text style={styles.link}>Privacy policy</Text>
+          </Text>
+        </Pressable>
       </View>
       <Text style={styles.byline}>powered by Ailura</Text>
     </View>
@@ -160,6 +165,9 @@ function StudyList({ userId }: { userId: string }) {
               Tap a study to read and work on it. Publish your best ones for everyone using
               Cheqer.
             </Text>
+            <Pressable onPress={() => router.push('/account' as never)} hitSlop={8}>
+              <Text style={styles.signOut}>Account</Text>
+            </Pressable>
             <Pressable onPress={() => signOut()} hitSlop={8}>
               <Text style={styles.signOut}>Sign out</Text>
             </Pressable>
@@ -253,6 +261,7 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     backgroundColor: colors.bg,
   },
   message: { color: colors.accent, fontSize: 13, marginTop: 10 },
+  privacy: { color: colors.faint, fontSize: 12, lineHeight: 18, marginTop: 14 },
   buttonRow: { flexDirection: 'row', gap: 16, marginTop: 14, alignItems: 'center' },
   button: {
     backgroundColor: colors.accent,

@@ -673,6 +673,37 @@ $$;
 
 grant execute on function capture_email(text, boolean, text) to anon, authenticated;
 
+-- Account deletion (both app stores require it wherever accounts can be
+-- created). Removes the caller's studies, any mailing-list row under the
+-- same address, and the auth user itself; sessions and identities cascade
+-- from auth.users. Published studies go too: they are the owner's rows.
+-- The privacy policy (app/src/app/privacy.tsx) describes exactly this.
+create or replace function delete_my_account()
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  addr text;
+begin
+  if uid is null then
+    raise exception 'not signed in' using errcode = '28000';
+  end if;
+  select lower(email) into addr from auth.users where id = uid;
+  delete from public.word_studies where owner = uid;
+  if addr is not null then
+    delete from public.email_signups where email = addr;
+  end if;
+  delete from auth.users where id = uid;
+  return true;
+end;
+$$;
+
+revoke execute on function delete_my_account() from public, anon;
+grant execute on function delete_my_account() to authenticated;
+
 -- Evaluation harness (AI layer 4, docs/eval/): the tagged LXX as ground
 -- truth for retrieval experiments. Read-only over world-readable data.
 create or replace function eval_lxx_truth(p_strongs text)

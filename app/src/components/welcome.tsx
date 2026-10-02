@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
 
 import { BrandEmblem } from '@/components/brand';
 import { captureEmail } from '@/lib/api';
+import { APP_URL } from '@/lib/share';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 const SEEN_KEY = 'cheqer-welcome-v1';
@@ -107,6 +109,10 @@ export function WelcomeSheet() {
             {status === 'error' ? (
               <Text style={styles.errorText}>Could not save that just now. You can skip and try later.</Text>
             ) : null}
+            {/* Opens outside the app so this sheet, shown once, stays put. */}
+            <Pressable onPress={() => Linking.openURL(`${APP_URL}/privacy`)} hitSlop={6}>
+              <Text style={styles.privacyLink}>Privacy policy</Text>
+            </Pressable>
 
             <View style={styles.divider} />
 
@@ -198,6 +204,13 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   checkboxOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   checkmark: { color: '#fff', fontSize: 14, fontWeight: '700', lineHeight: 16 },
   consentText: { flex: 1, fontSize: 12, color: colors.faint, lineHeight: 17 },
+  privacyLink: {
+    fontSize: 12,
+    color: colors.link,
+    textDecorationLine: 'underline',
+    textAlign: 'center',
+    marginTop: 10,
+  },
   primaryBtn: {
     backgroundColor: colors.accent,
     borderRadius: 8,

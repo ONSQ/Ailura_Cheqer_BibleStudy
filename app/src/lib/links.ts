@@ -6,3 +6,10 @@
 export const SUPPORT_URL: string | null = 'https://buymeacoffee.com/ONSQ';
 
 export const AILURA_URL = 'https://ailura.net';
+
+/**
+ * Where privacy questions and data requests go; shown on the privacy
+ * policy and the delete-account screen. Until an address is set, both
+ * point people to ailura.net instead.
+ */
+export const CONTACT_EMAIL: string | null = null;
