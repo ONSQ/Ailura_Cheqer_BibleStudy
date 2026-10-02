@@ -121,6 +121,17 @@ eas submit --platform ios               # uploads to TestFlight
 
 For the group on iPhone, TestFlight is the simplest path: one build, then invite testers by email. The `preview` profile on iOS is ad hoc and needs each phone registered first (`eas device:create`).
 
+### Over-the-air updates
+
+The phone apps include `expo-updates`, so changes to the app's own code (screens, text, fixes) reach installed phones on the next launch, with no rebuild and no store upload:
+
+```bash
+cd app
+eas update --channel production --environment production --message "what changed"
+```
+
+Store builds listen on the `production` channel and the group APK on `preview`. An update only reaches builds with the same runtime version, which is the `version` in `app.json`. Anything native (a new Expo library, the icon, the splash image, permissions) still needs a store build, and that build must bump `version` first so older installs do not receive code they cannot run.
+
 Both stores ask for two links, and the app serves them: the privacy policy at https://cheqer.vercel.app/privacy and account deletion at https://cheqer.vercel.app/account. The policy describes what the code stores and sends; when that changes (`schema.sql`, `supabase/functions/`), update `app/src/app/privacy.tsx` in the same commit.
 
 To try a change on an Android emulator without EAS: `npx expo prebuild --platform android`, then `cd android && ./gradlew assembleRelease`. On Windows, do this from a short path outside OneDrive (for example `C:\tmp\cq\app`); the native build exceeds the 260-character path limit otherwise. The generated `android/` and `ios/` folders are not committed.
