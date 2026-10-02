@@ -10,6 +10,7 @@ Cheqer (חֵקֶר, KHAY-ker: "searching out, deep inquiry") is a word-study Bib
 - Byline: "powered by Ailura" (About screen, splash, store listings; link ailura.net)
 - Tagline: Proverbs 25:2 — "It is the glory of God to conceal a matter, but the glory of kings is to search out a matter."
 - The Phase 3/4 period-witness panel is named **Sod** (the deeper counsel: Jer 23:18, Ps 25:14)
+- Responsible party: ONSQ Enterprises, contact onsq@onsq.net. Use these on the privacy policy (`app/src/lib/links.ts`), the store listings, and anywhere the app must name who answers for it.
 - Keep Ailura as byline branding only. The app itself is a free ministry/personal project; this matters for the ETCBC non-commercial data constraint below.
 - Identifiers: Android package and iOS bundle `net.onsq.cheqer`, Expo slug `cheqer`, EAS owner `onsq27`
 - Logo: the gold Q emblem and the "Cheqer" wordmark. Masters live in `app/assets/brand/`; every icon, the splash image, the favicon, and the in-app logos are derived from them by `python tools/make_brand_assets.py` (re-run it after changing a master, never edit the derived PNGs by hand). The wordmark's letters are navy, so dark surfaces use the reversed cut (`BrandHeader` in `app/src/components/brand.tsx` picks it).

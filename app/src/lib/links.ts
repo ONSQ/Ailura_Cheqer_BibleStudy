@@ -8,8 +8,9 @@ export const SUPPORT_URL: string | null = 'https://buymeacoffee.com/ONSQ';
 export const AILURA_URL = 'https://ailura.net';
 
 /**
- * Where privacy questions and data requests go; shown on the privacy
- * policy and the delete-account screen. Until an address is set, both
- * point people to ailura.net instead.
+ * Who answers for the app and where privacy questions and data requests
+ * go; shown on the privacy policy and the delete-account screen, and the
+ * same details belong in the store listings.
  */
-export const CONTACT_EMAIL: string | null = null;
+export const RESPONSIBLE_PARTY = 'ONSQ Enterprises';
+export const CONTACT_EMAIL = 'onsq@onsq.net';
