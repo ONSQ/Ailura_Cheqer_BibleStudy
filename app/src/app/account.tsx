@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import { AILURA_URL, CONTACT_EMAIL } from '@/lib/links';
+import { CONTACT_EMAIL } from '@/lib/links';
 import { deleteAccount } from '@/lib/studies';
 import { supabase } from '@/lib/supabase';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
@@ -147,11 +147,8 @@ export default function Account() {
           <Text style={styles.footnote}>
             Cannot sign in, or only want off the mailing list? Ask and it will be done by hand:
           </Text>
-          <Pressable
-            onPress={() =>
-              Linking.openURL(CONTACT_EMAIL ? `mailto:${CONTACT_EMAIL}` : AILURA_URL)
-            }>
-            <Text style={styles.link}>{CONTACT_EMAIL ?? 'ailura.net'}</Text>
+          <Pressable onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}>
+            <Text style={styles.link}>{CONTACT_EMAIL}</Text>
           </Pressable>
           <Pressable onPress={() => router.push('/privacy' as never)}>
             <Text style={styles.link}>Privacy policy</Text>

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AILURA_URL, CONTACT_EMAIL } from '@/lib/links';
+import { CONTACT_EMAIL, RESPONSIBLE_PARTY } from '@/lib/links';
 import { themedSheets, useSheet } from '@/lib/theme';
 
 const UPDATED = 'October 2, 2026';
@@ -40,9 +40,10 @@ export default function Privacy() {
       <Text style={styles.title}>Privacy policy</Text>
       <Text style={styles.updated}>Last updated {UPDATED}</Text>
       <Text style={styles.lead}>
-        Cheqer is a free Bible word-study app run by Owen Eskew as a personal ministry project,
-        powered by Ailura. It has no ads, no analytics, and no tracking. This page says what the
-        app stores, why, and how to remove it.
+        Cheqer is a free Bible word-study app from {RESPONSIBLE_PARTY}, offered as a ministry
+        project and powered by Ailura. {RESPONSIBLE_PARTY} is responsible for the app and for
+        the data described here. It has no ads, no analytics, and no tracking. This page says
+        what the app stores, why, and how to remove it.
       </Text>
 
       <Section title="You can use Cheqer without an account">
@@ -153,17 +154,8 @@ export default function Privacy() {
       </Section>
 
       <Section title="Contact">
-        {CONTACT_EMAIL ? (
-          <>
-            <P>Questions and requests about your data:</P>
-            <Out label={CONTACT_EMAIL} url={`mailto:${CONTACT_EMAIL}`} />
-          </>
-        ) : (
-          <>
-            <P>Questions and requests about your data go through Ailura:</P>
-            <Out label="ailura.net" url={AILURA_URL} />
-          </>
-        )}
+        <P>Questions and requests about your data go to {RESPONSIBLE_PARTY}:</P>
+        <Out label={CONTACT_EMAIL} url={`mailto:${CONTACT_EMAIL}`} />
       </Section>
     </ScrollView>
   );
