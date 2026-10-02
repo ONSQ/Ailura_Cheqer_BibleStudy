@@ -116,7 +116,14 @@ python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators A
 cd app && npx expo start
 eas build --platform android --profile preview   # APK for the men's group
 eas build --platform ios --profile production && eas submit --platform ios   # TestFlight
+eas update --channel production --environment production --message "..."     # OTA: JS-only changes, no rebuild
 ```
+
+## Releases (read before shipping a change to phones)
+
+- JS-only change (screens, text, logic): publish with `eas update` on the `production` channel. No build, no store upload.
+- Native change (new Expo library, icon, splash, permissions, anything in `app.json` that affects the binary): bump `version` in `app/app.json`, then build and upload to both stores. The runtime version follows `version` (`appVersion` policy), so skipping the bump would send new JS to old binaries that cannot run it.
+- iOS submissions need the App Store Connect key file; EAS has no stored key. Android uploads to Play are manual until a Play service-account key is added.
 
 ## Repo layout
 
