@@ -81,7 +81,7 @@ export default function StudyNote() {
   const shareOut = async () => {
     if (!s) return;
     const outcome = await shareText(
-      `${s.title ?? 'A Cheqer study'}\n\n${s.notes ?? ''}\n\n— Cheqer Bible Study`,
+      `${s.title ?? 'A Cheqer study'}\n\n${s.notes ?? ''}\n\n— Cheqer Word Study Bible`,
     );
     if (outcome === 'copied') setStatus('Copied to clipboard ✓');
     else if (outcome === 'failed') setStatus('Could not share');

@@ -44,7 +44,7 @@ export default function About() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <BrandHeader width={260} />
-      <Text style={styles.name}>Cheqer Bible Study</Text>
+      <Text style={styles.name}>Cheqer Word Study Bible</Text>
       <Text style={styles.definition}>
         Cheqer (חֵקֶר, pronounced KHAY-ker) is Hebrew for a searching out, a deep inquiry into a
         matter.

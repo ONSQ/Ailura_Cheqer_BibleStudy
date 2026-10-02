@@ -6,7 +6,7 @@ Cheqer (חֵקֶר, KHAY-ker: "searching out, deep inquiry") is a word-study Bib
 
 ## Branding
 
-- App name: **Cheqer** (display as "Cheqer Bible Study" where context needs it)
+- App name: **Cheqer** (full name "Cheqer Word Study Bible" on both store listings and wherever the app needs its long name; a word study of the Bible, which is what sets it apart from general Bible apps)
 - Byline: "powered by Ailura" (About screen, splash, store listings; link ailura.net)
 - Tagline: Proverbs 25:2 — "It is the glory of God to conceal a matter, but the glory of kings is to search out a matter."
 - The Phase 3/4 period-witness panel is named **Sod** (the deeper counsel: Jer 23:18, Ps 25:14)
