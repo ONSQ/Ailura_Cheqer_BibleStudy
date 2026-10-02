@@ -125,6 +125,18 @@ export default function About() {
       <Text style={styles.sectionTitle}>Appearance</Text>
       <ThemePicker />
 
+      <Text style={styles.sectionTitle}>Your data</Text>
+      <Text style={styles.body}>
+        No ads, no analytics, no tracking. The privacy policy lists what the app stores, and you
+        can delete your account and everything in it at any time.
+      </Text>
+      <Pressable onPress={() => router.push('/privacy' as never)}>
+        <Text style={styles.link}>Privacy policy</Text>
+      </Pressable>
+      <Pressable onPress={() => router.push('/account' as never)}>
+        <Text style={styles.link}>Delete my account</Text>
+      </Pressable>
+
       <Text style={styles.sectionTitle}>Data credits</Text>
       <Text style={styles.body}>
         Original-language text and tagging: TAHOT and TAGNT by Tyndale House, Cambridge and STEP

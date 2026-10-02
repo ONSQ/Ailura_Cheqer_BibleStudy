@@ -62,6 +62,8 @@ function ThemedApp() {
         <Stack.Screen name="study-note/[id]" options={{ title: 'Study' }} />
         <Stack.Screen name="about" options={{ title: 'About Cheqer', presentation: 'modal' }} />
         <Stack.Screen name="guide" options={{ title: 'How to Cheqer', presentation: 'modal' }} />
+        <Stack.Screen name="privacy" options={{ title: 'Privacy', presentation: 'modal' }} />
+        <Stack.Screen name="account" options={{ title: 'Account' }} />
         <Stack.Screen name="ask" options={{ title: 'Ask' }} />
       </Stack>
       {splashDone && <WelcomeSheet />}
