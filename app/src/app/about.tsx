@@ -88,7 +88,7 @@ export default function About() {
       <Text style={[styles.body, { marginTop: 12 }]}>
         You can also select a verse or passage and ask questions about it in plain English,
         explore themes and connections across chapters, and save what you find as notes, kept
-        private or shared with your study group.
+        private or published for other readers.
       </Text>
 
       <Text style={styles.sectionTitle}>What Sod means</Text>

@@ -34,7 +34,7 @@ Tap any English word in a verse. A sheet shows the original word behind it: root
 - **Tap a verse** to open it in a sheet, add neighboring verses if you want a passage, and ask anything in plain English: "what is it really saying here?", "what are the themes?", "how does this connect with the rest of Scripture?", "how would this apply to me?" Answers are grounded in the passage's own words and witnesses, never in the model's memory, and every reference is tappable.
 - **Ask ✨** in the header opens the general question box: "where does Scripture talk about the sons of God?" The answer comes back with the verses it found and the Hebrew/Greek words behind them.
 - Both can draw on the Second Temple writings when the question touches that world. Those sources are always named ("Josephus writes...") and never treated as Scripture.
-- **Save note** and **Share** under every answer keep it in your Studies tab or send it to the group.
+- **Save note** and **Share** under every answer keep it in your Studies tab or send it to someone.
 
 ### Library
 
@@ -92,7 +92,7 @@ Supabase: Postgres + pgvector + Auth + Row Level Security + edge functions
   ol_words / lexemes   <- STEPBible tagging (448k tokens, 13.9k lexemes)
   translations         <- helloao (BSB, KJV, WEB)
   period_docs          <- LXX, Targum, Josephus, Philo, Second Temple (43k passages, embedded)
-  word_studies         <- group notes behind Auth + RLS
+  word_studies         <- readers' notes behind Auth + RLS
   edge functions       <- Claude for grounded answers and briefs; OpenAI embeddings for retrieval
 ```
 
@@ -106,7 +106,7 @@ The phone apps come from the same `app/` code as the web app, built in the cloud
 cd app
 npm install -g eas-cli && eas login     # once; app.json is already linked to the EAS project @onsq27/cheqer
 
-# Android: an APK the men's group can install from a link
+# Android: an APK testers can install from a link
 eas build --platform android --profile preview
 
 # Android: Play Store bundle
@@ -119,7 +119,7 @@ eas build --platform ios --profile production
 eas submit --platform ios               # uploads to TestFlight
 ```
 
-For the group on iPhone, TestFlight is the simplest path: one build, then invite testers by email. The `preview` profile on iOS is ad hoc and needs each phone registered first (`eas device:create`).
+For iPhone testers, TestFlight is the simplest path: one build, then invite testers by email. The `preview` profile on iOS is ad hoc and needs each phone registered first (`eas device:create`).
 
 ### Over-the-air updates
 
@@ -130,7 +130,7 @@ cd app
 eas update --channel production --environment production --message "what changed"
 ```
 
-Store builds listen on the `production` channel and the group APK on `preview`. An update only reaches builds with the same runtime version, which is the `version` in `app.json`. Anything native (a new Expo library, the icon, the splash image, permissions) still needs a store build, and that build must bump `version` first so older installs do not receive code they cannot run.
+Store builds listen on the `production` channel and the tester APK on `preview`. An update only reaches builds with the same runtime version, which is the `version` in `app.json`. Anything native (a new Expo library, the icon, the splash image, permissions) still needs a store build, and that build must bump `version` first so older installs do not receive code they cannot run.
 
 ### Get the app page
 
@@ -142,7 +142,7 @@ To try a change on an Android emulator without EAS: `npx expo prebuild --platfor
 
 ## Remaining roadmap
 
-- Store listings (Play Console, App Store Connect) once the group has tested the builds
+- Store listings (Play Console, App Store Connect) once testers have tried the builds
 - Dead Sea Scrolls (ETCBC, non-commercial) into period_docs
 - Evaluation harness (UTSA independent study): precision/recall of semantic retrieval vs. concordance baseline over a gold-standard lemma set
 

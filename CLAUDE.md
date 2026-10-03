@@ -2,7 +2,7 @@
 
 ## What this project is
 
-Cheqer (חֵקֶר, KHAY-ker: "searching out, deep inquiry") is a word-study Bible app for personal discipleship and a men's church group, powered by Ailura. Tap any word in the biblical text and see its original Hebrew or Greek lemma, morphology, every occurrence across Scripture, how translators render it, and (later phases) how the Septuagint, Dead Sea Scrolls, and Second Temple literature use the same term. Owner: Owen Eskew (github.com/ONSQ). This may also become a UTSA independent study on cross-corpus lemma retrieval.
+Cheqer (חֵקֶר, KHAY-ker: "searching out, deep inquiry") is a free word-study Bible app for anyone, powered by Ailura. It began with a men's church group; the public app, its store listings, and the AI prompts speak to every reader, so no user-facing text or prompt should mention the group. Tap any word in the biblical text and see its original Hebrew or Greek lemma, morphology, every occurrence across Scripture, how translators render it, and (later phases) how the Septuagint, Dead Sea Scrolls, and Second Temple literature use the same term. Owner: Owen Eskew (github.com/ONSQ). This may also become a UTSA independent study on cross-corpus lemma retrieval.
 
 ## Branding
 
@@ -32,7 +32,7 @@ Supabase: Postgres + pgvector + Auth + Row Level Security
   ol_words / lexemes   <- STEPBible TAHOT/TAGNT (done)
   translations         <- helloao Free Use Bible API import (phase 2)
   period_docs          <- LXX, Sefaria, Perseus, Pseudepigrapha, DSS (phase 3)
-  word_studies         <- shared group notes, RLS: each user sees shared + own (phase 2)
+  word_studies         <- readers' notes, RLS: each user sees published + own (phase 2)
 ```
 
 ## AI architecture
@@ -78,7 +78,7 @@ The AI layers in Cheqer, in build order:
 
 1. LICENSING. STEPBible data is CC BY 4.0: credit "Tyndale House, Cambridge" (www.TyndaleHouse.com) and "STEP Bible" (www.STEPBible.org) in the app's About screen and README. Do not commit or redistribute their raw data files; the ingest script clones from their repo. ETCBC Dead Sea Scrolls data is CC BY-NC 4.0: personal/free use only, keep it isolated so it can be excluded from any future commercial build. Never commit wordstudy.db.
 2. Never commit .env, Supabase service keys, or DATABASE_URL. Client app uses the anon key + RLS only.
-3. RLS on word_studies: owner can CRUD own rows; group members can read rows where is_shared = true. No public access.
+3. RLS on word_studies: owner can CRUD own rows; signed-in users can read rows where is_shared = true. No public access.
 4. Keep the ingestion scripts idempotent (safe to re-run: truncate-and-load or upsert).
 5. Support: buymeacoffee.com/ONSQ (About screen only; shown as a prominent button near the top at Owen's request; never gate any content or feature behind it, especially anything touching the CC BY-NC Dead Sea Scrolls data).
 
@@ -114,7 +114,7 @@ python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators A
 
 # App (once scaffolded)
 cd app && npx expo start
-eas build --platform android --profile preview   # APK for the men's group
+eas build --platform android --profile preview   # APK testers can install from a link
 eas build --platform ios --profile production && eas submit --platform ios   # TestFlight
 eas update --channel production --environment production --message "..."     # OTA: JS-only changes, no rebuild
 ```

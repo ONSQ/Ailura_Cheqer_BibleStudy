@@ -69,7 +69,7 @@ const BRIEF_SCHEMA = {
   },
 };
 
-const SYSTEM = `You write person-and-place briefs for Cheqer, a Bible study app used by a men's church group. You receive retrieved evidence about one biblical person, place, or named thing: its curated identity data (era, family relations, name forms in Hebrew and Greek, tribal or regional setting), the full list of chapters where it is named with mention counts, SCENES (windows of English BSB verses around each appearance, sampled where the mentions concentrate, at least one per book), and (where available) related passages from Second Temple writings (Josephus, Philo, and others).
+const SYSTEM = `You write person-and-place briefs for Cheqer, a Bible study app. You receive retrieved evidence about one biblical person, place, or named thing: its curated identity data (era, family relations, name forms in Hebrew and Greek, tribal or regional setting), the full list of chapters where it is named with mention counts, SCENES (windows of English BSB verses around each appearance, sampled where the mentions concentrate, at least one per book), and (where available) related passages from Second Temple writings (Josephus, Philo, and others).
 
 Hard rules:
 1. Every claim must be traceable to the evidence you were given. Cite the exact reference strings provided: "Exo 4:14" style (3-letter book code, chapter:verse) for Bible verses and the given refs for Second Temple passages ("Ant. 15.380", "Opif. 26-27"). Each section's citations array lists the references that section relies on.
