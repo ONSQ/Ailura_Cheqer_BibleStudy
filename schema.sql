@@ -704,6 +704,24 @@ $$;
 revoke execute on function delete_my_account() from public, anon;
 grant execute on function delete_my_account() to authenticated;
 
+-- Requests from the "Get the app" page: an email and which phone. RLS with
+-- no policies; only the tester-request edge function (service role) reads
+-- or writes it. status: received (stored only), invited (added to the
+-- TestFlight group), linked (sent the Play opt-in link), failed (detail
+-- says why).
+create table if not exists tester_requests (
+  id bigint generated always as identity primary key,
+  email text not null,
+  platform text not null check (platform in ('ios', 'android')),
+  status text not null default 'received',
+  detail text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (email, platform)
+);
+
+alter table tester_requests enable row level security;
+
 -- Evaluation harness (AI layer 4, docs/eval/): the tagged LXX as ground
 -- truth for retrieval experiments. Read-only over world-readable data.
 create or replace function eval_lxx_truth(p_strongs text)

@@ -12,5 +12,14 @@ export const AILURA_URL = 'https://ailura.net';
  * go; shown on the privacy policy and the delete-account screen, and the
  * same details belong in the store listings.
  */
+/**
+ * Direct test-install links for the "Get the app" page. Null until each
+ * store has produced one (TestFlight public link once Beta App Review
+ * approves a build; Play open-testing link once that track is live). The
+ * page falls back to the email request form, which works either way.
+ */
+export const TESTFLIGHT_PUBLIC_URL: string | null = null;
+export const PLAY_TEST_URL: string | null = null;
+
 export const RESPONSIBLE_PARTY = 'ONSQ Enterprises';
 export const CONTACT_EMAIL = 'onsq@onsq.net';

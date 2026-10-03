@@ -132,6 +132,10 @@ eas update --channel production --environment production --message "what changed
 
 Store builds listen on the `production` channel and the group APK on `preview`. An update only reaches builds with the same runtime version, which is the `version` in `app.json`. Anything native (a new Expo library, the icon, the splash image, permissions) still needs a store build, and that build must bump `version` first so older installs do not receive code they cannot run.
 
+### Get the app page
+
+https://cheqer.vercel.app/get-the-app offers the phone apps to web visitors (a dismissible banner under the Reader header points there). The form posts to the `tester-request` edge function, which stores the request in `tester_requests` and then: for iPhone, adds the address to the TestFlight external group through the App Store Connect API so Apple sends the invite; for Android, returns the Play open-testing link. The function needs these secrets on the Supabase project: `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` (the .p8 file contents), `ASC_BETA_GROUP_ID`, and `PLAY_TEST_URL`. Until they are set, requests are stored with status `received` for handling by hand.
+
 Both stores ask for two links, and the app serves them: the privacy policy at https://cheqer.vercel.app/privacy and account deletion at https://cheqer.vercel.app/account. The policy describes what the code stores and sends; when that changes (`schema.sql`, `supabase/functions/`), update `app/src/app/privacy.tsx` in the same commit.
 
 To try a change on an Android emulator without EAS: `npx expo prebuild --platform android`, then `cd android && ./gradlew assembleRelease`. On Windows, do this from a short path outside OneDrive (for example `C:\tmp\cq\app`); the native build exceeds the 260-character path limit otherwise. The generated `android/` and `ios/` folders are not committed.

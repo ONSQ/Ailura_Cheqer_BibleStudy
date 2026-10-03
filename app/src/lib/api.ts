@@ -272,6 +272,35 @@ export async function captureEmail(email: string, consent: boolean): Promise<boo
   return data === true;
 }
 
+export type TesterPlatform = 'ios' | 'android';
+export interface TesterRequestResult {
+  /** invited: Apple is sending a TestFlight invite. linked: url is the Play
+   *  opt-in link. received: stored, to be handled by hand. */
+  status: 'invited' | 'linked' | 'received';
+  url: string | null;
+}
+
+/** "Get the app" page: ask for a test invite for one phone platform. */
+export async function requestTesterInvite(
+  email: string,
+  platform: TesterPlatform,
+): Promise<TesterRequestResult> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.functions.invoke('tester-request', {
+    body: { email, platform },
+  });
+  if (error) {
+    // The function's own 4xx message is more useful than the generic wrapper.
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === 'function') {
+      const body = (await ctx.json().catch(() => null)) as { error?: string } | null;
+      if (body?.error) throw new Error(body.error);
+    }
+    throw error;
+  }
+  return data as TesterRequestResult;
+}
+
 export interface SenseDriftEra {
   era: string;
   total: number;
