@@ -92,7 +92,12 @@ async function inviteToTestFlight(email: string): Promise<{ ok: boolean; detail:
       data: [{ type: 'betaTesters', id }],
     });
     if (linked.status === 204) return { ok: true, detail: 'added existing tester' };
-    return { ok: false, detail: `link ${linked.status}: ${JSON.stringify(linked.data).slice(0, 200)}` };
+    // Apple answers 409 when the tester is already in the group; confirm
+    // that is the reason before calling it a failure.
+    const groups = await asc(token, 'GET', `/betaTesters/${id}/betaGroups?limit=200`);
+    const inGroup = ((groups.data as { data?: { id: string }[] })?.data ?? []).some((g) => g.id === group);
+    if (inGroup) return { ok: true, detail: 'already in group' };
+    return { ok: false, detail: `link ${linked.status}: ${JSON.stringify(linked.data).slice(0, 300)}` };
   }
   return { ok: false, detail: `create ${created.status}: ${JSON.stringify(created.data).slice(0, 200)}` };
 }

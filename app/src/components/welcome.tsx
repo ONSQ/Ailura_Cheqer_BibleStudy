@@ -118,8 +118,8 @@ export function WelcomeSheet() {
 
             <Text style={styles.sectionLabel}>Keep your studies</Text>
             <Text style={styles.smallBody}>
-              Create a free account to save notes, build word studies, and share them with your
-              group.
+              Create a free account to save notes, build word studies, and publish the best ones
+              for everyone using Cheqer.
             </Text>
             <Pressable style={styles.secondaryBtn} onPress={toStudies}>
               <Text style={styles.secondaryBtnText}>Create a free account</Text>
