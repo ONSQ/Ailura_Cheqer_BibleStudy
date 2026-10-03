@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GetAppBanner } from '@/components/get-app-banner';
 import { TrailPanel } from '@/components/trail';
 import { WordSheet, type WordSelection } from '@/components/word-sheet';
 import { formatQaShare, shareText } from '@/lib/share';
@@ -246,6 +247,7 @@ export default function Reader() {
           <Text style={styles.aboutLink}>About</Text>
         </Pressable>
       </View>
+      <GetAppBanner />
 
       {chapter.isLoading && <ActivityIndicator style={{ marginTop: 48 }} color={colors.accent} />}
       {chapter.isError && (

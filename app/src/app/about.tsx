@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BrandHeader } from '@/components/brand';
 import { SUPPORT_URL } from '@/lib/links';
@@ -68,6 +68,11 @@ export default function About() {
         </>
       ) : null}
 
+      {Platform.OS === 'web' && (
+        <Pressable style={styles.guideBtn} onPress={() => router.push('/get-the-app' as never)}>
+          <Text style={styles.guideBtnText}>📱 Get Cheqer on your phone</Text>
+        </Pressable>
+      )}
       <Pressable style={styles.guideBtn} onPress={() => router.push('/guide' as never)}>
         <Text style={styles.guideBtnText}>📖 How to Cheqer — a two-minute tour</Text>
       </Pressable>

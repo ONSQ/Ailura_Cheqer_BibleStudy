@@ -69,6 +69,12 @@ export default function Privacy() {
           Your email address, stored only when you tick the consent box on the welcome screen.
           It is used for occasional updates about Cheqer and Ailura and nothing else.
         </Item>
+        <Item label="App test invites, if you ask for one.">
+          The email address you enter on the Get the app page and which phone you chose. For an
+          iPhone invite the address is passed to Apple, which adds it to the TestFlight tester
+          list for Cheqer and sends the invitation. These addresses are kept with the test
+          records and are not added to the mailing list.
+        </Item>
         <Item label="A usage log for the AI features.">
           Each time the app calls an AI feature (Ask, and the Sod panels on the word-study and
           who-and-where screens), the server records your IP address, which feature was used,
@@ -113,6 +119,10 @@ export default function Privacy() {
           serves the web app and keeps ordinary server logs of requests.
         </Item>
         <Item label="Anthropic and OpenAI">handle the questions you ask, as described above.</Item>
+        <Item label="Apple and Google">
+          run the TestFlight and Google Play testing programs the phone apps are offered through,
+          under their own policies.
+        </Item>
         <P>
           Links out of the app (Buy Me a Coffee, map links for places, the data sources on the
           About screen) open those sites, which have their own policies.
