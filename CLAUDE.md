@@ -124,6 +124,7 @@ eas update --channel production --environment production --message "..."     # O
 - JS-only change (screens, text, logic): publish with `eas update` on the `production` channel. No build, no store upload.
 - Native change (new Expo library, icon, splash, permissions, anything in `app.json` that affects the binary): bump `version` in `app/app.json`, then build and upload to both stores. The runtime version follows `version` (`appVersion` policy), so skipping the bump would send new JS to old binaries that cannot run it.
 - iOS submissions need the App Store Connect key file; EAS has no stored key. Android uploads to Play are manual until a Play service-account key is added.
+- Play is a personal developer account: production access (and open testing) needs a closed test with 12+ opted-in testers for 14 days first. The closed track is "Alpha" (track id 4698791378303586669) fed by the "Cheqer testers" and "Ailura internal testers" email lists; Android invite requests are added to those lists by hand.
 
 ## Repo layout
 

@@ -2,8 +2,11 @@
 // in tester_requests, then does what each store allows:
 //   ios      -> adds the address to the TestFlight external group through
 //               the App Store Connect API, which makes Apple send the invite.
-//   android  -> Google has no API for tester lists, so the reply carries the
-//               open-testing opt-in link (PLAY_TEST_URL) for the page to show.
+//   android  -> Google has no API for email tester lists, so the reply carries
+//               the Play opt-in link (PLAY_TEST_URL) for the page to show.
+//               Leave it unset while the track is a closed test: the link only
+//               works for addresses already on the Play tester list, so the
+//               request stays "received" until the address is added by hand.
 // Secrets: ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY (the .p8 contents),
 // ASC_BETA_GROUP_ID; PLAY_TEST_URL. Any of them missing leaves the request
 // stored as "received" so nothing is lost while setup finishes.
