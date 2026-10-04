@@ -17,7 +17,9 @@ import {
   getEntityRefs,
   type EntityRef,
 } from '@/lib/api';
+import { ShareButton } from '@/components/share-button';
 import { bookName, displayRef } from '@/lib/names';
+import { formatBrief, formatEntityShare } from '@/lib/share';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 const PAGE = 50;
@@ -93,6 +95,16 @@ export default function EntityScreen() {
     (n, i, all) => all.findIndex((x) => x.dstrong === n.dstrong && x.form === n.form) === i,
   );
 
+  const buildShare = () =>
+    formatEntityShare({
+      ustrong: ustrong!,
+      card: card.data,
+      brief: brief.data,
+      linkRows,
+      nameForms,
+      appearances: { total, rows },
+    });
+
   const jumpTo = (r: EntityRef) =>
     router.push({
       pathname: '/',
@@ -129,6 +141,9 @@ export default function EntityScreen() {
                       </Text>
                     </Pressable>
                   )}
+                  <View style={{ marginTop: 12 }}>
+                    <ShareButton build={buildShare} title={`${e.name} · Cheqer`} label="Share" />
+                  </View>
                 </View>
 
                 <View style={[styles.card, styles.sodCard]}>
@@ -153,6 +168,18 @@ export default function EntityScreen() {
                         AI summary written only from the verses and witnesses cited. Always
                         weigh it against the texts themselves.
                       </Text>
+                      <ShareButton
+                        build={() =>
+                          `${e.name} · Sod brief
+
+${formatBrief(brief.data!)}
+
+— Cheqer Word Study Bible · https://cheqer.vercel.app/entity/${ustrong}`
+                        }
+                        title={`${e.name} · Sod brief`}
+                        label="Share brief"
+                        onDark
+                      />
                     </>
                   ) : makeBrief.isPending ? (
                     <View style={styles.briefPending}>

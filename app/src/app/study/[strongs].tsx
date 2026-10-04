@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { Pronunciation } from '@/components/pronunciation';
+import { ShareButton } from '@/components/share-button';
 import { createStudy, getUserId } from '@/lib/studies';
 
 import {
@@ -28,6 +29,7 @@ import {
   getSenseDrift,
 } from '@/lib/api';
 import { bookName, displayRef } from '@/lib/names';
+import { formatBrief, formatWordStudyShare } from '@/lib/share';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 import type { Occurrence } from '@/lib/types';
 
@@ -147,6 +149,25 @@ export default function WordStudy() {
     }
   };
 
+  // Everything on the page that has loaded, as one text.
+  const buildShare = () =>
+    formatWordStudyShare({
+      strongs: strongs!,
+      lexeme: lexeme.data,
+      translit: commonForm?.translit,
+      gloss: displayGloss(lexeme.data?.gloss ?? null),
+      baseTotal,
+      baseText,
+      entities: entities.data,
+      glosses: glosses.data,
+      drift: driftVisible ? { data: drift.data, eras: driftEras } : null,
+      brief: brief.data,
+      renderings: renderings.data,
+      lxx: sod.data,
+      witnesses: semantic.data,
+      occurrences: { rows, total },
+    });
+
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ title: strongs ?? 'Word Study' }} />
@@ -181,6 +202,7 @@ export default function WordStudy() {
                   {displayGloss(lexeme.data.gloss) ? (
                     <Text style={styles.lexGloss}>{displayGloss(lexeme.data.gloss)}</Text>
                   ) : null}
+                  <View style={styles.btnRow}>
                   <Pressable
                     style={[styles.saveBtn, saveState === 'saved' && styles.saveBtnDone]}
                     onPress={saveState === 'signin' ? () => router.push('/studies' as never) : saveStudy}>
@@ -194,6 +216,12 @@ export default function WordStudy() {
                             : 'Save study'}
                     </Text>
                   </Pressable>
+                  <ShareButton
+                    build={buildShare}
+                    title={`${lexeme.data.lemma ?? strongs} · Cheqer`}
+                    label="Share study"
+                  />
+                  </View>
                 </>
               )}
             </View>
@@ -309,6 +337,18 @@ export default function WordStudy() {
                     AI summary of the witnesses above, with a citation for every claim. Always
                     weigh it against the texts themselves.
                   </Text>
+                  <ShareButton
+                    build={() =>
+                      `${lexeme.data?.lemma ?? strongs} (${strongs}) · Sod word-study brief
+
+${formatBrief(brief.data!)}
+
+— Cheqer Word Study Bible · https://cheqer.vercel.app/study/${strongs}`
+                    }
+                    title={`${lexeme.data?.lemma ?? strongs} · Sod brief`}
+                    label="Share brief"
+                    onDark
+                  />
                 </>
               ) : makeBrief.isPending ? (
                 <View style={styles.briefPending}>
@@ -560,13 +600,13 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   lemmaHebrew: { textAlign: 'left', fontSize: 40 },
   lexMeta: { color: colors.faint, marginTop: 4, fontSize: 13 },
   lexGloss: { color: colors.ink, marginTop: 8, fontSize: 16 },
+  btnRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12, alignItems: 'center' },
   saveBtn: {
     alignSelf: 'flex-start',
     backgroundColor: colors.accentSoft,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    marginTop: 12,
   },
   saveBtnDone: { backgroundColor: '#DCEEDB' },
   saveBtnText: { color: colors.accent, fontWeight: '700', fontSize: 13 },

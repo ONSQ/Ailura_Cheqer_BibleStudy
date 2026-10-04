@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import { EditStudyModal } from '@/components/edit-study';
 import { displayRef } from '@/lib/names';
-import { shareText } from '@/lib/share';
+import { formatStudyNoteShare, shareText } from '@/lib/share';
 import {
   createStudy,
   deleteStudy,
@@ -81,7 +81,13 @@ export default function StudyNote() {
   const shareOut = async () => {
     if (!s) return;
     const outcome = await shareText(
-      `${s.title ?? 'A Cheqer study'}\n\n${s.notes ?? ''}\n\n— Cheqer Word Study Bible`,
+      formatStudyNoteShare({
+        title: s.title,
+        notes: s.notes,
+        strongs: s.strongs,
+        ref: s.ref,
+      }),
+      s.title ?? 'A Cheqer study',
     );
     if (outcome === 'copied') setStatus('Copied to clipboard ✓');
     else if (outcome === 'failed') setStatus('Could not share');
