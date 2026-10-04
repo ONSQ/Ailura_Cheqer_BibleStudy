@@ -15,8 +15,9 @@ export const AILURA_URL = 'https://ailura.net';
 /**
  * Direct test-install links for the "Get the app" page. Null until each
  * store has produced one (TestFlight public link once Beta App Review
- * approves a build; Play open-testing link once that track is live). The
- * page falls back to the email request form, which works either way.
+ * approves a build; Play opt-in link once a track anyone can join is live,
+ * which Google only allows after a 14-day closed test). The page falls back
+ * to the email request form, which works either way.
  */
 export const TESTFLIGHT_PUBLIC_URL: string | null = null;
 export const PLAY_TEST_URL: string | null = null;
