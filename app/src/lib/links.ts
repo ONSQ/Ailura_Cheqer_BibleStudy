@@ -19,7 +19,7 @@ export const AILURA_URL = 'https://ailura.net';
  * which Google only allows after a 14-day closed test). The page falls back
  * to the email request form, which works either way.
  */
-export const TESTFLIGHT_PUBLIC_URL: string | null = null;
+export const TESTFLIGHT_PUBLIC_URL: string | null = 'https://testflight.apple.com/join/AnQq5Zr5';
 export const PLAY_TEST_URL: string | null = null;
 
 export const RESPONSIBLE_PARTY = 'ONSQ Enterprises';
