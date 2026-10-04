@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Pronunciation } from '@/components/pronunciation';
+import { Sheet } from '@/components/sheet';
 import { displaySurface, getVerseEntities, variantNote } from '@/lib/api';
 import { matchEnglishToOriginal } from '@/lib/match';
 import { bookName } from '@/lib/names';
@@ -69,8 +70,7 @@ export function WordSheet({
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.scrim} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
+      <Sheet onClose={onClose} scrimStyle={styles.scrim} sheetStyle={styles.sheet}>
           <Text style={styles.title}>
             “{query.replace(/^[^A-Za-z'’-]+|[^A-Za-z'’-]+$/g, '')}” · {bookName(book)} {chapter}:
             {verse.verse}
@@ -107,8 +107,7 @@ export function WordSheet({
               </>
             )}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+      </Sheet>
     </Modal>
   );
 }

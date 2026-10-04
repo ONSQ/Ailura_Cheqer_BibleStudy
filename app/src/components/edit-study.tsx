@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { Sheet } from '@/components/sheet';
 import { updateStudy, type WordStudy } from '@/lib/studies';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
@@ -28,8 +29,7 @@ export function EditStudyModal({
   });
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalScrim} onPress={onClose}>
-        <Pressable style={styles.modalSheet} onPress={() => {}}>
+      <Sheet onClose={onClose} scrimStyle={styles.modalScrim} sheetStyle={styles.modalSheet}>
           <Text style={styles.title}>Edit study</Text>
           <ScrollView keyboardShouldPersistTaps="handled">
             <TextInput
@@ -59,8 +59,7 @@ export function EditStudyModal({
               </Pressable>
             </View>
           </ScrollView>
-        </Pressable>
-      </Pressable>
+      </Sheet>
     </Modal>
   );
 }
