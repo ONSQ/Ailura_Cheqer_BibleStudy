@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GetAppBanner } from '@/components/get-app-banner';
+import { Sheet } from '@/components/sheet';
 import { TrailPanel } from '@/components/trail';
 import { WordSheet, type WordSelection } from '@/components/word-sheet';
 import { formatQaShare, shareText } from '@/lib/share';
@@ -343,8 +344,7 @@ export default function Reader() {
       )}
 
       <Modal visible={picker === 'book'} animationType="slide" transparent>
-        <Pressable style={styles.modalScrim} onPress={() => setPicker(null)}>
-          <Pressable style={styles.modalSheet} onPress={() => {}}>
+        <Sheet onClose={() => setPicker(null)} scrimStyle={styles.modalScrim} sheetStyle={styles.modalSheet}>
             <Text style={styles.modalTitle}>Book</Text>
             <GoToRef onGo={goToRef} />
             <ScrollView>
@@ -374,13 +374,11 @@ export default function Reader() {
                 </View>
               ))}
             </ScrollView>
-          </Pressable>
-        </Pressable>
+        </Sheet>
       </Modal>
 
       <Modal visible={picker === 'chapter'} animationType="slide" transparent>
-        <Pressable style={styles.modalScrim} onPress={() => setPicker(null)}>
-          <Pressable style={styles.modalSheet} onPress={() => {}}>
+        <Sheet onClose={() => setPicker(null)} scrimStyle={styles.modalScrim} sheetStyle={styles.modalSheet}>
             <Text style={styles.modalTitle}>
               {bookName(sel.book)}: chapter
             </Text>
@@ -403,13 +401,11 @@ export default function Reader() {
                 ))}
               </View>
             </ScrollView>
-          </Pressable>
-        </Pressable>
+        </Sheet>
       </Modal>
 
       <Modal visible={picker === 'verse'} animationType="slide" transparent>
-        <Pressable style={styles.modalScrim} onPress={() => setPicker(null)}>
-          <Pressable style={styles.modalSheet} onPress={() => {}}>
+        <Sheet onClose={() => setPicker(null)} scrimStyle={styles.modalScrim} sheetStyle={styles.modalSheet}>
             <Text style={styles.modalTitle}>
               {sel.book} {sel.chapter}: verse
             </Text>
@@ -437,8 +433,7 @@ export default function Reader() {
                 </View>
               </ScrollView>
             )}
-          </Pressable>
-        </Pressable>
+        </Sheet>
       </Modal>
     </View>
   );
@@ -791,8 +786,7 @@ function VerseSheet({
   };
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalScrim} onPress={onClose}>
-        <Pressable style={styles.modalSheet} onPress={() => {}}>
+      <Sheet onClose={onClose} scrimStyle={styles.modalScrim} sheetStyle={styles.modalSheet}>
           <View style={styles.sheetHeader}>
             <Text style={styles.modalTitle}>
               {bookName(book)} {chapter}:{range.start}
@@ -835,8 +829,7 @@ function VerseSheet({
               </View>
             ))}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+      </Sheet>
     </Modal>
   );
 }
