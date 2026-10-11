@@ -15,7 +15,7 @@ export function Pronunciation({
   onDark = false,
 }: {
   translit: string | null | undefined;
-  speak: string; // what the TTS should say (surface form or lemma)
+  speak: string; // the form this guide transliterates, as printed; speech.ts cleans it
   strongs: string | null | undefined;
   size?: number;
   onDark?: boolean;

@@ -12,6 +12,7 @@ import {
 
 import { Pronunciation } from '@/components/pronunciation';
 import { ShareButton } from '@/components/share-button';
+import { lemmaKey } from '@/lib/speech';
 import { createStudy, getUserId } from '@/lib/studies';
 
 import {
@@ -108,7 +109,10 @@ export default function WordStudy() {
   // Occurrences in the base text alone, shown when the amalgamated count is higher.
   const baseTotal = occurrences.data?.pages[0]?.base_total;
 
-  // Pronunciation guide: the most common attested form of this lexeme.
+  // Pronunciation guide: the lemma's own form where it occurs, otherwise
+  // the most common attested form. The speaker button says this same form,
+  // so what is read aloud is what the guide shows.
+  const lemma = lexeme.data?.lemma;
   const commonForm = useMemo(() => {
     const counts = new Map<string, { n: number; surface: string }>();
     for (const r of rows) {
@@ -117,9 +121,11 @@ export default function WordStudy() {
       e.n += 1;
       counts.set(r.translit, e);
     }
-    const top = [...counts.entries()].sort((a, b) => b[1].n - a[1].n)[0];
+    const ranked = [...counts.entries()].sort((a, b) => b[1].n - a[1].n);
+    const key = lemma ? lemmaKey(lemma) : null;
+    const top = (key && ranked.find(([, e]) => lemmaKey(e.surface) === key)) ?? ranked[0];
     return top ? { translit: top[0], surface: top[1].surface } : null;
-  }, [rows]);
+  }, [rows, lemma]);
   const isHebrew = strongs?.startsWith('H');
   const baseText = isHebrew ? 'the Hebrew text' : 'NA28';
   const maxGloss = glosses.data?.[0]?.count ?? 1;
@@ -187,7 +193,7 @@ export default function WordStudy() {
                   {commonForm && (
                     <Pronunciation
                       translit={commonForm.translit}
-                      speak={lexeme.data.lemma ?? displaySurface(commonForm.surface)}
+                      speak={commonForm.surface}
                       strongs={strongs}
                       size={16}
                     />
