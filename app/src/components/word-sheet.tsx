@@ -132,7 +132,7 @@ function WordRow({
         </Text>
         <Pronunciation
           translit={word.translit}
-          speak={displaySurface(word.surface)}
+          speak={word.surface}
           strongs={word.strongs}
         />
         <Text style={styles.meta}>{word.gloss ?? ''}</Text>
