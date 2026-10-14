@@ -21,8 +21,9 @@ The **Reader** opens in Genesis 1 with the English text above the tagged origina
 
 Tap any English word in a verse. A sheet shows the original word behind it: root, gloss, morphology, and a syllable-by-syllable pronunciation with a 🔊 button that says it aloud. Tap the word again to open the full **Word Study** screen:
 
+- **Word anatomy**: the word taken apart from the lexicon and the tagging. Its root or derivation (λόγος from λέγω; אֱלֹהִים from the root אלה), the family of words on the same root (tap one to study it), the Hebrew a Greek word stood for in the Septuagint, the lexicon's own layout of senses (BDB for Hebrew, Abbott-Smith for Greek), and the forms the text attests (Qal 39 · Niphal 10 · Piel 5; aorist passive, present participle). Nothing here is generated.
 - **How translators render it**: every English gloss with counts
-- **Sod · Word-study brief**: an AI-written summary tracing the word from the Torah through the prophets into the Septuagint, with a citation for every claim. Written once per word, then kept for everyone.
+- **Sod · Word-study brief**: an AI-written summary that opens by taking the word apart from the lexicon entry and the attested forms, then traces it from the Torah through the prophets into the Septuagint, with a citation for every claim. Written once per word, then kept for everyone.
 - **Sod · How the Septuagint renders it**: the Greek words the LXX translators chose for a Hebrew word; tap one to follow it into the Greek scriptures
 - **Sod · Septuagint usage**: the same Greek word at work centuries before the NT
 - **Sod · Second Temple usage**: passages in Josephus, Philo, 1 Enoch, Jubilees, and other period writings closest to the word's field of meaning, found by meaning rather than exact wording
@@ -78,6 +79,9 @@ The **Shared Studies** tab needs a sign-in (email and password). Saved word stud
 | Perseus Digital Library | Josephus, Greek + Whiston English | CC BY-SA 4.0 | Loaded |
 | OpenGreekAndLatin First1KGreek | Philo, Greek + Yonge English | CC BY-SA 4.0 | Loaded |
 | Wikisource (Charles 1917) | 1 Enoch | Public domain | Loaded |
+| STEPBible TBESG | Abbott-Smith Greek lexicon, edited | CC BY 4.0 | Loaded (word anatomy) |
+| OpenScriptures HebrewLexicon | Brown-Driver-Briggs text + Lexical Index with roots | Public domain text, CC BY 4.0 index | Loaded (word anatomy) |
+| STEPBible TBESH | Hebrew forms, grammar codes, glosses, name relations | CC BY 4.0 (its Meaning column is Online Bible's and is not used) | Loaded (word anatomy) |
 | ETCBC DSS | Dead Sea Scrolls transcriptions | CC BY-NC 4.0 | Planned; non-commercial only, kept isolated |
 
 Original-language tagging data is from [Tyndale House, Cambridge](https://www.TyndaleHouse.com) and [STEP Bible](https://www.STEPBible.org), licensed CC BY 4.0. This repo does not redistribute their raw data files; the ingest script clones them from the [STEPBible-Data repo](https://github.com/STEPBible/STEPBible-Data).

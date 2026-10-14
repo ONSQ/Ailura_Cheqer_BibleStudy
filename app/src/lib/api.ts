@@ -21,6 +21,7 @@ import type {
   Corpus,
   GlossCount,
   Lexeme,
+  LexiconEntry,
   LxxRendering,
   OccurrencePage,
   PeriodUsagePage,
@@ -30,6 +31,7 @@ import type {
   VerseAnswer,
   VerseWitness,
   Word,
+  WordForm,
 } from './types';
 
 import Constants from 'expo-constants';
@@ -147,6 +149,28 @@ export async function getLexeme(strongs: string): Promise<Lexeme | null> {
     .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+/** Word anatomy: the lexicon entry (BDB or Abbott-Smith) behind a Strong's number. */
+export async function getLexiconEntry(strongs: string): Promise<LexiconEntry | null> {
+  if (!usingSupabase) return null;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('lexicon_entries')
+    .select('*')
+    .eq('strongs', strongs)
+    .maybeSingle();
+  if (error) throw error;
+  return data as LexiconEntry | null;
+}
+
+/** Attested grammatical forms from the tagging: Hebrew stems, Greek tense/voice/mood. */
+export async function getWordForms(strongs: string): Promise<WordForm[]> {
+  if (!usingSupabase) return [];
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc('word_forms', { p_strongs: strongs });
+  if (error) throw error;
+  return (data ?? []) as WordForm[];
 }
 
 export async function getGlossDistribution(strongs: string): Promise<GlossCount[]> {

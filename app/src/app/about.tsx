@@ -150,6 +150,14 @@ export default function About() {
       <Link label="www.TyndaleHouse.com" url="https://www.TyndaleHouse.com" />
       <Link label="www.STEPBible.org" url="https://www.STEPBible.org" />
       <Text style={[styles.body, { marginTop: 12 }]}>
+        Word anatomy: Greek entries from Abbott-Smith's Manual Greek Lexicon of the New Testament
+        (1922, public domain) as edited by STEP Bible (TBESG, CC BY 4.0); Hebrew entries from
+        Brown, Driver and Briggs (1906, public domain) with the OpenScriptures Lexical Index
+        (CC BY 4.0), which supplies each word's root and relatives. Hebrew forms, grammar codes
+        and name relations from STEP Bible's TBESH (CC BY 4.0).
+      </Text>
+      <Link label="github.com/openscriptures/HebrewLexicon" url="https://github.com/openscriptures/HebrewLexicon" />
+      <Text style={[styles.body, { marginTop: 12 }]}>
         These texts are amalgamated: they include every word that a major translation renders.
         Greek words absent from the Nestle-Aland text (NA28), and Hebrew words that translators
         supply from the Septuagint, appear in [brackets] in the Reader, and the word sheet names

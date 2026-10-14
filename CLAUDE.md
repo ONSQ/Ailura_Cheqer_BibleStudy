@@ -76,7 +76,7 @@ The AI layers in Cheqer, in build order:
 
 ## Hard constraints (do not violate)
 
-1. LICENSING. STEPBible data is CC BY 4.0: credit "Tyndale House, Cambridge" (www.TyndaleHouse.com) and "STEP Bible" (www.STEPBible.org) in the app's About screen and README. Do not commit or redistribute their raw data files; the ingest script clones from their repo. ETCBC Dead Sea Scrolls data is CC BY-NC 4.0: personal/free use only, keep it isolated so it can be excluded from any future commercial build. Never commit wordstudy.db.
+1. LICENSING. STEPBible data is CC BY 4.0: credit "Tyndale House, Cambridge" (www.TyndaleHouse.com) and "STEP Bible" (www.STEPBible.org) in the app's About screen and README. Do not commit or redistribute their raw data files; the ingest script clones from their repo. ETCBC Dead Sea Scrolls data is CC BY-NC 4.0: personal/free use only, keep it isolated so it can be excluded from any future commercial build. Never commit wordstudy.db. Word anatomy sources: STEPBible TBESG (Abbott-Smith, CC BY) and the OpenScriptures BDB + Lexical Index (public domain text, CC BY markup) are free to use and credited on the About screen; STEPBible TBESH's Meaning column is Online Bible's abridged BDB and needs their permission, so `ingest/ingest_lexicon.py` reads only its transliteration, grammar, gloss and relation columns. Keep it that way.
 2. Never commit .env, Supabase service keys, or DATABASE_URL. Client app uses the anon key + RLS only.
 3. RLS on word_studies: owner can CRUD own rows; signed-in users can read rows where is_shared = true. No public access.
 4. Keep the ingestion scripts idempotent (safe to re-run: truncate-and-load or upsert).
@@ -103,6 +103,12 @@ python3 ingest/ingest_stepbible.py --data-dir "data/STEPBible-Data/Translators A
 mkdir -p data/TIPNR
 curl -sL -o data/TIPNR/TIPNR.txt "https://raw.githubusercontent.com/STEPBible/STEPBible-Data/master/Proper%20Nouns/TIPNR%20-%20Translators%20Individualised%20Proper%20Names%20with%20all%20References%20-%20STEPBible.org%20CC%20BY.txt"
 python3 ingest/ingest_tipnr.py --file data/TIPNR/TIPNR.txt --sqlite wordstudy.db
+
+# Word anatomy: lexicon entries (Abbott-Smith for Greek via STEPBible TBESG,
+# BDB for Hebrew via OpenScriptures + STEPBible TBESH). Downloads the four
+# source files into data/lexicon when missing. On Supabase the same rows were
+# loaded by supabase/functions/lexicon-load (now a 410 stub; redeploy to reload).
+python3 ingest/ingest_lexicon.py --data-dir data/lexicon --sqlite wordstudy.db
 
 # LXX verse alignment (after ingest_stepbible.py and ingest_lxx.py; then
 # run "select rebuild_lxx_equivalents();" on Supabase once it is loaded)

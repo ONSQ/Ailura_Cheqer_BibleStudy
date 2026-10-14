@@ -117,6 +117,7 @@ export function formatWordStudyShare(input: {
   gloss?: string | null;
   baseTotal?: number | null;
   baseText?: string;
+  anatomy?: string | null;
   entities?: { name: string; description: string | null }[] | null;
   glosses?: GlossCount[] | null;
   drift?: { data: SenseDrift | null | undefined; eras: SenseDrift['eras'] } | null;
@@ -169,6 +170,7 @@ export function formatWordStudyShare(input: {
 
   return join([
     headerLines.filter(Boolean).join('\n'),
+    section('Word anatomy', input.anatomy),
     section(
       'Who & where',
       input.entities?.map((e) => `${e.name}${e.description ? `: ${e.description}` : ''}`).join('\n'),
