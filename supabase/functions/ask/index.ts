@@ -98,8 +98,12 @@ const TOOLS = [
 const ANSWER_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['answer', 'lemmas', 'verses'],
+  required: ['title', 'answer', 'lemmas', 'verses'],
   properties: {
+    title: {
+      type: 'string',
+      description: 'A headline of 3 to 7 words naming the specific point of this answer, never a restatement of the question',
+    },
     answer: {
       type: 'string',
       description: 'Plain-English answer, a short paragraph or two',
@@ -143,7 +147,8 @@ Hard rules:
 3. Write for thoughtful laymen: plain, warm English. Introduce Hebrew/Greek words with transliteration. Never show Strong's numbers in the answer text (they ride along in the lemmas list for the app to link).
 4. Be efficient: two to four tool calls usually suffice. Search the English text for distinctive phrases first, then use verse_words on a key verse to identify the original words.
 5. In the verses list, use the exact 3-letter book codes from the search results (Gen, Exo, Psa, Mat, Jhn...). List 3-8 of the most relevant verses, not every hit.
-6. search_witnesses returns Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others). These illuminate the world of Scripture but are not Scripture: always attribute them by name in the answer ("Josephus writes...", "1 Enoch describes...") and never present them with scriptural authority. Keep the verses list for Bible verses only.`;
+6. search_witnesses returns Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others). These illuminate the world of Scripture but are not Scripture: always attribute them by name in the answer ("Josephus writes...", "1 Enoch describes...") and never present them with scriptural authority. Keep the verses list for Bible verses only.
+7. title: a headline of 3 to 7 words naming what the answer found ("The sons of God in Genesis 6", "Bread and wine as covenant signs"), so saved answers can be told apart. Never restate the question.`;
 
 async function callClaude(messages: unknown[], final = false) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {

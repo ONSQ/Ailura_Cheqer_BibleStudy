@@ -86,8 +86,12 @@ const TOOLS = [
 const ANSWER_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['answer', 'refs'],
+  required: ['title', 'answer', 'refs'],
   properties: {
+    title: {
+      type: 'string',
+      description: 'A headline of 3 to 7 words naming the specific point of this answer (what the passage says or does), never a restatement of the question',
+    },
     answer: { type: 'string', description: 'The answer, plain warm English' },
     refs: {
       type: 'array',
@@ -118,7 +122,8 @@ Rules:
 4b. The search_witnesses tool returns Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others). These illuminate the passage's world but are not Scripture: always attribute them by name ("Josephus writes...", "Jubilees retells this...") and never present them with scriptural authority. Their refs may appear in refs (e.g. "Ant. 1.27-33", "1 Enoch 6:1-4").
 5. Application questions are welcome, handled humbly: draw only on what the passage emphasizes, offer observations and questions worth pondering rather than personal directives, mark where the text ends and reflection begins ("Worth pondering:"), and for weighty personal matters suggest a pastor or trusted friends.
 6. Plain, warm, precise English. No Strong's numbers in prose. Never mention your inputs, tools, or process — speak of the passage, the words, the witnesses, Scripture.
-7. refs: the references your answer leans on — from the passage material and from search results. Use exact reference strings (3-letter book codes like Gen, Psa, Jhn).`;
+7. refs: the references your answer leans on — from the passage material and from search results. Use exact reference strings (3-letter book codes like Gen, Psa, Jhn).
+8. title: a headline of 3 to 7 words that names what this answer found in the passage ("Joy in heaven over one repentant sinner", "Born of water and the Spirit"), so a reader can tell saved answers apart. Never restate the question ("How this applies to me" is not a title).`;
 
 async function callClaude(messages: unknown[], final = false) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {

@@ -52,7 +52,8 @@ export default function Ask() {
     }
     try {
       await createStudy({
-        title: question.trim(),
+        // The answer's own headline tells saved answers apart; the question is the fallback.
+        title: ask.data.title?.trim() || question.trim(),
         notes: `${ask.data.answer}${
           ask.data.verses.length
             ? `\n\nPassages: ${ask.data.verses.map((v) => v.ref).join(', ')}`
