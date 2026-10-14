@@ -12,6 +12,7 @@ import {
 
 import { Pronunciation } from '@/components/pronunciation';
 import { ShareButton } from '@/components/share-button';
+import { WordAnatomy, formatWordAnatomy, useWordAnatomy } from '@/components/word-anatomy';
 import { lemmaKey } from '@/lib/speech';
 import { createStudy, getUserId } from '@/lib/studies';
 
@@ -80,6 +81,7 @@ export default function WordStudy() {
     enabled: !!strongs,
     staleTime: Infinity,
   });
+  const anatomy = useWordAnatomy(strongs);
   const entities = useQuery({
     queryKey: ['entities-for', strongs],
     queryFn: () => getEntitiesForStrongs(strongs!),
@@ -164,6 +166,7 @@ export default function WordStudy() {
       gloss: displayGloss(lexeme.data?.gloss ?? null),
       baseTotal,
       baseText,
+      anatomy: formatWordAnatomy(anatomy.entry, anatomy.forms),
       entities: entities.data,
       glosses: glosses.data,
       drift: driftVisible ? { data: drift.data, eras: driftEras } : null,
@@ -231,6 +234,8 @@ export default function WordStudy() {
                 </>
               )}
             </View>
+
+            {strongs ? <WordAnatomy strongs={strongs} /> : null}
 
             {!!entities.data?.length && (
               <View style={styles.card}>

@@ -143,3 +143,30 @@ export interface LxxRendering {
   share: number;
   lift: number;
 }
+
+/**
+ * Word anatomy: the lexicon entry behind a Strong's number. Greek from
+ * Abbott-Smith (STEPBible TBESG, CC BY), Hebrew from BDB (public domain, via
+ * OpenScriptures). `family` lists words built on the same root.
+ */
+export interface LexiconEntry {
+  strongs: string;
+  language: 'heb' | 'grk';
+  source: string;
+  lemma: string | null;
+  translit: string | null;
+  pos: string | null;
+  gloss: string | null;
+  root: string | null;
+  derivation: string | null;
+  lxx_for: string | null;
+  definition: string | null;
+  family: { strongs: string; lemma: string | null; gloss: string | null }[];
+  relations: string[];
+}
+
+/** One attested grammatical form (Hebrew stem or Greek tense/voice/mood) with its count. */
+export interface WordForm {
+  form: string;
+  count: number;
+}

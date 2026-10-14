@@ -940,3 +940,75 @@ as $fn$
 $fn$;
 
 grant execute on function sense_drift(text) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Word anatomy (2026-10-13): the lexicon entry behind each Strong's number
+-- and the grammatical forms the tagging attests. Loaded by
+-- ingest/ingest_lexicon.py: Abbott-Smith for Greek (STEPBible TBESG, CC BY),
+-- BDB for Hebrew (public domain, via the OpenScriptures Lexical Index, CC BY),
+-- STEPBible TBESH for Hebrew forms, grammar codes and name relations.
+-- ---------------------------------------------------------------------------
+create table if not exists lexicon_entries (
+  strongs text primary key,
+  language text not null,
+  source text not null,
+  lemma text,
+  translit text,
+  pos text,
+  gloss text,
+  root text,
+  derivation text,
+  lxx_for text,
+  definition text,
+  family jsonb not null default '[]'::jsonb,
+  relations jsonb not null default '[]'::jsonb
+);
+alter table lexicon_entries enable row level security;
+drop policy if exists lexicon_entries_read on lexicon_entries;
+create policy lexicon_entries_read on lexicon_entries for select using (true);
+grant select on lexicon_entries to anon, authenticated;
+
+-- Stems for Hebrew verbs, tense/voice/mood for Greek verbs; [] for other words.
+create or replace function word_forms(p_strongs text) returns jsonb
+language sql stable set search_path to 'public' as $fn$
+  with w as (
+    select morph from ol_words where strongs = p_strongs and morph is not null
+  ),
+  lab as (
+    select case
+      when p_strongs like 'H%' and morph ~ 'V[A-Za-z]' then
+        case substring(morph from 'V([A-Za-z])')
+          when 'q' then 'Qal' when 'N' then 'Niphal' when 'p' then 'Piel' when 'P' then 'Pual'
+          when 'h' then 'Hiphil' when 'H' then 'Hophal' when 't' then 'Hithpael'
+          when 'o' then 'Polel' when 'O' then 'Polal' when 'r' then 'Hithpolel'
+          when 'm' then 'Poel' when 'M' then 'Poal' when 'l' then 'Pilpel'
+          when 'L' then 'Polpal' when 'Q' then 'Qal passive' when 'f' then 'Hithpalpel'
+          when 'i' then 'Pilel' when 'k' then 'Palel' when 'K' then 'Pulal'
+          when 'D' then 'Nithpael' when 'c' then 'Tiphil' when 'v' then 'Hishtaphel'
+          else 'other stem' end
+      when p_strongs like 'G%' and morph ~ '^V-2?[PIFAXY][A-Z][A-Z]' then
+        concat_ws(' ',
+          case when morph ~ '^V-2' then 'second' end,
+          case substring(morph from '^V-2?([PIFAXY])')
+            when 'P' then 'present' when 'I' then 'imperfect' when 'F' then 'future'
+            when 'A' then 'aorist' when 'X' then 'perfect' when 'Y' then 'pluperfect' end,
+          case substring(morph from '^V-2?[PIFAXY]([A-Z])')
+            when 'A' then 'active' when 'M' then 'middle' when 'P' then 'passive'
+            when 'E' then 'middle or passive' when 'D' then 'middle deponent'
+            when 'O' then 'passive deponent' when 'N' then 'middle or passive deponent'
+            when 'Q' then 'impersonal active' when 'X' then 'no voice' end,
+          case substring(morph from '^V-2?[PIFAXY][A-Z]([A-Z])')
+            when 'I' then 'indicative' when 'S' then 'subjunctive' when 'O' then 'optative'
+            when 'M' then 'imperative' when 'N' then 'infinitive' when 'P' then 'participle'
+            when 'R' then 'imperative participle' end)
+      end as form
+    from w
+  )
+  select coalesce(jsonb_agg(jsonb_build_object('form', form, 'count', n) order by n desc), '[]'::jsonb)
+  from (select form, count(*) as n from lab where form is not null group by form order by n desc limit 10) x
+$fn$;
+grant execute on function word_forms(text) to anon, authenticated;
+
+-- study_bundle() also carries 'lexicon' (the entry with a citable 'ref' such
+-- as "BDB (H1254)") and 'forms' ({ref: 'STEPBible morphology', counts});
+-- see the migration lexicon_entries_word_forms for the full body.
