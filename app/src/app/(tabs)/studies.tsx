@@ -188,7 +188,7 @@ function StudyList({ userId }: { userId: string }) {
               style={styles.card}
               onPress={() => router.push(`/study-note/${item.id}` as never)}>
               <View style={styles.cardTop}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
+                <Text style={styles.cardTitle} numberOfLines={2}>
                   {studyIcon(item)} {item.title ?? item.strongs ?? 'Study'}
                 </Text>
                 <Text style={[styles.badge, item.is_shared && styles.badgePublished]}>
