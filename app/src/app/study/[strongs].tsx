@@ -146,9 +146,13 @@ export default function WordStudy() {
     }
     setSaveState('saving');
     try {
+      const gloss = displayGloss(lexeme.data?.gloss ?? null);
+      const lemma = lexeme.data?.lemma ?? strongs;
       await createStudy({
         strongs,
-        title: `${lexeme.data?.lemma ?? strongs} (${strongs})`,
+        // Readable first: "In debauchery · ἀσώτως", not "ἀσώτως (G0811)".
+        title: gloss ? `${gloss.charAt(0).toUpperCase()}${gloss.slice(1)} · ${lemma}` : lemma,
+        notes: brief.data?.summary ?? '',
       });
       qc.invalidateQueries({ queryKey: ['studies'] });
       setSaveState('saved');

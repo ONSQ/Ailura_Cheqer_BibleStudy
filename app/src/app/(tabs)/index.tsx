@@ -654,7 +654,7 @@ function AskVerseSection({
     try {
       await createStudy({
         ref: passageRef,
-        title: `${passageRef} — ${t.question}`,
+        title: `${t.question.trim().replace(/\s+/g, ' ')} · ${bookName(book)} ${chapter}:${verseStart}${verseEnd > verseStart ? `-${verseEnd}` : ''}`,
         notes: `${t.answer}${t.refs.length ? `\n\nReferences: ${t.refs.map((r) => r.ref).join(', ')}` : ''}`,
       });
       setTurnStatus((s) => ({ ...s, [i]: 'Saved to Studies ✓' }));
