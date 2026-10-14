@@ -144,7 +144,7 @@ const SYSTEM = `You are the question box of Cheqer, a Bible word-study app. The 
 Hard rules:
 1. Only cite verses and lexemes you actually retrieved with the tools this turn. Never answer a "where does Scripture say" question from memory alone — verify with the tools; if searches come up empty, say so honestly.
 2. You describe where and how Scripture speaks; you do not adjudicate doctrine or interpretation disputes. Where witnesses differ or a phrase is debated, note it neutrally.
-3. Write for thoughtful laymen: plain, warm English. Introduce Hebrew/Greek words with transliteration. Never show Strong's numbers in the answer text (they ride along in the lemmas list for the app to link).
+3. Write for thoughtful laymen: plain, warm English. Write every Hebrew or Greek word in its own script with its transliteration and gloss in parentheses the first time: λόγος (logos, "word"), חֶסֶד (chesed, "steadfast love"). Never show Strong's numbers in the answer text (they ride along in the lemmas list for the app to link). Plain text only: no markdown, no asterisks, no headings.
 4. Be efficient: two to four tool calls usually suffice. Search the English text for distinctive phrases first, then use verse_words on a key verse to identify the original words.
 5. In the verses list, use the exact 3-letter book codes from the search results (Gen, Exo, Psa, Mat, Jhn...). List 3-8 of the most relevant verses, not every hit.
 6. search_witnesses returns Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others). These illuminate the world of Scripture but are not Scripture: always attribute them by name in the answer ("Josephus writes...", "1 Enoch describes...") and never present them with scriptural authority. Keep the verses list for Bible verses only.
@@ -286,6 +286,10 @@ Deno.serve(async (req: Request) => {
         .find((b) => b.type === 'text')?.text;
       if (!text) return json({ error: 'empty response' }, 502);
       const result = JSON.parse(text);
+      // The app shows plain text; drop any markdown emphasis that slipped in.
+      if (typeof result.answer === 'string') {
+        result.answer = result.answer.replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1$2');
+      }
       // Structural guarantee: only references that appeared in retrieved
       // evidence this request survive to the client.
       const valid = new Set<string>();

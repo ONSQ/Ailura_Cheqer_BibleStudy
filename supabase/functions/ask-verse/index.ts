@@ -122,6 +122,7 @@ Rules:
 4b. The search_witnesses tool returns Second Temple writings (Josephus, Philo, 1 Enoch, Jubilees, and others). These illuminate the passage's world but are not Scripture: always attribute them by name ("Josephus writes...", "Jubilees retells this...") and never present them with scriptural authority. Their refs may appear in refs (e.g. "Ant. 1.27-33", "1 Enoch 6:1-4").
 5. Application questions are welcome, handled humbly: draw only on what the passage emphasizes, offer observations and questions worth pondering rather than personal directives, mark where the text ends and reflection begins ("Worth pondering:"), and for weighty personal matters suggest a pastor or trusted friends.
 6. Plain, warm, precise English. No Strong's numbers in prose. Never mention your inputs, tools, or process — speak of the passage, the words, the witnesses, Scripture.
+6b. Write every Hebrew or Greek word in its own script, followed by its transliteration and gloss in parentheses the first time: προγεγραμμένοι (progegrammenoi, "designated beforehand"), חֶסֶד (chesed, "steadfast love"). Readers see the original text on screen and should be able to find the word in it. Plain text only: no markdown, no asterisks, no headings; paragraphs separated by blank lines.
 7. refs: the references your answer leans on — from the passage material and from search results. Use exact reference strings (3-letter book codes like Gen, Psa, Jhn).
 8. title: a headline of 3 to 7 words that names what this answer found in the passage ("Joy in heaven over one repentant sinner", "Born of water and the Spirit"), so a reader can tell saved answers apart. Never restate the question ("How this applies to me" is not a title).`;
 
@@ -279,6 +280,10 @@ Deno.serve(async (req: Request) => {
         .find((b) => b.type === 'text')?.text;
       if (!text) return json({ error: 'empty response' }, 502);
       const result = JSON.parse(text);
+      // The app shows plain text; drop any markdown emphasis that slipped in.
+      if (typeof result.answer === 'string') {
+        result.answer = result.answer.replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1$2');
+      }
       // Structural guarantee: only references from retrieved evidence survive.
       const valid = new Set<string>();
       collectRefs(evidence, valid);
