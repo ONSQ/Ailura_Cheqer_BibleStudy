@@ -110,6 +110,8 @@ export interface CitationCheck {
 }
 
 export interface VerseAnswer {
+  /** 3-7 word headline naming the point of the answer; the saved study's title. */
+  title?: string;
   answer: string;
   refs: { ref: string; note: string }[];
   trail?: TrailStep[];
@@ -117,6 +119,7 @@ export interface VerseAnswer {
 }
 
 export interface AskResult {
+  title?: string;
   answer: string;
   lemmas: { strongs: string; lemma: string; note: string }[];
   verses: { ref: string; note: string }[];
