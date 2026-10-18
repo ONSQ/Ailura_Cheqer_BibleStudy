@@ -13,7 +13,12 @@ import {
 
 import { BrandEmblem } from '@/components/brand';
 import { requestTesterInvite, type TesterPlatform, type TesterRequestResult } from '@/lib/api';
-import { PLAY_TEST_URL, TESTFLIGHT_PUBLIC_URL } from '@/lib/links';
+import {
+  PLAY_OPT_IN_URL,
+  PLAY_TEST_URL,
+  PLAY_TESTER_GROUP_URL,
+  TESTFLIGHT_PUBLIC_URL,
+} from '@/lib/links';
 import { themedSheets, useSheet, useTheme } from '@/lib/theme';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
@@ -22,7 +27,9 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
  * Get the app: the phone apps are in testing on both stores. Someone on
  * the web picks their phone, leaves an email, and the tester-request
  * function either sends the TestFlight invite (iPhone) or hands back the
- * Google Play opt-in link (Android).
+ * Google Play opt-in link (Android). Once the Android tester group is set
+ * (PLAY_TESTER_GROUP_URL), Android visitors sign themselves up instead: join
+ * the group, opt in, install. No email or manual step is involved.
  */
 export default function GetTheApp() {
   const styles = useSheet(sheets);
@@ -51,6 +58,7 @@ export default function GetTheApp() {
   };
 
   const directUrl = platform === 'ios' ? TESTFLIGHT_PUBLIC_URL : PLAY_TEST_URL;
+  const androidSelfServe = platform === 'android' && PLAY_TESTER_GROUP_URL != null;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -91,7 +99,9 @@ export default function GetTheApp() {
           />
         </View>
 
-        {directUrl ? (
+        {androidSelfServe ? (
+          <AndroidSteps groupUrl={PLAY_TESTER_GROUP_URL!} />
+        ) : directUrl ? (
           <>
             <Pressable style={styles.primaryBtn} onPress={() => Linking.openURL(directUrl)}>
               <Text style={styles.primaryBtnText}>
@@ -101,13 +111,13 @@ export default function GetTheApp() {
             <Text style={styles.hint}>
               {platform === 'ios'
                 ? 'Opens the TestFlight app on your iPhone. Install TestFlight from the App Store first if you do not have it.'
-                : 'Open this on your Android phone while signed in to the Google account you use for the Play Store.'}
+                : 'Open this on your Android phone, signed in to the Google account you use for the Play Store. While Android is in closed testing, Google Play shows Cheqer only to approved testers; if it says the app is not available, ask for an invite below.'}
             </Text>
             <Text style={styles.or}>or ask for an invite by email</Text>
           </>
         ) : null}
 
-        {result ? (
+        {androidSelfServe ? null : result ? (
           <View style={styles.done}>
             <Text style={styles.doneTitle}>
               {result.status === 'invited'
@@ -167,13 +177,60 @@ export default function GetTheApp() {
       </View>
 
       <Text style={styles.footnote}>
-        Your email is used only to send the invite and is kept with the test records. It is not
-        added to the mailing list.{' '}
+        {androidSelfServe
+          ? 'Cheqer stores nothing for Android signup. Joining the group shows your Google account email to the group owner, as Google Groups does for any group.'
+          : 'Your email is used only to send the invite and is kept with the test records. It is not added to the mailing list.'}{' '}
         <Text style={styles.link} onPress={() => router.push('/privacy' as never)}>
           Privacy policy
         </Text>
       </Text>
     </ScrollView>
+  );
+}
+
+/** The three self-serve steps for Android, each opening Google's own page. */
+function AndroidSteps({ groupUrl }: { groupUrl: string }) {
+  const styles = useSheet(sheets);
+  const steps = [
+    {
+      title: 'Join the Cheqer testers group',
+      body: 'Use the Google account signed in on your Android phone, and choose Join group.',
+      label: 'Join the group',
+      url: groupUrl,
+    },
+    {
+      title: 'Become a tester',
+      body: 'Google Play asks you to accept the test. If it says you are not eligible yet, wait a few minutes after joining and try again.',
+      label: 'Become a tester',
+      url: PLAY_OPT_IN_URL,
+    },
+    {
+      title: 'Install Cheqer',
+      body: 'Install from Google Play like any other app. Updates arrive on their own.',
+      label: 'Open in Google Play',
+      url: PLAY_TEST_URL ?? 'https://play.google.com/store/apps/details?id=net.onsq.cheqer',
+    },
+  ];
+  return (
+    <View>
+      {steps.map((s, i) => (
+        <View key={s.title} style={[styles.step, i > 0 && styles.stepGap]}>
+          <View style={styles.stepNum}>
+            <Text style={styles.stepNumText}>{i + 1}</Text>
+          </View>
+          <View style={styles.stepBody}>
+            <Text style={styles.stepTitle}>{s.title}</Text>
+            <Text style={styles.body}>{s.body}</Text>
+            <Pressable style={styles.primaryBtn} onPress={() => Linking.openURL(s.url)}>
+              <Text style={styles.primaryBtnText}>{s.label}</Text>
+            </Pressable>
+          </View>
+        </View>
+      ))}
+      <Text style={styles.hint}>
+        Open these on your Android phone. All three use the same Google account.
+      </Text>
+    </View>
   );
 }
 
@@ -251,4 +308,17 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   body: { fontSize: 14, color: colors.ink, lineHeight: 21 },
   footnote: { fontSize: 12, color: colors.faint, lineHeight: 18, marginTop: 16, textAlign: 'center' },
   link: { color: colors.link, textDecorationLine: 'underline' },
+  step: { flexDirection: 'row', gap: 12 },
+  stepGap: { marginTop: 18 },
+  stepNum: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumText: { fontSize: 14, fontWeight: '700', color: colors.accent },
+  stepBody: { flex: 1 },
+  stepTitle: { fontSize: 15, fontWeight: '700', color: colors.ink, marginBottom: 4 },
 }));
