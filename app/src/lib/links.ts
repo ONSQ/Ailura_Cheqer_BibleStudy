@@ -13,14 +13,14 @@ export const AILURA_URL = 'https://ailura.net';
  * same details belong in the store listings.
  */
 /**
- * Direct test-install links for the "Get the app" page. Null until each
- * store has produced one (TestFlight public link once Beta App Review
- * approves a build; Play opt-in link once a track anyone can join is live,
- * which Google only allows after a 14-day closed test). The page falls back
- * to the email request form, which works either way.
+ * Direct test-install links for the "Get the app" page. Null hides the
+ * button and leaves only the email request form. The Play link is the store
+ * listing: during the closed test Google shows it only to accounts already on
+ * the tester list, so the page keeps the email form under it for everyone else.
  */
 export const TESTFLIGHT_PUBLIC_URL: string | null = 'https://testflight.apple.com/join/AnQq5Zr5';
-export const PLAY_TEST_URL: string | null = null;
+export const PLAY_TEST_URL: string | null =
+  'https://play.google.com/store/apps/details?id=net.onsq.cheqer';
 
 export const RESPONSIBLE_PARTY = 'ONSQ Enterprises';
 export const CONTACT_EMAIL = 'onsq@onsq.net';

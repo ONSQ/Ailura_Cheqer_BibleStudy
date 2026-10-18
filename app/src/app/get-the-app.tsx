@@ -101,7 +101,7 @@ export default function GetTheApp() {
             <Text style={styles.hint}>
               {platform === 'ios'
                 ? 'Opens the TestFlight app on your iPhone. Install TestFlight from the App Store first if you do not have it.'
-                : 'Open this on your Android phone while signed in to the Google account you use for the Play Store.'}
+                : 'Open this on your Android phone, signed in to the Google account you use for the Play Store. While Android is in closed testing, Google Play shows Cheqer only to approved testers; if it says the app is not available, ask for an invite below.'}
             </Text>
             <Text style={styles.or}>or ask for an invite by email</Text>
           </>
