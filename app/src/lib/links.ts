@@ -30,7 +30,7 @@ export const PLAY_TEST_URL: string | null =
  * once the group exists and is on the track's tester list; while it is null
  * the page keeps the store button and email form above.
  */
-export const PLAY_TESTER_GROUP_URL: string | null = null;
+export const PLAY_TESTER_GROUP_URL: string | null = 'https://groups.google.com/g/cheqer-testers';
 export const PLAY_OPT_IN_URL = 'https://play.google.com/apps/testing/net.onsq.cheqer';
 
 export const RESPONSIBLE_PARTY = 'ONSQ Enterprises';
