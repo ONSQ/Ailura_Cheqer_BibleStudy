@@ -73,7 +73,9 @@ export default function Privacy() {
           The email address you enter on the Get the app page and which phone you chose. For an
           iPhone invite the address is passed to Apple, which adds it to the TestFlight tester
           list for Cheqer and sends the invitation. These addresses are kept with the test
-          records and are not added to the mailing list.
+          records and are not added to the mailing list. Android testers join a Google Group
+          instead; Cheqer stores nothing for that, and Google shows the group's members to its
+          owner.
         </Item>
         <Item label="A usage log for the AI features.">
           Each time the app calls an AI feature (Ask, and the Sod panels on the word-study and

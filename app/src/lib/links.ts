@@ -22,5 +22,16 @@ export const TESTFLIGHT_PUBLIC_URL: string | null = 'https://testflight.apple.co
 export const PLAY_TEST_URL: string | null =
   'https://play.google.com/store/apps/details?id=net.onsq.cheqer';
 
+/**
+ * Android self-serve signup. The Play closed track lists a Google Group as
+ * its testers, and the group lets anyone join, so a visitor joins the group,
+ * opts in, and installs with nobody adding their address by hand. Set
+ * PLAY_TESTER_GROUP_URL to the group's page (https://groups.google.com/g/<name>)
+ * once the group exists and is on the track's tester list; while it is null
+ * the page keeps the store button and email form above.
+ */
+export const PLAY_TESTER_GROUP_URL: string | null = null;
+export const PLAY_OPT_IN_URL = 'https://play.google.com/apps/testing/net.onsq.cheqer';
+
 export const RESPONSIBLE_PARTY = 'ONSQ Enterprises';
 export const CONTACT_EMAIL = 'onsq@onsq.net';
