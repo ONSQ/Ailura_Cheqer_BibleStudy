@@ -150,6 +150,7 @@ cheqer/
 ## Front page (site/)
 
 - cheqer.io is a hand-written static page in `site/` (no build step), deployed as the Vercel project `cheqer-site` (`cd site && vercel deploy --prod --yes`). It is not part of the Expo app; the app stays at app.cheqer.io / cheqer.vercel.app.
+- `cheqer-site` is deliberately NOT connected to the GitHub repo. `vercel link` connected it once, and the next push to main built a production deployment from the repo root (no index.html) that took cheqer.io down with a 404. If it is ever reconnected, set the project's Root Directory to `site` first. Pushing to main does not update cheqer.io; run the CLI deploy.
 - Look: ink-dark ground, parchment leaves, gold rules, Cormorant Garamond + EB Garamond, a grain overlay. Keep it feeling like opened manuscripts; no stock photos.
 - The tap-a-word sample carries real rows copied from `lexicon_entries` / `word_forms()` (dated in `main.js`); refresh them if the lexicon changes.
 - The letters form posts to the same `capture_email` RPC the app uses (consent required, source `cheqer.io`) with the publishable key. Support is the Buy Me a Coffee link plus a plain cost table; nothing on the page or in the app is gated by it.
