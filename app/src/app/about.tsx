@@ -1,8 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BrandHeader } from '@/components/brand';
-import { SUPPORT_URL } from '@/lib/links';
+import { getChampions } from '@/lib/api';
+import { MEMBERSHIP_URL, SUPPORT_URL } from '@/lib/links';
 import { themedSheets, useSheet, useTheme, type ThemeMode } from '@/lib/theme';
 
 const MODES: { value: ThemeMode; label: string }[] = [
@@ -41,6 +43,7 @@ function Link({ label, url }: { label: string; url: string }) {
 
 export default function About() {
   const styles = useSheet(sheets);
+  const champions = useQuery({ queryKey: ['champions'], queryFn: getChampions, staleTime: 5 * 60_000 });
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <BrandHeader width={260} />
@@ -65,6 +68,20 @@ export default function About() {
             Cheqer is free and always will be. A coffee helps cover the small costs of running
             it.
           </Text>
+          <Pressable style={styles.championBtn} onPress={() => Linking.openURL(MEMBERSHIP_URL)}>
+            <Text style={styles.championBtnText}>🏅 Become a Cheqer Champion</Text>
+          </Pressable>
+          <Text style={styles.coffeeCaption}>
+            Champions keep the lamps lit month by month, and their names are kept here.
+          </Text>
+          {!!champions.data?.length && (
+            <View style={styles.championsBox}>
+              <Text style={styles.championsTitle}>Cheqer Champions</Text>
+              <Text style={styles.championsNames}>
+                {champions.data.map((c) => c.name).join(' · ')}
+              </Text>
+            </View>
+          )}
         </>
       ) : null}
 
@@ -226,6 +243,34 @@ const sheets = themedSheets((colors) => StyleSheet.create({
     elevation: 3,
   },
   coffeeBtnText: { color: '#26211A', fontWeight: '700', fontSize: 16 },
+  championBtn: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  championBtnText: { color: colors.accent, fontWeight: '700', fontSize: 15 },
+  championsBox: {
+    alignSelf: 'stretch',
+    backgroundColor: colors.accentSoft,
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  championsTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colors.faint,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  championsNames: { fontSize: 15, color: colors.ink, textAlign: 'center', lineHeight: 22 },
   guideBtn: {
     backgroundColor: colors.accentSoft,
     borderRadius: 10,

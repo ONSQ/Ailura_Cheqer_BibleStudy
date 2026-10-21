@@ -151,6 +151,18 @@ export async function getLexeme(strongs: string): Promise<Lexeme | null> {
   return data;
 }
 
+/** Cheqer Champions: supporters who agreed to be named, newest first. */
+export async function getChampions(): Promise<{ name: string; since: string }[]> {
+  if (!usingSupabase) return [];
+  const supabase = await getSupabase();
+  const { data, error } = await supabase
+    .from('champions')
+    .select('name, since')
+    .order('since', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as { name: string; since: string }[];
+}
+
 /** Word anatomy: the lexicon entry (BDB or Abbott-Smith) behind a Strong's number. */
 export async function getLexiconEntry(strongs: string): Promise<LexiconEntry | null> {
   if (!usingSupabase) return null;

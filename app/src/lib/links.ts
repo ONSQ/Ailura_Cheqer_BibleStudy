@@ -4,6 +4,8 @@
  * especially anything touching the CC BY-NC Dead Sea Scrolls data.
  */
 export const SUPPORT_URL: string | null = 'https://buymeacoffee.com/ONSQ';
+/** The monthly membership: Cheqer Champions, named on the About screen and cheqer.io. */
+export const MEMBERSHIP_URL = 'https://buymeacoffee.com/ONSQ/membership';
 
 export const AILURA_URL = 'https://ailura.net';
 
