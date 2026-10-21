@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cheqer Word Study Bible</title>
+  <meta name="description" content="Tap any word of Scripture and see the Hebrew or Greek behind it: its root, every place it occurs, how translators render it, and how the Septuagint, Josephus, Philo and the Second Temple writers used it. Free, no ads.">
+  <link rel="icon" href="/assets/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <meta property="og:title" content="Cheqer Word Study Bible">
+  <meta property="og:description" content="Search out a matter. The Hebrew and Greek behind every word of Scripture, with the witnesses of the Second Temple age.">
+  <meta property="og:image" content="https://cheqer.io/assets/og.jpg">
+  <meta property="og:url" content="https://cheqer.io">
+  <meta name="theme-color" content="#0f1218">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top">
+    <a class="brand" href="/" aria-label="Cheqer home">
+      <img src="/assets/emblem.png" alt="" width="40" height="40">
+      <span class="brand-name">Cheqer</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#discover">Discover</a>
+      <a href="#sod">Sod</a>
+      <a href="#get">Get the app</a>
+      <a href="#support">Support</a>
+      <a href="#letters">Letters</a>
+    </nav>
+    <a class="btn btn-gold btn-small" href="https://cheqer.vercel.app" data-app-link>Open the web app</a>
+  </header>
+
+  <main id="main">
+
+    <!-- ====================================================== hero -->
+    <section class="hero">
+      <div class="hero-inner">
+        <img class="hero-emblem" src="/assets/emblem.png" alt="The Cheqer emblem: a gold Q holding an open book and a magnifying glass" width="220" height="220">
+        <p class="hero-hebrew" lang="he" dir="rtl">חֵקֶר</p>
+        <p class="hero-pron"><em>KHAY-ker</em> · searching out, deep inquiry</p>
+        <h1>Search out a matter.</h1>
+        <p class="hero-lead">
+          Tap any word of Scripture and see the Hebrew or Greek behind it: its root, every place
+          it occurs, how translators render it, and how the Septuagint, Josephus, Philo and the
+          writers of the Second Temple age used the same word.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-gold" href="https://cheqer.vercel.app" data-app-link>Open the web app</a>
+          <a class="btn btn-parchment" href="#get">Get it on your phone</a>
+        </div>
+        <p class="hero-verse">
+          “It is the glory of God to conceal a matter, but the glory of kings is to search out a matter.”
+          <span>Proverbs 25:2</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================== the verse -->
+    <section class="section" id="discover">
+      <div class="wrap">
+        <p class="eyebrow">What you discover</p>
+        <h2>A verse, taken apart</h2>
+        <p class="lede">
+          Here is the first line of the Bible. Tap a word and the scroll opens on the word behind it,
+          exactly as it does in the app.
+        </p>
+
+        <div class="verse-card">
+          <p class="verse-ref">Genesis 1:1 · Berean Standard Bible</p>
+          <p class="verse-text">
+            <sup>1</sup>In the beginning
+            <button class="word" data-word="elohim" aria-pressed="false">God</button>
+            <button class="word" data-word="bara" aria-pressed="false">created</button>
+            the <button class="word" data-word="shamayim" aria-pressed="false">heavens</button>
+            and the earth.
+          </p>
+          <p class="verse-hebrew" lang="he" dir="rtl">בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃</p>
+
+          <div class="word-sheet" id="word-sheet" hidden>
+            <div class="sheet-head">
+              <p class="sheet-lemma" lang="he" dir="rtl" id="ws-lemma"></p>
+              <p class="sheet-pron" id="ws-pron"></p>
+            </div>
+            <p class="sheet-gloss" id="ws-gloss"></p>
+            <dl class="sheet-grid">
+              <div><dt>Root</dt><dd id="ws-root"></dd></div>
+              <div><dt>Same root</dt><dd id="ws-family"></dd></div>
+              <div><dt>Forms in the text</dt><dd id="ws-forms"></dd></div>
+              <div><dt>In the Septuagint</dt><dd id="ws-lxx"></dd></div>
+            </dl>
+            <p class="sheet-senses" id="ws-senses"></p>
+            <p class="sheet-source" id="ws-source"></p>
+            <a class="sheet-link" id="ws-link" href="https://cheqer.vercel.app/study/H1254" data-app-link>Open the full word study →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================== features -->
+    <section class="section section-dark">
+      <div class="wrap">
+        <p class="eyebrow">The tools of the search</p>
+        <h2>Everything a word carries</h2>
+        <div class="grid">
+          <article class="leaf">
+            <h3>Word anatomy</h3>
+            <p>Where the word comes from, the family of words built on its root, how the lexicon lays out its senses, and the forms the text actually uses: Qal, Niphal, Piel; aorist, participle. From Brown-Driver-Briggs and Abbott-Smith, never from guesswork.</p>
+          </article>
+          <article class="leaf">
+            <h3>Every occurrence</h3>
+            <p>All 2,603 places אֱלֹהִים appears, in canonical order, each one a tap away from the verse. Counts show the base text beside the amalgamated total, so nothing is hidden.</p>
+          </article>
+          <article class="leaf">
+            <h3>How translators render it</h3>
+            <p>Every English gloss with its count, and a view of how a word's dominant sense moves from the Torah to the Prophets to the Writings.</p>
+          </article>
+          <article class="leaf">
+            <h3>Ask in plain English</h3>
+            <p>“Where does Scripture speak of the sons of God?” The answer is searched from the text, not remembered, and every verse it cites was retrieved first. Ask about one verse, or about the whole Bible.</p>
+          </article>
+          <article class="leaf">
+            <h3>Who &amp; where</h3>
+            <p>Twenty-nine Zechariahs, three Herods. Tap a name and see which one, with family, name forms, a map for places, and every appearance.</p>
+          </article>
+          <article class="leaf">
+            <h3>Your studies</h3>
+            <p>Save a word, a question, or an answer. Keep it private or publish it for every reader. Share any of it to Messages, mail or wherever you talk.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== sod -->
+    <section class="section" id="sod">
+      <div class="wrap wrap-narrow">
+        <p class="eyebrow">The deeper counsel</p>
+        <h2>Sod <span class="hebrew-inline" lang="he" dir="rtl">סוֹד</span></h2>
+        <p class="lede">
+          “For who has stood in the council of the LORD to see and to hear His word?” (Jeremiah 23:18).
+          <em>Sod</em> is the intimate counsel, the inner circle where a matter is searched out.
+          In Cheqer it is the panel that opens a word to the witnesses of its own age.
+        </p>
+        <div class="scroll">
+          <div class="scroll-roll scroll-roll-top" aria-hidden="true"></div>
+          <div class="scroll-body">
+            <p class="drop">
+              <span class="dropcap">T</span>he Old and New Testaments are tagged to the last word, so finding a word there is exact. The world around them is not: Josephus and Philo, 1 Enoch and Jubilees, the Testaments of the Twelve Patriarchs, the Septuagint and the Targum, and soon the Dead Sea Scrolls. Cheqer reads those too, and finds the passages whose subject is closest to the word you are studying.
+            </p>
+            <p>
+              Then it writes a <strong>word-study brief</strong>: the word taken apart, its path from the Torah through the Prophets, how the Greek translators handled it, what the Second Temple writers made of the idea, and where it surfaces in the New Testament. Every claim carries a citation back to a text you can open. The brief summarizes witnesses; it never invents doctrine.
+            </p>
+            <ul class="witness-list">
+              <li><b>Septuagint</b> · the Greek Old Testament, with Brenton's English</li>
+              <li><b>Targum Onkelos</b> · the Aramaic Torah</li>
+              <li><b>Josephus</b> · Antiquities and War, Greek and Whiston</li>
+              <li><b>Philo</b> · the Alexandrian commentaries, Greek and Yonge</li>
+              <li><b>1 Enoch, Jubilees, Ben Sira, the Testaments, the Maccabees</b></li>
+              <li><b>Dead Sea Scrolls</b> · on the way</li>
+            </ul>
+          </div>
+          <div class="scroll-roll scroll-roll-bottom" aria-hidden="true"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================ get the app -->
+    <section class="section section-dark" id="get">
+      <div class="wrap">
+        <p class="eyebrow">In your hand</p>
+        <h2>Get the app</h2>
+        <p class="lede">
+          The same word study on iPhone and Android, with the text ready at a touch. Both apps are in
+          testing before they go on the stores: testers get every build as it lands, and the app
+          updates itself after that.
+        </p>
+        <div class="grid grid-3">
+          <article class="leaf leaf-cta">
+            <h3>On the web</h3>
+            <p>Nothing to install. Works on any phone, tablet or computer.</p>
+            <a class="btn btn-gold" href="https://cheqer.vercel.app" data-app-link>Open cheqer</a>
+          </article>
+          <article class="leaf leaf-cta">
+            <h3>iPhone</h3>
+            <p>Install Apple's TestFlight app, then open this link on your iPhone.</p>
+            <a class="btn btn-gold" href="https://testflight.apple.com/join/AnQq5Zr5">Join on TestFlight</a>
+          </article>
+          <article class="leaf leaf-cta">
+            <h3>Android</h3>
+            <p>Three taps on your phone, signed in to your Google account:</p>
+            <ol class="steps">
+              <li><a href="https://groups.google.com/g/cheqer-testers">Join the testers group</a></li>
+              <li><a href="https://play.google.com/apps/testing/net.onsq.cheqer">Accept the invitation</a></li>
+              <li><a href="https://play.google.com/store/apps/details?id=net.onsq.cheqer">Install from Google Play</a></li>
+            </ol>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== letters -->
+    <section class="section" id="letters">
+      <div class="wrap wrap-narrow">
+        <p class="eyebrow">Letters</p>
+        <h2>Hear when something new is found</h2>
+        <p class="lede">
+          An occasional letter: new witnesses added, new tools, a word worth searching out. No
+          more than a few a year, and you can leave at any time.
+        </p>
+        <form class="letter-form" id="letter-form" novalidate>
+          <label class="sr-only" for="letter-email">Email address</label>
+          <div class="letter-row">
+            <input id="letter-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
+            <button class="btn btn-gold" type="submit">Count me in</button>
+          </div>
+          <label class="consent">
+            <input type="checkbox" id="letter-consent" required>
+            <span>Send me occasional email updates about Cheqer and Ailura. Unsubscribe anytime.</span>
+          </label>
+          <p class="form-status" id="letter-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===================================================== support -->
+    <section class="section section-dark" id="support">
+      <div class="wrap wrap-narrow">
+        <p class="eyebrow">A labor of love</p>
+        <h2>Keep the lamps lit</h2>
+        <p class="lede">
+          Cheqer is built and kept by Owen Eskew of ONSQ Enterprises LLC, in evenings and on
+          weekends. It is free, it has no ads, and nothing in it is ever locked behind a payment.
+        </p>
+        <div class="ledger">
+          <p>What it costs to keep online, in plain figures:</p>
+          <table>
+            <tr><td>Database and sign-in (Supabase)</td><td>$25 / month</td></tr>
+            <tr><td>The AI that writes briefs and answers questions</td><td>$2 to $20 / month, with use</td></tr>
+            <tr><td>Apple developer program</td><td>$99 / year</td></tr>
+            <tr><td>Domain and hosting</td><td>under $5 / month</td></tr>
+          </table>
+          <p class="ledger-total">About <b>$40 a month</b>. A few readers covering a cup of coffee each would carry all of it.</p>
+        </div>
+        <div class="cta-row">
+          <a class="btn btn-gold" href="https://buymeacoffee.com/ONSQ">☕ Buy me a coffee</a>
+          <a class="btn btn-parchment" href="mailto:onsq@onsq.net?subject=Sponsoring%20Cheqer">Sponsor a year</a>
+        </div>
+        <p class="small">Sponsors who want it are named on the About screen. Gifts do not change what anyone can see or do in the app.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <img class="foot-mark" src="/assets/wordmark-dark.png" alt="Cheqer" width="200" height="74">
+      <p>Cheqer Word Study Bible · powered by <a href="https://ailura.net">Ailura</a></p>
+      <p>Owen Eskew · ONSQ Enterprises LLC · <a href="mailto:onsq@onsq.net">onsq@onsq.net</a></p>
+      <p class="credits">
+        Original-language text and tagging by <a href="https://www.TyndaleHouse.com">Tyndale House, Cambridge</a> and
+        <a href="https://www.STEPBible.org">STEP Bible</a> (CC BY 4.0). Hebrew lexicon: Brown-Driver-Briggs via
+        <a href="https://github.com/openscriptures/HebrewLexicon">OpenScriptures</a>; Greek lexicon: Abbott-Smith via STEP Bible.
+        English text: Berean Standard Bible. Josephus via Perseus; Philo via First1KGreek; Second Temple texts via Sefaria.
+      </p>
+      <p>
+        <a href="https://cheqer.vercel.app/privacy" data-app-link="privacy">Privacy</a> ·
+        <a href="https://cheqer.vercel.app/account" data-app-link="account">Your account</a> ·
+        <a href="https://github.com/ONSQ/Ailura_Cheqer_BibleStudy">Source</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

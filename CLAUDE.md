@@ -143,8 +143,17 @@ cheqer/
 ├── ingest/
 │   └── ingest_stepbible.py
 ├── app/                # Expo app (phase 2)
+├── site/               # cheqer.io front page: static HTML/CSS/JS, its own Vercel project
 └── docs/               # UTSA proposal, eval design
 ```
+
+## Front page (site/)
+
+- cheqer.io is a hand-written static page in `site/` (no build step), deployed as the Vercel project `cheqer-site` (`cd site && vercel deploy --prod --yes`). It is not part of the Expo app; the app stays at app.cheqer.io / cheqer.vercel.app.
+- Look: ink-dark ground, parchment leaves, gold rules, Cormorant Garamond + EB Garamond, a grain overlay. Keep it feeling like opened manuscripts; no stock photos.
+- The tap-a-word sample carries real rows copied from `lexicon_entries` / `word_forms()` (dated in `main.js`); refresh them if the lexicon changes.
+- The letters form posts to the same `capture_email` RPC the app uses (consent required, source `cheqer.io`) with the publishable key. Support is the Buy Me a Coffee link plus a plain cost table; nothing on the page or in the app is gated by it.
+- Domains: `cheqer.io` and `www.cheqer.io` on `cheqer-site`, `app.cheqer.io` on the app project `cheqer`. The registrar is Hostinger; Vercel wants `A 76.76.21.21` for each name (or its nameservers ns1/ns2.vercel-dns.com).
 
 ## Verification queries (sanity checks after any ingestion change)
 
