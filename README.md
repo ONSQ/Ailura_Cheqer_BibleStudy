@@ -148,6 +148,10 @@ Both stores ask for two links, and the app serves them: the privacy policy at ht
 
 To try a change on an Android emulator without EAS: `npx expo prebuild --platform android`, then `cd android && ./gradlew assembleRelease`. On Windows, do this from a short path outside OneDrive (for example `C:\tmp\cq\app`); the native build exceeds the 260-character path limit otherwise. The generated `android/` and `ios/` folders are not committed.
 
+### Front page: cheqer.io
+
+`site/` is the public front page: a static page (no build step) that introduces the app, carries a tap-a-word sample with real lexicon rows, links the web app and the phone test tracks, takes newsletter sign-ups through the same consent-gated `capture_email` RPC the app uses, and asks for support with a plain cost table and the Buy Me a Coffee link. It deploys as its own Vercel project, `cheqer-site` (`cd site && vercel deploy --prod --yes`), on `cheqer.io` and `www.cheqer.io`; `app.cheqer.io` points at the app project.
+
 ## Remaining roadmap
 
 - Store listings (Play Console, App Store Connect) once testers have tried the builds

@@ -25,3 +25,6 @@ Thumbs.db
 desktop.ini
 
 .claude/
+
+# Vercel CLI link files
+.vercel/
