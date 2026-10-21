@@ -200,6 +200,10 @@ p { margin: 0 0 1em; }
 .ledger-total { margin: 8px 0 0; }
 .ledger-total b { color: var(--gold-deep); }
 
+.champions { margin-top: 30px; text-align: center; }
+.champions[hidden] { display: none; }
+.champion-names { font-family: var(--display); font-size: 1.35rem; color: var(--cream); line-height: 1.7; max-width: 60ch; margin: 0 auto; }
+
 /* ------------------------------------------------------------------- foot */
 .foot { padding: 60px 0 40px; text-align: center; color: var(--cream-dim); font-size: 0.98rem; border-top: 1px solid var(--rule); }
 .foot-mark { width: 200px; height: auto; margin-bottom: 14px; opacity: 0.9; }

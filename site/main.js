@@ -63,6 +63,27 @@ document.querySelectorAll('.word').forEach((b) => {
   b.addEventListener('click', () => showWord(b.dataset.word, b));
 });
 
+// ---------------------------------------------------------- champions
+// Supporters on the membership who agreed to be named; the same public rows
+// the app's About screen shows.
+(async () => {
+  const box = document.getElementById('champions');
+  const names = document.getElementById('champion-names');
+  if (!box || !names) return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/champions?select=name,since&order=since.asc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    });
+    const rows = res.ok ? await res.json() : [];
+    if (Array.isArray(rows) && rows.length) {
+      names.textContent = rows.map((r) => r.name).join(' · ');
+      box.hidden = false;
+    }
+  } catch {
+    // the page reads fine without the list
+  }
+})();
+
 // ------------------------------------------------------------ letters
 const form = document.getElementById('letter-form');
 if (form) {

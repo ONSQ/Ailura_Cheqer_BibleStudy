@@ -1012,3 +1012,19 @@ grant execute on function word_forms(text) to anon, authenticated;
 -- study_bundle() also carries 'lexicon' (the entry with a citable 'ref' such
 -- as "BDB (H1254)") and 'forms' ({ref: 'STEPBible morphology', counts});
 -- see the migration lexicon_entries_word_forms for the full body.
+
+-- Cheqer Champions (2026-10-20): supporters on the Buy Me a Coffee membership
+-- who agreed to be named on the About screen and cheqer.io. Rows are added by
+-- hand from the BMC supporter list; everyone can read the visible ones.
+create table if not exists champions (
+  id bigserial primary key,
+  name text not null,
+  since date not null default current_date,
+  note text,
+  visible boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table champions enable row level security;
+drop policy if exists champions_read on champions;
+create policy champions_read on champions for select using (visible);
+grant select on champions to anon, authenticated;

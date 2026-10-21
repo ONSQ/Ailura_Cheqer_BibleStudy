@@ -152,6 +152,16 @@ To try a change on an Android emulator without EAS: `npx expo prebuild --platfor
 
 `site/` is the public front page: a static page (no build step) that introduces the app, carries a tap-a-word sample with real lexicon rows, links the web app and the phone test tracks, takes newsletter sign-ups through the same consent-gated `capture_email` RPC the app uses, and asks for support with a plain cost table and the Buy Me a Coffee link. It deploys as its own Vercel project, `cheqer-site` (`cd site && vercel deploy --prod --yes`), on `cheqer.io` and `www.cheqer.io`; `app.cheqer.io` points at the app project.
 
+### Cheqer Champions
+
+Supporters on the Buy Me a Coffee membership (buymeacoffee.com/ONSQ/membership) are named on the app's About screen and on cheqer.io. The names live in the `champions` table (name, since, note, visible); add one from the Supabase table editor or with SQL:
+
+```sql
+insert into champions (name, since) values ('Jane Doe', '2026-10-20');
+```
+
+Set `visible = false` to take a name down without deleting the row. Membership never changes what anyone can see or do in the app.
+
 ## Remaining roadmap
 
 - Store listings (Play Console, App Store Connect) once testers have tried the builds
