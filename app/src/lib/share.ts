@@ -4,7 +4,7 @@ import type { EntityCard, SemanticWitness, SenseDrift } from '@/lib/api';
 import { bookName, displayRef } from '@/lib/names';
 import type { GlossCount, Lexeme, LxxRendering, Occurrence, PeriodHit, SodBrief } from '@/lib/types';
 
-export const APP_URL = 'https://cheqer.vercel.app';
+export const APP_URL = 'https://app.cheqer.io';
 const SIGNATURE = 'Cheqer Word Study Bible';
 
 /**

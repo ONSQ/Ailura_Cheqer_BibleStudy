@@ -4,7 +4,7 @@
 // the public key the app ships), and the app links, which move to
 // app.cheqer.io once that name is live.
 
-const APP_URL = 'https://cheqer.vercel.app';
+const APP_URL = 'https://app.cheqer.io';
 const SUPABASE_URL = 'https://sprykzqdpybiyqzbiybr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_mPC9RUurQIxHzR6ESYwgPw_TRAhzBIs';
 
