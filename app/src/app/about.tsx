@@ -183,6 +183,12 @@ export default function About() {
         Bible; the KJV and WEB divide a few verses differently.
       </Text>
       <Text style={[styles.body, { marginTop: 12 }]}>
+        The Lit option is not a translation: it prints STEPBible's gloss of every word in the
+        original word order. [Bracketed] words are implied by the original; words in angle
+        brackets are there in the original but dropped in English; a Hebrew suffix keeps its
+        place after its root, so Psalm 23 opens "Yahweh [is] shepherd my".
+      </Text>
+      <Text style={[styles.body, { marginTop: 12 }]}>
         Septuagint text and tagging: CenterBLC LXX (Rahlfs 1935), MIT license.
       </Text>
       <Link label="github.com/CenterBLC/LXX" url="https://github.com/CenterBLC/LXX" />

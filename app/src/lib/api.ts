@@ -211,7 +211,25 @@ export async function getOccurrences(
   return (data ?? { total: 0, rows: [] }) as OccurrencePage;
 }
 
-/** Version codes present in the translations table, BSB first. */
+/**
+ * The word-for-word option in the version picker. Not a translation in the
+ * table: the Reader prints STEPBible's gloss of every word in the original
+ * word order, from the chapter it has already loaded.
+ */
+export const LIT_VERSION = 'Lit';
+
+/**
+ * One word's gloss as the word-for-word line prints it. A slash separates a
+ * Hebrew prefix or suffix from its root ("shepherd/ my"); the line keeps the
+ * Hebrew order and drops the slash. [Implied] and <untranslated> markers stay,
+ * as in a printed interlinear.
+ */
+export function literalGloss(gloss: string | null): string {
+  if (!gloss) return '';
+  return gloss.replace(/\s*\/\s*/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** Version codes present in the translations table, BSB first, then Lit. */
 export async function getVersions(): Promise<string[]> {
   let versions: string[];
   if (!usingSupabase) {
@@ -222,7 +240,8 @@ export async function getVersions(): Promise<string[]> {
     if (error) throw error;
     versions = (data ?? []).map((r) => r.version);
   }
-  return versions.sort((a, b) => (a === 'BSB' ? -1 : b === 'BSB' ? 1 : a.localeCompare(b)));
+  versions.sort((a, b) => (a === 'BSB' ? -1 : b === 'BSB' ? 1 : a.localeCompare(b)));
+  return [...versions, LIT_VERSION];
 }
 
 export async function getTranslation(

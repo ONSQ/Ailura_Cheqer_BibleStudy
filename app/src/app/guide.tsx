@@ -36,8 +36,9 @@ export default function Guide() {
         <P>
           The Reader shows the English text with the Hebrew or Greek underneath. Use the chips
           in the header: the book and chapter open pickers that go all the way down to a verse,
-          the version chip cycles BSB, KJV, and WEB, and the Heb/Grk chip hides the original
-          line. You can also type a reference like John 3:16 straight into any picker.
+          the version chip cycles BSB, KJV, WEB, and Lit (every word's gloss in the original
+          word order, so Psalm 23 opens "Yahweh [is] shepherd my"), and the Heb/Grk chip hides
+          the original line. You can also type a reference like John 3:16 straight into any picker.
         </P>
       </Section>
 
