@@ -73,11 +73,24 @@ def flatten_verse(content):
 
 
 def chapter_rows(version, book, chapter_json):
+    chapter = chapter_json["chapter"]["number"]
     for item in chapter_json["chapter"]["content"]:
-        if isinstance(item, dict) and item.get("type") == "verse":
+        if not isinstance(item, dict):
+            continue
+        if item.get("type") == "verse":
             text = flatten_verse(item.get("content", []))
             if text:
-                yield (version, book, chapter_json["chapter"]["number"], item["number"], text)
+                yield (version, book, chapter, item["number"], text)
+        elif item.get("type") == "hebrew_subtitle":
+            # A psalm superscription ("For the choirmaster. A Psalm of
+            # David."). The Hebrew text numbers it as verse 1; the English
+            # does not number it, so it is stored as verse 0, where the
+            # Reader shows it above verse 1, matching ol_words. The WEB also
+            # marks the acrostic letters of Psalm 119 this way (ALEPH, BETH);
+            # a single word is never a superscription.
+            text = flatten_verse(item.get("content", []))
+            if text and " " in text:
+                yield (version, book, chapter, 0, text)
 
 
 def main():
