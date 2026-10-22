@@ -555,13 +555,19 @@ function VerseRow({
           highlighted && styles.verseHighlight,
           selected && styles.verseSelected,
         ]}>
-        <Text style={styles.englishPrimary} onLongPress={onVerseLongPress} suppressHighlighting>
-          <Text
-            suppressHighlighting
-            style={[styles.verseNum, onVersePress && styles.verseNumTappable]}
-            onPress={onVersePress}>
-            {verse.verse}{' '}
-          </Text>
+        <Text
+          style={[styles.englishPrimary, verse.verse === 0 && styles.englishTitle]}
+          onLongPress={onVerseLongPress}
+          suppressHighlighting>
+          {/* Verse 0 is a psalm superscription: no number, set as a title. */}
+          {verse.verse > 0 && (
+            <Text
+              suppressHighlighting
+              style={[styles.verseNum, onVersePress && styles.verseNumTappable]}
+              onPress={onVersePress}>
+              {verse.verse}{' '}
+            </Text>
+          )}
           {english.split(/(\s+)/).map((token, i) =>
             /\S/.test(token) ? (
               <Text key={i} suppressHighlighting onPress={() => onEnglishWord(token)}>
@@ -880,6 +886,7 @@ const sheets = themedSheets((colors) => StyleSheet.create({
   listContent: { padding: 16, paddingBottom: 48 },
   verseRow: { marginBottom: 12, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
   englishPrimary: { color: colors.ink, fontSize: 17, lineHeight: 26 },
+  englishTitle: { fontStyle: 'italic', color: colors.faint, fontSize: 15 },
   originalSecondary: { color: colors.faint, marginTop: 3 },
   verseHighlight: { backgroundColor: colors.highlight },
   verseText: { color: colors.ink },

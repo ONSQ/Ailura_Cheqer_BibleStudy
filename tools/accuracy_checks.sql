@@ -65,13 +65,19 @@ with checks (name, expected, actual) as (
               and not exists (select 1 from ol_words w
                               where w.book = t.book and w.chapter = t.chapter and w.verse = t.verse))
     union all
-    -- 116 psalm titles (verse 0) and 16 verses the BSB leaves to its footnotes
-    select 'original-language verses with no BSB text', '132',
+    -- the 16 verses the BSB leaves to its footnotes
+    select 'original-language verses with no BSB text', '16',
            (select count(*)::text
             from (select distinct book, chapter, verse from ol_words) w
             where not exists (select 1 from translations t
                               where t.version = 'BSB' and t.book = w.book
                                 and t.chapter = w.chapter and t.verse = w.verse))
+    union all
+    select 'psalm superscriptions with English (verse 0)', '116 / 116 / 116',
+           (select string_agg(n::text, ' / ' order by version)
+            from (select version, count(*) n from translations
+                  where book = 'Psa' and verse = 0 and version in ('BSB', 'KJV', 'WEB')
+                  group by version) t)
     union all
     select '2 Corinthians 13 verses', '14',
            (select count(distinct verse)::text from ol_words where book = '2Co' and chapter = 13)
