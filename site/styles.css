@@ -125,6 +125,9 @@ p { margin: 0 0 1em; }
 .verse-ref { font-family: var(--display); letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.8rem; color: var(--parch-faint); }
 .verse-text { font-size: clamp(1.4rem, 3.2vw, 1.9rem); font-family: var(--display); font-weight: 500; line-height: 1.5; margin: 6px 0 4px; }
 .verse-text sup { color: var(--gold-deep); font-size: 0.6em; margin-right: 4px; }
+.verse-literal { font-size: 1.08rem; color: #3b3022; margin: 14px 0 0; line-height: 1.6; }
+.verse-literal span { display: block; font-family: var(--display); letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.72rem; color: var(--gold-deep); margin-bottom: 2px; }
+.verse-note { font-size: 0.98rem; color: #5a4a33; margin: 10px 0 0; line-height: 1.55; }
 .verse-hebrew { font-family: var(--hebrew); font-size: clamp(1.5rem, 3.4vw, 2rem); color: #4a3d28; margin: 6px 0 0; line-height: 1.7; }
 .word {
   font: inherit; color: inherit; background: none; border: 0; padding: 0 2px; cursor: pointer; border-radius: 3px;
