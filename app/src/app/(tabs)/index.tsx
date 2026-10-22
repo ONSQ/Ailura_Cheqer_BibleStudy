@@ -29,12 +29,14 @@ import {
   getChapter,
   getTranslation,
   getVersions,
+  LIT_VERSION,
+  literalGloss,
   getVerseWitnesses,
 } from '@/lib/api';
 import { bookName, displayRef } from '@/lib/names';
 import { parseRef } from '@/lib/refs';
 import { fonts, themedSheets, useSheet, useTheme } from '@/lib/theme';
-import type { Verse, VerseAnswer } from '@/lib/types';
+import type { Verse, VerseAnswer, Word } from '@/lib/types';
 
 const LAST_READ_KEY = 'cheqer-last-read';
 
@@ -102,9 +104,10 @@ export default function Reader() {
   const translation = useQuery({
     queryKey: ['translation', version, sel.book, sel.chapter],
     queryFn: () => getTranslation(sel.book, sel.chapter, version!),
-    enabled: version != null,
+    enabled: version != null && version !== LIT_VERSION,
   });
-  // Cycle BSB -> KJV -> WEB -> off -> BSB...
+  const literal = version === LIT_VERSION;
+  // Cycle BSB -> KJV -> WEB -> Lit -> off -> BSB...
   const cycleVersion = () => {
     const list = versions.data?.length ? versions.data : ['BSB'];
     setVersion((v) => {
@@ -115,9 +118,16 @@ export default function Reader() {
   };
   const englishByVerse = useMemo(() => {
     const map = new Map<number, string>();
+    if (literal) {
+      // Word-for-word: the glosses of the chapter already in hand.
+      for (const v of chapter.data?.verses ?? []) {
+        map.set(v.verse, v.words.map((w) => literalGloss(w.gloss)).filter(Boolean).join(' '));
+      }
+      return map;
+    }
     for (const v of translation.data?.verses ?? []) map.set(v.verse, v.text);
     return map;
-  }, [translation.data]);
+  }, [translation.data, chapter.data, literal]);
 
   const isRTL = chapter.data?.corpus === 'OT';
   const chapterCount = useMemo(
@@ -311,11 +321,17 @@ export default function Reader() {
                 !!selection && item.verse >= selection.start && item.verse <= selection.end
               }
               english={version != null ? englishByVerse.get(item.verse) : undefined}
+              literal={literal}
               showOriginal={showOriginal}
               onEnglishWord={(query) =>
                 selection
                   ? onVersePress(item.verse)
                   : setWordSel({ query, verse: item, book: sel.book, chapter: sel.chapter, isRTL })
+              }
+              onWord={(w) =>
+                selection
+                  ? onVersePress(item.verse)
+                  : w.strongs && router.push(`/study/${w.strongs}` as never)
               }
               onVersePress={() => onVersePress(item.verse)}
               onVerseLongPress={() => onVerseLongPress(item.verse)}
@@ -530,8 +546,10 @@ function VerseRow({
   highlighted,
   selected,
   english,
+  literal,
   showOriginal,
   onEnglishWord,
+  onWord,
   onVersePress,
   onVerseLongPress,
 }: {
@@ -540,8 +558,11 @@ function VerseRow({
   highlighted: boolean;
   selected?: boolean;
   english?: string;
+  /** Word-for-word: each gloss is its own word, tapping it opens that word's study. */
+  literal?: boolean;
   showOriginal: boolean;
   onEnglishWord: (word: string) => void;
+  onWord?: (word: Word) => void;
   onVersePress?: () => void;
   onVerseLongPress?: () => void;
 }) {
@@ -568,15 +589,29 @@ function VerseRow({
               {verse.verse}{' '}
             </Text>
           )}
-          {english.split(/(\s+)/).map((token, i) =>
-            /\S/.test(token) ? (
-              <Text key={i} suppressHighlighting onPress={() => onEnglishWord(token)}>
-                {token}
-              </Text>
-            ) : (
-              token
-            ),
-          )}
+          {literal
+            ? verse.words.map((w) => {
+                const gloss = literalGloss(w.gloss);
+                if (!gloss) return null;
+                return (
+                  <Text
+                    key={w.id}
+                    suppressHighlighting
+                    style={w.variant ? styles.wordVariant : undefined}
+                    onPress={onWord ? () => onWord(w) : undefined}>
+                    {gloss}{' '}
+                  </Text>
+                );
+              })
+            : english.split(/(\s+)/).map((token, i) =>
+                /\S/.test(token) ? (
+                  <Text key={i} suppressHighlighting onPress={() => onEnglishWord(token)}>
+                    {token}
+                  </Text>
+                ) : (
+                  token
+                ),
+              )}
         </Text>
         {showOriginal && <OriginalLine verse={verse} isRTL={isRTL} primary={false} />}
       </View>
