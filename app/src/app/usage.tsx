@@ -138,7 +138,7 @@ export default function Usage() {
           <View key={a.email} style={styles.person}>
             <Text style={styles.email}>{a.email}</Text>
             <Text style={styles.footnote}>
-              Joined {shortDate(a.joined)} · last seen {a.last_seen ? relativeDate(a.last_seen) : 'never'}
+              Joined {shortDate(a.joined)} · last sign-in {a.last_seen ? relativeDate(a.last_seen) : 'never'}
               {a.confirmed ? '' : ' · unconfirmed'} · {a.studies} {a.studies === 1 ? 'study' : 'studies'}
               {a.published ? ` (${a.published} published)` : ''}
             </Text>
@@ -171,8 +171,10 @@ export default function Usage() {
       </Card>
 
       <Text style={styles.footnote}>
-        Reading needs no account, so people who only read are not counted here. "People using AI"
-        counts distinct network addresses, so one phone on Wi-Fi and on cellular counts twice.
+        Reading needs no account, so people who only read are not counted here. "Last sign-in"
+        is the last time an account typed its password; staying signed in does not update it.
+        "People using AI" counts distinct network addresses, so one phone on Wi-Fi and on
+        cellular counts twice.
       </Text>
     </ScrollView>
   );
@@ -251,7 +253,7 @@ export function formatReport(r: UsageReport): string {
     `Accounts (${r.accounts.length}):`,
     ...r.accounts.map(
       (a) =>
-        `  ${a.email} · joined ${shortDate(a.joined)} · last seen ${a.last_seen ? shortDate(a.last_seen) : 'never'} · ${a.studies} studies`,
+        `  ${a.email} · joined ${shortDate(a.joined)} · last sign-in ${a.last_seen ? shortDate(a.last_seen) : 'never'} · ${a.studies} studies`,
     ),
     '',
     `Email sign-ups (${r.email_signups.length}):`,
