@@ -14,7 +14,7 @@ import { Pronunciation } from '@/components/pronunciation';
 import { ShareButton } from '@/components/share-button';
 import { WordAnatomy, formatWordAnatomy, useWordAnatomy } from '@/components/word-anatomy';
 import { lemmaKey } from '@/lib/speech';
-import { createStudy, getUserId } from '@/lib/studies';
+import { createStudy, findMyStudy, getUserId } from '@/lib/studies';
 
 import {
   displayGloss,
@@ -138,8 +138,20 @@ export default function WordStudy() {
       params: { book: o.book, chapter: String(o.chapter), verse: String(o.verse) },
     });
 
+  // Already saved on an earlier visit? Then the button opens it instead of
+  // saving a second copy. Keyed under 'studies' so any study change refreshes it.
+  const myStudy = useQuery({
+    queryKey: ['studies', 'mine', strongs],
+    queryFn: () => findMyStudy(strongs!),
+    enabled: !!strongs,
+  });
+
   const saveStudy = async () => {
     if (!strongs || saveState === 'saving') return;
+    if (myStudy.data) {
+      router.push(`/study-note/${myStudy.data.id}` as never);
+      return;
+    }
     if (!(await getUserId())) {
       setSaveState('signin');
       return;
@@ -148,13 +160,14 @@ export default function WordStudy() {
     try {
       const gloss = displayGloss(lexeme.data?.gloss ?? null);
       const lemma = lexeme.data?.lemma ?? strongs;
-      await createStudy({
+      const created = await createStudy({
         strongs,
         // Readable first: "In debauchery · ἀσώτως", not "ἀσώτως (G0811)".
         title: gloss ? `${gloss.charAt(0).toUpperCase()}${gloss.slice(1)} · ${lemma}` : lemma,
         notes: brief.data?.summary ?? '',
       });
-      qc.invalidateQueries({ queryKey: ['studies'] });
+      qc.setQueryData(['studies', 'mine', strongs], created);
+      qc.invalidateQueries({ queryKey: ['studies'], exact: true });
       setSaveState('saved');
     } catch {
       setSaveState('idle');
@@ -217,11 +230,11 @@ export default function WordStudy() {
                   ) : null}
                   <View style={styles.btnRow}>
                   <Pressable
-                    style={[styles.saveBtn, saveState === 'saved' && styles.saveBtnDone]}
+                    style={[styles.saveBtn, myStudy.data && styles.saveBtnDone]}
                     onPress={saveState === 'signin' ? () => router.push('/studies' as never) : saveStudy}>
                     <Text style={styles.saveBtnText}>
-                      {saveState === 'saved'
-                        ? 'Saved to studies ✓'
+                      {myStudy.data
+                        ? 'Saved ✓ · Open study'
                         : saveState === 'saving'
                           ? 'Saving…'
                           : saveState === 'signin'

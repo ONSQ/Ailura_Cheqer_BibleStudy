@@ -59,6 +59,72 @@ export async function deleteAccount() {
   await supabase.auth.signOut({ scope: 'local' });
 }
 
+/**
+ * The signed-in user's own saved study of one word, if there is one, so the
+ * Save button can say "Saved" on every visit instead of saving again.
+ */
+export async function findMyStudy(strongs: string): Promise<WordStudy | null> {
+  const owner = await getUserId();
+  if (!owner) return null;
+  const { data, error } = await supabase
+    .from('word_studies')
+    .select('*')
+    .eq('owner', owner)
+    .eq('strongs', strongs)
+    .is('ref', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export interface UsageReport {
+  generated_at: string;
+  totals: Record<
+    | 'accounts' | 'accounts_active_7d' | 'accounts_active_30d' | 'accounts_new_30d'
+    | 'email_signups' | 'email_signups_30d' | 'tester_requests' | 'tester_requests_30d'
+    | 'studies' | 'studies_30d' | 'studies_published'
+    | 'ai_requests_7d' | 'ai_requests_30d' | 'ai_requests_all' | 'ai_people_7d' | 'ai_people_30d'
+    | 'word_briefs' | 'entity_briefs',
+    number
+  >;
+  ai_by_feature_30d: { feature: string; requests: number }[];
+  weeks: {
+    week_of: string;
+    ai_requests: number;
+    ai_people: number;
+    new_accounts: number;
+    new_signups: number;
+    studies: number;
+  }[];
+  accounts: {
+    email: string;
+    joined: string;
+    last_seen: string | null;
+    confirmed: boolean;
+    studies: number;
+    published: number;
+  }[];
+  email_signups: { email: string; joined: string; source: string | null; has_account: boolean }[];
+  tester_requests: { email: string; platform: 'ios' | 'android'; status: string; requested: string }[];
+}
+
+/** True only for an account listed in app_admins (checked on the server). */
+export async function isAppAdmin(): Promise<boolean> {
+  if (!(await getUserId())) return false;
+  const { data, error } = await supabase.rpc('is_app_admin');
+  if (error) return false;
+  return data === true;
+}
+
+/** The owner's usage report. The server refuses every other account. */
+export async function getUsageReport(): Promise<UsageReport> {
+  const { data, error } = await supabase.rpc('usage_report');
+  if (error) throw error;
+  return data as UsageReport;
+}
+
 export async function getStudy(id: number): Promise<WordStudy | null> {
   const { data, error } = await supabase
     .from('word_studies')

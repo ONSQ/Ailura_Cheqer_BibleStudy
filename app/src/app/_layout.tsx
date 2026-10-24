@@ -65,6 +65,7 @@ function ThemedApp() {
         <Stack.Screen name="privacy" options={{ title: 'Privacy', presentation: 'modal' }} />
         <Stack.Screen name="get-the-app" options={{ title: 'Get the app' }} />
         <Stack.Screen name="account" options={{ title: 'Account' }} />
+        <Stack.Screen name="usage" options={{ title: 'Usage' }} />
         <Stack.Screen name="ask" options={{ title: 'Ask' }} />
       </Stack>
       {splashDone && <WelcomeSheet />}
@@ -74,6 +75,21 @@ function ThemedApp() {
 }
 
 export default function RootLayout() {
+  // Answers that depend on who is signed in (your own studies, whether you see
+  // the usage report) must not outlive a sign-in or sign-out in the cache.
+  useEffect(() => {
+    let unsubscribe = () => {};
+    import('@/lib/supabase').then(({ supabase }) => {
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+        queryClient.invalidateQueries({ queryKey: ['studies'] });
+        queryClient.invalidateQueries({ queryKey: ['is-app-admin'] });
+        queryClient.removeQueries({ queryKey: ['usage-report'] });
+      });
+      unsubscribe = () => data.subscription.unsubscribe();
+    });
+    return () => unsubscribe();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>

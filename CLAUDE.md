@@ -175,3 +175,7 @@ cheqer/
 
 - TAHOT and TAGNT are amalgamated: they carry every word a major translation renders, including Greek words absent from NA28 and Hebrew words supplied from the LXX. `word_variant()` in schema.sql is the one rule for which words those are. The Reader brackets them, the word sheet names the editions, and occurrence counts show the base-text figure beside the total ("992 occurrences (915 in NA28)"). Do not filter them out of counts or text silently.
 - Brenton's English is aligned to the Greek LXX rows by `ingest/ingest_witness_en.py` before it is attached; his verse numbers differ from Rahlfs in places.
+
+## Usage report
+
+- Owen opens it from About > Usage report (signed in), or at app.cheqer.io/usage, or with `select usage_report();` in the Supabase SQL editor. It reads data the app already stores (accounts, sign-ups, tester requests, studies, ai_calls); there is no visitor tracking, and About promises none. Through the API it answers only accounts in `app_admins`.
