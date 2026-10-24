@@ -4,6 +4,7 @@ import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import { BrandHeader } from '@/components/brand';
 import { getChampions } from '@/lib/api';
+import { isAppAdmin } from '@/lib/studies';
 import { MEMBERSHIP_URL, SUPPORT_URL } from '@/lib/links';
 import { themedSheets, useSheet, useTheme, type ThemeMode } from '@/lib/theme';
 
@@ -44,6 +45,8 @@ function Link({ label, url }: { label: string; url: string }) {
 export default function About() {
   const styles = useSheet(sheets);
   const champions = useQuery({ queryKey: ['champions'], queryFn: getChampions, staleTime: 5 * 60_000 });
+  // The owner's usage report: linked only for that account (the server checks again).
+  const admin = useQuery({ queryKey: ['is-app-admin'], queryFn: isAppAdmin });
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <BrandHeader width={260} />
@@ -158,6 +161,11 @@ export default function About() {
       <Pressable onPress={() => router.push('/account' as never)}>
         <Text style={styles.link}>Delete my account</Text>
       </Pressable>
+      {admin.data && (
+        <Pressable onPress={() => router.push('/usage' as never)}>
+          <Text style={styles.link}>Usage report</Text>
+        </Pressable>
+      )}
 
       <Text style={styles.sectionTitle}>Data credits</Text>
       <Text style={styles.body}>

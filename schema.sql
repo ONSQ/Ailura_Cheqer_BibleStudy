@@ -1028,3 +1028,118 @@ alter table champions enable row level security;
 drop policy if exists champions_read on champions;
 create policy champions_read on champions for select using (visible);
 grant select on champions to anon, authenticated;
+
+-- =============================================================
+-- Usage report for the app's owner. One call returns everything the
+-- Usage screen shows (and what the SQL editor shows when you run
+-- select usage_report();). It reads auth.users and the sign-up lists,
+-- so it is gated: through the API only an account listed in app_admins
+-- gets an answer. A direct database connection (the SQL editor) is
+-- already trusted with those tables and is let through.
+-- =============================================================
+
+create table if not exists app_admins (
+    user_id    uuid primary key references auth.users (id) on delete cascade,
+    added_at   timestamptz not null default now()
+);
+alter table app_admins enable row level security;   -- no policies: never readable through the API
+
+create or replace function is_app_admin()
+returns boolean
+language sql stable
+security definer
+set search_path = public
+as $$
+    select exists (select 1 from app_admins where user_id = auth.uid())
+$$;
+
+create or replace function usage_report()
+returns jsonb
+language plpgsql stable
+security definer
+set search_path = public
+as $$
+declare
+    report jsonb;
+begin
+    -- PostgREST (the app, the edge functions) connects as authenticator.
+    if session_user = 'authenticator' and not is_app_admin() then
+        raise exception 'not authorized' using errcode = '42501';
+    end if;
+
+    with weeks as (
+        select generate_series(
+            date_trunc('week', now()) - interval '7 weeks',
+            date_trunc('week', now()), interval '1 week') as wk
+    )
+    select jsonb_build_object(
+        'generated_at', now(),
+        'totals', jsonb_build_object(
+            'accounts',            (select count(*) from auth.users),
+            'accounts_active_7d',  (select count(*) from auth.users where last_sign_in_at > now() - interval '7 days'),
+            'accounts_active_30d', (select count(*) from auth.users where last_sign_in_at > now() - interval '30 days'),
+            'accounts_new_30d',    (select count(*) from auth.users where created_at > now() - interval '30 days'),
+            'email_signups',       (select count(*) from email_signups),
+            'email_signups_30d',   (select count(*) from email_signups where created_at > now() - interval '30 days'),
+            'tester_requests',     (select count(*) from tester_requests),
+            'tester_requests_30d', (select count(*) from tester_requests where created_at > now() - interval '30 days'),
+            'studies',             (select count(*) from word_studies),
+            'studies_30d',         (select count(*) from word_studies where created_at > now() - interval '30 days'),
+            'studies_published',   (select count(*) from word_studies where is_shared),
+            'ai_requests_7d',      (select count(*) from ai_calls where created_at > now() - interval '7 days'),
+            'ai_requests_30d',     (select count(*) from ai_calls where created_at > now() - interval '30 days'),
+            'ai_requests_all',     (select count(*) from ai_calls),
+            'ai_people_7d',        (select count(distinct ip) from ai_calls where created_at > now() - interval '7 days'),
+            'ai_people_30d',       (select count(distinct ip) from ai_calls where created_at > now() - interval '30 days'),
+            'word_briefs',         (select count(*) from sod_briefs),
+            'entity_briefs',       (select count(*) from entity_briefs)
+        ),
+        'ai_by_feature_30d', coalesce((
+            select jsonb_agg(jsonb_build_object('feature', fn, 'requests', n) order by n desc)
+            from (select fn, count(*) n from ai_calls
+                  where created_at > now() - interval '30 days' group by fn) f), '[]'::jsonb),
+        'weeks', (
+            select jsonb_agg(jsonb_build_object(
+                'week_of',      to_char(w.wk, 'YYYY-MM-DD'),
+                'ai_requests',  (select count(*) from ai_calls a where a.created_at >= w.wk and a.created_at < w.wk + interval '1 week'),
+                'ai_people',    (select count(distinct ip) from ai_calls a where a.created_at >= w.wk and a.created_at < w.wk + interval '1 week'),
+                'new_accounts', (select count(*) from auth.users u where u.created_at >= w.wk and u.created_at < w.wk + interval '1 week'),
+                'new_signups',  (select count(*) from email_signups e where e.created_at >= w.wk and e.created_at < w.wk + interval '1 week'),
+                'studies',      (select count(*) from word_studies s where s.created_at >= w.wk and s.created_at < w.wk + interval '1 week')
+            ) order by w.wk)
+            from weeks w),
+        'accounts', coalesce((
+            select jsonb_agg(jsonb_build_object(
+                'email',      u.email,
+                'joined',     u.created_at,
+                'last_seen',  u.last_sign_in_at,
+                'confirmed',  u.email_confirmed_at is not null,
+                'studies',    (select count(*) from word_studies s where s.owner = u.id),
+                'published',  (select count(*) from word_studies s where s.owner = u.id and s.is_shared)
+            ) order by u.last_sign_in_at desc nulls last, u.created_at desc)
+            from auth.users u), '[]'::jsonb),
+        'email_signups', coalesce((
+            select jsonb_agg(jsonb_build_object(
+                'email',       e.email,
+                'joined',      e.created_at,
+                'source',      e.source,
+                'has_account', exists (select 1 from auth.users u where lower(u.email) = e.email)
+            ) order by e.created_at desc)
+            from email_signups e), '[]'::jsonb),
+        'tester_requests', coalesce((
+            select jsonb_agg(jsonb_build_object(
+                'email', t.email, 'platform', t.platform,
+                'status', t.status, 'requested', t.created_at
+            ) order by t.created_at desc)
+            from tester_requests t), '[]'::jsonb)
+    ) into report;
+    return report;
+end;
+$$;
+
+revoke execute on function is_app_admin() from public, anon;
+revoke execute on function usage_report() from public, anon;
+grant execute on function is_app_admin() to authenticated;
+grant execute on function usage_report() to authenticated;
+
+-- The owner: insert into app_admins (user_id) values (<auth.users id>);
